@@ -31,6 +31,7 @@ object ChessPiece extends Enum[ChessPiece] {
   })
 
 
+  //nebun
   case object Bishop extends ChessPiece(4, {
     case (Position(x, y), Position(a, b)) => abs(x - a) == abs(y - b)
   }, {
@@ -39,6 +40,7 @@ object ChessPiece extends Enum[ChessPiece] {
         yield Position(hOffset, y /*+ vOffset*/)
   })
 
+  //cal
   case object Knight extends ChessPiece(5, {
     case (Position(x, y), Position(a, b)) => x == a || y == b
   }, {
@@ -47,6 +49,18 @@ object ChessPiece extends Enum[ChessPiece] {
            vOffset <- List(-1, 0, 1) if y + vOffset >= 0)
         yield Position(x + hOffset, y + vOffset)
   })
+
+  //tura
+  case object Rook extends ChessPiece(6, {
+    case (Position(x, y), Position(a, b)) => x == a || y == b
+  }, {
+    case (Position(x, y), Table(h, v)) =>
+      for (hOffset <- List(-1, 0, 1) if x + hOffset >= 0;
+           vOffset <- List(-1, 0, 1) if y + vOffset >= 0)
+        yield Position(x + hOffset, y + vOffset)
+  })
+
+
 
 }
 

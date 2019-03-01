@@ -1,5 +1,7 @@
 package chess
 
+import java.util.Optional
+
 object GenerationCore {
   def solutions(input: Input): Stream[Solution] = {
     input match {
@@ -27,4 +29,14 @@ case class Input(table: Table,
                  piecesCount: Map[ChessPiece, Int],
                  positions: Set[Position])
 
+object Input {
+  def piecesFor(table: Table): Seq[Position] = {
+    for (i <- 0 until table.horiz;
+         j <- 0 until table.vert) yield Position(i, j)
+  }
+
+  def apply(table: Table, piecesCount: Map[ChessPiece, Int]): Input = Input(table, piecesCount, piecesFor(table).toSet)
+}
+
 case class Solution(solution: Stream[(ChessPiece, Position)])
+
