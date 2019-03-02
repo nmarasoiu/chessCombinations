@@ -7,14 +7,23 @@ import org.scalacheck.{Arbitrary, Properties}
 object ChessProperties extends Properties("GenerationCore") {
   implicitly[Arbitrary[Input]]
 
-  def rotations(solution: List[(ChessPiece, (Int, Int))]): List[List[(ChessPiece, (Int, Int))]] =
-    Stream.iterate(solution)(rotation).take(4).toList
+  def rotations(table: Table, solution: List[(ChessPiece, (Int, Int))]): List[List[(ChessPiece, (Int, Int))]] =
+    Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toList
 
-  def rotation(solution: List[(ChessPiece, (Int, Int))]): List[(ChessPiece, (Int, Int))] = {
-    def rotation(x: Int, y: Int): (Int, Int) = (x, y) //todo implement
+  def rotation(table: Table, solution: List[(ChessPiece, (Int, Int))]): List[(ChessPiece, (Int, Int))] = {
+    def rotation(x: Int, y: Int): (Int, Int) = (table.vert - 1 - y, x)
+
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
   }
 
+  //todo: asymettric table, 0x0 tables, intro rotations in algo
+  /**
+    * 00 10
+    * 01 00
+    * 11 01
+    * 10 11
+    *
+    */
   property("example1") = forAll { _: Unit => {
     println("Example1:")
     val input = Input(Table(3, 3), Map(King -> 2, Rook -> 1))
@@ -42,8 +51,10 @@ object ChessProperties extends Properties("GenerationCore") {
     val obtainedSolutions = solutions.map(_.solution.toList.map {
       case (piece, Position(x, y)) => (piece, (x, y))
     })
-    println("Example1: solutions: \n" + obtainedSolutions.mkString("\n"))
-    obtainedSolutions.toSet == expectedBoards.flatMap(rotations).toSet
+    val allExpectedBoards = expectedBoards.flatMap(board => rotations(input.table, board))
+    println("expectedBoards=\n" + allExpectedBoards.mkString("\n"))
+    println("obtainedBoards=\n" + obtainedSolutions.mkString("\n"))
+    obtainedSolutions.toSet == allExpectedBoards.toSet
   }
 
 
