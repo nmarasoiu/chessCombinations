@@ -16,7 +16,7 @@ object GenerationCore {
       //todo refactor into a single for and get rid of flatten?
       val r = for (position <- positions;
                    incompatiblePositions = piece.incompatiblePositions(position, table);
-                   _ <- Set(1) if incompatiblePositions.intersect(picksSoFar).isEmpty;
+                   _ <- Set(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
                    remainingPositions = positions - position -- incompatiblePositions)
         yield
           if (remainingPieces.isEmpty) {
