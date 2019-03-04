@@ -26,7 +26,7 @@ object ChessProperties extends Properties("GenerationCore") {
     */
   property("example1") = forAll { _: Unit => {
     println("Example1:")
-    val input = Input(Table(3, 3), Map(King -> 2, Rook -> 1))
+    val input = Input(Table(3, 3), Map[ChessPiece,Int](King -> 2, Rook -> 1))
     val expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]] = Seq(Seq((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
@@ -54,7 +54,7 @@ object ChessProperties extends Properties("GenerationCore") {
       case (piece, Position(x, y)) => (piece, (x, y))
     })
     val allExpectedBoards = expectedBoards.flatMap(board => rotations(input.table, board))
-    def evalAndStringify(boards: Seq[Seq[(ChessPiece, (Int, Int))]]) =
+    def evalAndStringify(boards: Iterable[Iterable[(ChessPiece, (Int, Int))]]) =
       boards.toList.map(_.toList).mkString("\n")
     println("expectedBoards=\n" + evalAndStringify(allExpectedBoards))
     println("obtainedBoards=\n" + evalAndStringify(obtainedSolutions))
