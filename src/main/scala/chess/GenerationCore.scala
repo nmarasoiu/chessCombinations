@@ -14,8 +14,6 @@ object GenerationCore {
   }
 }
 
-case class Table(horiz: Int, vert: Int)
-
 case class Input(table: Table,
                  piecesCount: Map[ChessPiece, Int],
                  positions: Set[Position])
@@ -28,6 +26,3 @@ object Input {
 
   def apply(table: Table, piecesCount: Map[ChessPiece, Int]): Input = Input(table, piecesCount, piecesFor(table).toSet)
 }
-
-case class Solution(solution: Stream[(ChessPiece, Position)])
-
