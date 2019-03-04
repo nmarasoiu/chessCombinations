@@ -12,7 +12,7 @@ object ChessProperties extends Properties("GenerationCore") {
     Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toSet
 
   def rotation(table: Table, solution: Board): Board = {
-    def rotation(x: Int, y: Int): (Int, Int) = (table.vert - 1 - y, x)
+    def rotation(x: Int, y: Int): (Int, Int) = (table.vertical - 1 - y, x)
 
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
   }
@@ -47,7 +47,7 @@ object ChessProperties extends Properties("GenerationCore") {
 
   private def areResultingBoardsTheExpectedOnes
   (input: Input, expectedBoards: Set[Board]): Boolean = {
-    val solutions: Set[PotentialSolution] = GenerationCore.solutions(input).toSet
+    val solutions: Set[PotentialSolution] = GenerationCore.solutions(input)
     val obtainedSolutions: Set[Board] = solutions.map((potentialSolution: PotentialSolution) =>
       potentialSolution.solution.map {
         case (piece: Piece, Position(x, y)) => (piece, (x, y))
