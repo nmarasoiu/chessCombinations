@@ -1,12 +1,20 @@
 package chess
 
 import enumeratum.{Enum, EnumEntry}
+
 import scala.math.abs
 
 sealed abstract class ChessPiece(val order: Int,
                                  val eval: Function[(Position, Position), Boolean],
-                                 val attackPositions: Function[(Position, Table), Seq[Position]],
+                                 protected val attackPositions: Function[(Position, Table), Seq[Position]],//currying?
                                 ) extends EnumEntry with Ordered[ChessPiece] {
+  lazy val incompatPositions: Function[(Position, Table), Seq[Position]] = {
+    case (pos@Position(a,b), table@Table(h, v)) =>
+      val incompatiblePositions = attackPositions(pos, table)
+      for (Position(x,y) <- incompatiblePositions if 0 <= x && x < h && 0 <= y && y <= v && x!=a && y!=b)
+        yield Position(x,y)
+  }
+
   def compare(that: ChessPiece): Int = this.order - that.order
 }
 
@@ -54,5 +62,6 @@ object ChessPiece extends Enum[ChessPiece] {
     case (Position(x, y), Table(h, v)) =>
       (for (hOffset <- 0 until h) yield Position(hOffset, y)) ++ (for (vOffset <- 0 until v) yield Position(x, vOffset))
   })
+
 }
 

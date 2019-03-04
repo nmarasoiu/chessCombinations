@@ -1,16 +1,18 @@
 package chess
 
 object GenerationCore {
+
   def solutions(input: Input): Stream[Solution] = {
     val Input(table, piecesCount, positions) = input
     (for (piece <- piecesCount.keySet.toStream if piecesCount(piece) > 0;
           position <- positions;
           remainingPiecesCount = piecesCount.updated(piece, piecesCount(piece) - 1);
-          remainingPositions = positions - position -- piece.attackPositions(position, input.table);
+          remainingPositions = positions - position -- piece.incompatPositions(position,table);
           smallerInput = Input(table, remainingPiecesCount, remainingPositions))
-      yield {
-        for(Solution(pairs)<-solutions(smallerInput)) yield Solution(Stream.cons((piece,position), pairs))
-      }).flatten
+      yield
+        for (Solution(pairs) <- solutions(smallerInput))
+          yield Solution(Stream.cons((piece, position), pairs))
+      ).flatten
   }
 }
 
