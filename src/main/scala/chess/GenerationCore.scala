@@ -8,12 +8,12 @@ object GenerationCore {
       Seq()
     } else {
       val piece = pieces.head
-      val remainingPieces = pieces.tail
       for (position <- positions;
            remainingPositions = positions - position -- piece.incompatPositions(position, table);
-           smallerInput = Input(table, remainingPieces, remainingPositions);
-           PotentialSolution(pairs) <- solutions(smallerInput))
-        yield PotentialSolution((piece, position) #:: pairs)
+           smallerInput = Input(table, pieces.tail, remainingPositions);
+           PotentialSolution(remainingSolution) <- solutions(smallerInput);
+           solution = PotentialSolution((piece, position) #:: remainingSolution))
+        yield solution
     }
   }
 }
