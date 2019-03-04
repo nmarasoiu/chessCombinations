@@ -18,11 +18,12 @@ object GenerationCore {
       sout("Picked piece=" + piece + ", remaining=" + remainingPieces)
       positions.flatMap(position => {
         sout("Picked position=" + position)
-        val remainingPositions = positions - position -- piece.incompatPositions(position, table)
+        val incompatiblePositions = piece.incompatPositions(position, table)
+        val remainingPositions = positions - position -- incompatiblePositions
         sout("remainingPositions=" + remainingPositions)
 
-        if (remainingPositions.isEmpty) {
-          val itIsOkToPickThisPieceInThisPosition = picksSoFar.intersect(piece.incompatPositions(position, table)).isEmpty
+        if (remainingPieces.isEmpty) {
+          val itIsOkToPickThisPieceInThisPosition = picksSoFar.intersect(incompatiblePositions).isEmpty
           if (itIsOkToPickThisPieceInThisPosition) {
             val potentialSolution = PotentialSolution(Set((piece, position)))
             sout(" SOLUTION=" + potentialSolution)
@@ -30,7 +31,7 @@ object GenerationCore {
           } else {
             sout("NOT A SOLUTION: already picked positions: " + picksSoFar +
               " are having an intersection with the incompatible positions of " + piece + " within " + table
-              + " which are " + piece.incompatPositions(position, table))
+              + " which are " + incompatiblePositions)
             Seq()
           }
         } else {
