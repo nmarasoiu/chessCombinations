@@ -42,7 +42,7 @@ case class Input(table: Table,
                  positions: Set[Position])
 
 object Input {
-  def piecesFor(table: Table): Seq[Position] = {
+  def positionsFor(table: Table): Seq[Position] = {
     for (i <- 0 until table.horiz;
          j <- 0 until table.vert) yield Position(i, j)
   }
@@ -53,5 +53,5 @@ object Input {
 
   def apply(table: Table, piecesCount: Map[Piece, Int]): Input = apply(table, toSeq(piecesCount))
 
-  def apply(table: Table, pieces: Seq[Piece]): Input = Input(table, pieces, piecesFor(table).toSet)
+  def apply(table: Table, pieces: Seq[Piece]): Input = Input(table, pieces, positionsFor(table).toSet)
 }
