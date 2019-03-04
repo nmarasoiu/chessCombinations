@@ -6,12 +6,12 @@ import scala.collection.immutable
 import scala.math.abs
 
 sealed abstract class Piece(val order: Int,
-                            val eval: Function[(Position, Position), Boolean],
+                            val canAttack: Function[(Position, Position), Boolean],
                             protected val attackPositions: Function[(Position, Table), Seq[Position]], //currying?
                                 ) extends EnumEntry with Ordered[Piece] {
-  lazy val incompatPositions: Function[(Position, Table), Seq[Position]] = {
+  lazy val incompatPositions: Function[(Position, Table), Set[Position]] = {
     case (pos, table@Table(h, v)) =>
-      val incompatiblePositions = attackPositions(pos, table)
+      val incompatiblePositions = attackPositions(pos, table).toSet
       for (Position(x,y) <- incompatiblePositions if 0 <= x && x < h && 0 <= y && y <= v)
         yield Position(x,y)
   }
@@ -32,7 +32,7 @@ object Piece extends Enum[Piece] {
   })
 
   case object Queen extends Piece(3,
-    pair => Bishop.eval(pair) || Knight.eval(pair),
+    pair => Bishop.canAttack(pair) || Knight.canAttack(pair),
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a))
 
 

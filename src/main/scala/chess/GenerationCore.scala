@@ -22,7 +22,7 @@ object GenerationCore {
         sout("remainingPositions=" + remainingPositions)
 
         if (remainingPositions.isEmpty) {
-          val itIsOkToPickThisPieceInThisPosition = piece.incompatPositions(position, table).toSet.intersect(picksSoFar).isEmpty
+          val itIsOkToPickThisPieceInThisPosition = picksSoFar.intersect(piece.incompatPositions(position, table)).isEmpty
           if (itIsOkToPickThisPieceInThisPosition) {
             val potentialSolution = PotentialSolution(Set((piece, position)))
             sout(" SOLUTION=" + potentialSolution)

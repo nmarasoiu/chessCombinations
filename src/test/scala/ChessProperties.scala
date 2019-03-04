@@ -25,6 +25,7 @@ object ChessProperties extends Properties("GenerationCore") {
     * 10 11
     *
     */
+  /*
   property("example1") = forAll { _: Unit => {
     println("Example1:")
     val input = Input(Table(3, 3), Map[Piece, Int](King -> 2, Rook -> 1))
@@ -32,7 +33,7 @@ object ChessProperties extends Properties("GenerationCore") {
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
-  }
+  }*/
 
   property("example2") = forAll { _: Unit => {
     println("Example2:")
@@ -45,14 +46,14 @@ object ChessProperties extends Properties("GenerationCore") {
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
-
+/*
   property("solutions") = forAll { input: Input => {
     val size = GenerationCore.solutions(input).size
     assert(size >= 0)
     println("Generated " + size + " solutions")
     size >= 0
   }
-  }
+  }*/
 
   private def areResultingBoardsTheExpectedOnes
   (input: Input, expectedBoards: Set[Board]): Boolean = {
@@ -64,8 +65,7 @@ object ChessProperties extends Properties("GenerationCore") {
     val allExpectedBoards: Set[Board] =
       expectedBoards.flatMap(board => rotations(input.table, board))
 
-    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) =
-      boards.toList.map(_.toList).mkString("\n")
+    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
 
     println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
     println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
