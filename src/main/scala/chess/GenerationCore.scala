@@ -7,52 +7,39 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input, picksSoFar: Seq[Position], prefix: String): Iterable[PotentialSolution] = {
-    def sout(msg: Any): Unit = {}//println(prefix + msg)
+    def sout(msg: Any): Unit = {} //println(prefix + msg)
 
-    val Input(table, pieces, positions) = input
+    val Input(table, pieces, positions: Set[Position]) = input
     if (pieces.isEmpty || table.vert <= 0 || table.horiz <= 0) {
       Seq()
     } else {
       val piece = pieces.head
       val remainingPieces = pieces.tail
-      sout("Picked piece=" + piece + ", remaining=" + remainingPieces)
-      positions
-          .filter(position => {
-            val incompatiblePositions = piece.incompatPositions(position, table)
-            incompatiblePositions.intersect(picksSoFar.toSet).isEmpty
-          })
-        .flatMap(position => {
-        sout("Picked position=" + position)
-        val incompatiblePositions = piece.incompatPositions(position, table)
-        val remainingPositions = positions - position -- incompatiblePositions
-        sout("remainingPositions=" + remainingPositions)
-
-        if (remainingPieces.isEmpty) {
-          val itIsOkToPickThisPieceInThisPosition = incompatiblePositions.intersect(picksSoFar.toSet).isEmpty
-          if (itIsOkToPickThisPieceInThisPosition) {
+      val r = for (position <- positions;
+                   incompatiblePositions: Set[Position] = piece.incompatPositions(position, table);
+                   _ <- Set(1) if incompatiblePositions.intersect(picksSoFar.toSet).isEmpty;
+                   incompatiblePositions: Set[Position] = piece.incompatPositions(position, table);
+                   remainingPositions = positions - position -- incompatiblePositions)
+        yield
+          if (remainingPieces.isEmpty) {
             val potentialSolution = PotentialSolution(Set((piece, position)))
             sout(" SOLUTION=" + potentialSolution)
             Seq(potentialSolution)
           } else {
-            sout("NOT A SOLUTION: already picked positions: " + picksSoFar +
-              " are having an intersection with the incompatible positions of " + piece + " within " + table
-              + " which are " + incompatiblePositions)
-            Seq()
-          }
-        } else {
-          val remainingInput = Input(table, remainingPieces, remainingPositions)
-          val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar ++ Seq(position), prefix + "  ")
-          sout("remainingPotentialSolutions=" + remainingPotentialSolutions)
+            val remainingInput = Input(table, remainingPieces, remainingPositions)
+            val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar ++ Seq(position), prefix + "  ")
+            sout("remainingPotentialSolutions=" + remainingPotentialSolutions)
 
-          remainingPotentialSolutions.map(remainingPotentialSolution => {
-            val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
-            sout("potentialSolution=" + potentialSolution)
-            potentialSolution
-          })
-        }
-      })
+            remainingPotentialSolutions.map(remainingPotentialSolution => {
+              val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
+              sout("potentialSolution=" + potentialSolution)
+              potentialSolution
+            })
+          }
+      r.flatten
     }
   }
+
 }
 
 case class Input(table: Table,
