@@ -54,7 +54,7 @@ object ChessProperties extends Properties("GenerationCore") {
     val allExpectedBoards: Set[Board] =
       expectedBoards.flatMap(board => rotations(input.table, board))
 
-    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
+//    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
 
 //    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
 //    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))

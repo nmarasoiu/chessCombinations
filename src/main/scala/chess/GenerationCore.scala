@@ -2,21 +2,21 @@ package chess
 
 object GenerationCore {
   //todo in parallel? thread safe? .par but..
-  def solutions(input: Input): Iterable[PotentialSolution] = {
-    _solutions(input, Seq(), "").filter(sol => sol.solution.size == input.pieces.size)
+  def solutions(input: Input): Set[PotentialSolution] = {
+    _solutions(input, Set()).filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private def _solutions(input: Input, picksSoFar: Seq[Position], prefix: String): Iterable[PotentialSolution] = {
-    val Input(table, pieces, positions: Set[Position]) = input
+  private def _solutions(input: Input, picksSoFar: Set[Position]): Set[PotentialSolution] = {
+    val Input(table, pieces: Seq[Piece], positions: Set[Position]) = input
     if (pieces.isEmpty || table.vert <= 0 || table.horiz <= 0) {
-      Seq()
+      Set()
     } else {
       val piece = pieces.head
       val remainingPieces = pieces.tail
       //todo refactor into a single for and get rid of flatten?
       val r = for (position <- positions;
-                   incompatiblePositions: Set[Position] = piece.incompatPositions(position, table);
-                   _ <- Set(1) if incompatiblePositions.intersect(picksSoFar.toSet).isEmpty;
+                   incompatiblePositions = piece.incompatPositions(position, table);
+                   _ <- Set(1) if incompatiblePositions.intersect(picksSoFar).isEmpty;
                    remainingPositions = positions - position -- incompatiblePositions)
         yield
           if (remainingPieces.isEmpty) {
@@ -24,7 +24,7 @@ object GenerationCore {
             Seq(potentialSolution)
           } else {
             val remainingInput = Input(table, remainingPieces, remainingPositions)
-            val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar ++ Seq(position), prefix + "  ")
+            val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
 
             remainingPotentialSolutions.map(remainingPotentialSolution => {
               val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
@@ -38,20 +38,24 @@ object GenerationCore {
 }
 
 case class Input(table: Table,
-                 pieces: Seq[Piece],
+                 pieces: Seq[Piece],//with duplicates
                  positions: Set[Position])
 
 object Input {
+  def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
+    apply(table, toSeq(piecesCount), positionsFor(table).toSet)
+
   def positionsFor(table: Table): Seq[Position] = {
-    for (i <- 0 until table.horiz;
-         j <- 0 until table.vert) yield Position(i, j)
+    for (i <- 0 until table.horiz; j <- 0 until table.vert) yield Position(i, j)
   }
 
   def toSeq(piecesCount: Map[Piece, Int]): Seq[Piece] = {
     for (piece <- piecesCount.keys.toSeq; _ <- 1 to piecesCount(piece)) yield piece
   }
-
-  def apply(table: Table, piecesCount: Map[Piece, Int]): Input = apply(table, toSeq(piecesCount))
-
-  def apply(table: Table, pieces: Seq[Piece]): Input = Input(table, pieces, positionsFor(table).toSet)
 }
+
+case class Position(x: Int, y: Int)
+
+case class Table(horiz: Int, vert: Int)
+
+case class PotentialSolution(solution: Set[(Piece, Position)])
