@@ -32,6 +32,7 @@ object ChessProperties extends Properties("GenerationCore") {
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
+/*
 
   property("example2") = forAll { _: Unit => {
     println("Example2:")
@@ -44,6 +45,7 @@ object ChessProperties extends Properties("GenerationCore") {
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
+*/
 
   private def areResultingBoardsTheExpectedOnes
   (input: Input, expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]]): Boolean = {

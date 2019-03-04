@@ -1,17 +1,17 @@
 package chess
 
 object GenerationCore {
-
-  def solutions(input: Input): Stream[Solution] = {
+  //todo in parallel? threadsafe? .par but..
+  def solutions(input: Input): Seq[PotentialSolution] = {
     val Input(table, piecesCount, positions) = input
-    (for (piece <- piecesCount.keySet.toStream if piecesCount(piece) > 0;
+    (for (piece <- piecesCount.keySet.toSeq if piecesCount(piece) > 0;
           position <- positions;
-          remainingPiecesCount = piecesCount.updated(piece, piecesCount(piece) - 1);//todo in parallel? threadsafe?
+          remainingPiecesCount = piecesCount.updated(piece, piecesCount(piece) - 1);
           remainingPositions = positions - position -- piece.incompatPositions(position,table);
           smallerInput = Input(table, remainingPiecesCount, remainingPositions))
       yield
-        for (Solution(pairs) <- solutions(smallerInput))
-          yield Solution(Stream.cons((piece, position), pairs))
+        for (PotentialSolution(pairs) <- solutions(smallerInput))
+          yield PotentialSolution(Stream.cons((piece, position), pairs))
       ).flatten
   }
 }

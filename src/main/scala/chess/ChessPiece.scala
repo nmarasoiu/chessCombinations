@@ -2,6 +2,7 @@ package chess
 
 import enumeratum.{Enum, EnumEntry}
 
+import scala.collection.immutable
 import scala.math.abs
 
 sealed abstract class ChessPiece(val order: Int,
@@ -19,7 +20,7 @@ sealed abstract class ChessPiece(val order: Int,
 }
 
 object ChessPiece extends Enum[ChessPiece] {
-  val values = findValues
+  lazy val values: immutable.IndexedSeq[ChessPiece] = findValues
 
   case object King extends ChessPiece(2, {
     case (Position(x, y), Position(a, b)) => abs(x - a) <= 1 && abs(y - b) <= 1
