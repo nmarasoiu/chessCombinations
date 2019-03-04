@@ -1,5 +1,6 @@
 package chess
 
+import chess.Piece.Queen.attackPositions
 import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable
@@ -25,8 +26,8 @@ object Piece extends Enum[Piece] {
 
   case object King extends Piece(2, {
     case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- -1 to 1 if x + hOffset >= 0;
-           vOffset <- -1 to 1 if y + vOffset >= 0)
+      for (hOffset <- -1 to 1;
+           vOffset <- -1 to 1)
         yield Position(x + hOffset, y + vOffset)
   }) {
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
@@ -37,6 +38,7 @@ object Piece extends Enum[Piece] {
 
   case object Queen extends Piece(3,
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a)) {
+    override lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
     override def takes(piecePosition: Position, otherPosition: Position): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
@@ -45,7 +47,7 @@ object Piece extends Enum[Piece] {
   //nebun
   case object Bishop extends Piece(4, {
     case (Position(x, y), Table(h, v)) => //todo optimize
-      for (hOffset <- 1 - h until h) yield Position(x + hOffset, y + hOffset)
+      for (hOffset <- (1 - h until h).toStream) yield Position(x + hOffset, y + hOffset)
   }) {
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
       abs(piecePosition.x - otherPosition.x) == abs(piecePosition.y - otherPosition.y)
@@ -61,6 +63,7 @@ object Piece extends Enum[Piece] {
              (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
         yield Position(x + hOffset, y + vOffset)
   }) {
+    override lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
       Seq((1, 2), (2, 1)).contains((abs(piecePosition.x - otherPosition.x), abs(piecePosition.y - otherPosition.y)))
     }
@@ -69,9 +72,9 @@ object Piece extends Enum[Piece] {
   //tura
   case object Rook extends Piece(6, {
     case (Position(x, y), Table(h, v)) =>
-      Seq(
-        for (hOffset <- 0 until h) yield Position(hOffset, y),
-        for (vOffset <- 0 until v) yield Position(x, vOffset)).flatten
+      Stream(
+        for (hOffset <- (0 until h).toStream) yield Position(hOffset, y),
+        for (vOffset <- (0 until v).toStream) yield Position(x, vOffset)).flatten
   }) {
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
       piecePosition.x == otherPosition.x || piecePosition.y == otherPosition.y
