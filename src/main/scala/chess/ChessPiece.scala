@@ -1,8 +1,7 @@
 package chess
 
-import enumeratum.Enum
-import enumeratum.EnumEntry
-import math.abs
+import enumeratum.{Enum, EnumEntry}
+import scala.math.abs
 
 sealed abstract class ChessPiece(val order: Int,
                                  val eval: Function[(Position, Position), Boolean],
@@ -23,21 +22,17 @@ object ChessPiece extends Enum[ChessPiece] {
         yield Position(x + hOffset, y + vOffset)
   })
 
-  case object Queen extends ChessPiece(3, pair => Bishop.eval(pair) || Knight.eval(pair), {
-    case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- List(-1, 0, 1) if x + hOffset >= 0;
-           vOffset <- List(-1, 0, 1) if y + vOffset >= 0)
-        yield Position(x + hOffset, y + vOffset)
-  })
+  case object Queen extends ChessPiece(3,
+    pair => Bishop.eval(pair) || Knight.eval(pair),
+    a => Rook.attackPositions(a) ++ Bishop.attackPositions(a))
 
 
   //nebun
   case object Bishop extends ChessPiece(4, {
     case (Position(x, y), Position(a, b)) => abs(x - a) == abs(y - b)
   }, {
-    case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- 0 until h)
-        yield Position(hOffset, y /*+ vOffset*/)
+    case (Position(x, y), Table(h, v)) => //todo optimize
+      for (hOffset <- -h until h) yield Position(x + hOffset, y + hOffset)
   })
 
   //cal
@@ -45,8 +40,10 @@ object ChessPiece extends Enum[ChessPiece] {
     case (Position(x, y), Position(a, b)) => x == a || y == b
   }, {
     case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- List(-1, 0, 1) if x + hOffset >= 0;
-           vOffset <- List(-1, 0, 1) if y + vOffset >= 0)
+      for ((absHorizOffset, absVertOffset) <- Seq((1, 2), (2, 1));
+           (hOffset, vOffset) <- Seq(
+             (absHorizOffset, absVertOffset), (-absHorizOffset, absVertOffset),
+             (absHorizOffset, -absVertOffset), (-absHorizOffset, -absVertOffset)))
         yield Position(x + hOffset, y + vOffset)
   })
 
@@ -55,12 +52,7 @@ object ChessPiece extends Enum[ChessPiece] {
     case (Position(x, y), Position(a, b)) => x == a || y == b
   }, {
     case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- List(-1, 0, 1) if x + hOffset >= 0;
-           vOffset <- List(-1, 0, 1) if y + vOffset >= 0)
-        yield Position(x + hOffset, y + vOffset)
+      (for (hOffset <- 0 until h) yield Position(hOffset, y)) ++ (for (vOffset <- 0 until v) yield Position(x, vOffset))
   })
-
-
-
 }
 
