@@ -25,8 +25,8 @@ object ChessPiece extends Enum[ChessPiece] {
     case (Position(x, y), Position(a, b)) => abs(x - a) <= 1 && abs(y - b) <= 1
   }, {
     case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- Stream(-1, 0, 1) if x + hOffset >= 0;
-           vOffset <- Stream(-1, 0, 1) if y + vOffset >= 0)
+      for (hOffset <- Seq(-1, 0, 1) if x + hOffset >= 0;
+           vOffset <- Seq(-1, 0, 1) if y + vOffset >= 0)
         yield Position(x + hOffset, y + vOffset)
   })
 
@@ -48,8 +48,8 @@ object ChessPiece extends Enum[ChessPiece] {
     case (Position(x, y), Position(a, b)) => x == a || y == b
   }, {
     case (Position(x, y), Table(h, v)) =>
-      for ((absHorizOffset, absVertOffset) <- Stream((1, 2), (2, 1));
-           (hOffset, vOffset) <- Stream(
+      for ((absHorizOffset, absVertOffset) <- Seq((1, 2), (2, 1));
+           (hOffset, vOffset) <- Seq(
              (absHorizOffset, absVertOffset), (-absHorizOffset, absVertOffset),
              (absHorizOffset, -absVertOffset), (-absHorizOffset, -absVertOffset)))
         yield Position(x + hOffset, y + vOffset)

@@ -27,7 +27,7 @@ object ChessProperties extends Properties("GenerationCore") {
   property("example1") = forAll { _: Unit => {
     println("Example1:")
     val input = Input(Table(3, 3), Map(King -> 2, Rook -> 1))
-    val expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]] = Stream(Stream((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
+    val expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]] = Seq(Seq((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
@@ -37,9 +37,9 @@ object ChessProperties extends Properties("GenerationCore") {
     println("Example2:")
     val input = Input(Table(4, 4), Map(Rook -> 2, Knight -> 4))
     val expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]] =
-      Stream(
-        Stream((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
-        Stream((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3))))
+      Seq(
+        Seq((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
+        Seq((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3))))
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
