@@ -56,3 +56,10 @@ object Piece extends Enum[Piece] {
 
 }
 
+/**
+Set((Knight,(1,3)), (Knight,(0,2)), (Knight,(0,3)), (Rook,(2,1)), (Rook,(3,0)), (Knight,(1,2)))
+  K K 0 0
+  K K 0 0
+  0 0 R 0
+  0 0 0 R
+  */

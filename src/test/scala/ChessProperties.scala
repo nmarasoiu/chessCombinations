@@ -25,16 +25,15 @@ object ChessProperties extends Properties("GenerationCore") {
     * 10 11
     *
     */
-  /*
-  property("example1") = forAll { _: Unit => {
+  /*property("example1") = forAll { _: Unit => {
     println("Example1:")
     val input = Input(Table(3, 3), Map[Piece, Int](King -> 2, Rook -> 1))
     val expectedBoards: Set[Board] = Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
-  }*/
-
+  }
+*/
   property("example2") = forAll { _: Unit => {
     println("Example2:")
     val input = Input(Table(4, 4), Map[Piece, Int](Rook -> 2, Knight -> 4))

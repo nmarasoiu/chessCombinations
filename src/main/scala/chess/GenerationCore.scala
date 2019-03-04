@@ -3,11 +3,11 @@ package chess
 object GenerationCore {
   //todo in parallel? threadsafe? .par but..
   def solutions(input: Input): Iterable[PotentialSolution] = {
-    _solutions(input, Set(), "").filter(sol => sol.solution.size == input.pieces.size)
+    _solutions(input, Seq(), "").filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private def _solutions(input: Input, picksSoFar: Set[Position], prefix: String): Iterable[PotentialSolution] = {
-    def sout(msg: Any): Unit = println(prefix + msg)
+  private def _solutions(input: Input, picksSoFar: Seq[Position], prefix: String): Iterable[PotentialSolution] = {
+    def sout(msg: Any): Unit = {}//println(prefix + msg)
 
     val Input(table, pieces, positions) = input
     if (pieces.isEmpty || table.vert <= 0 || table.horiz <= 0) {
@@ -16,14 +16,19 @@ object GenerationCore {
       val piece = pieces.head
       val remainingPieces = pieces.tail
       sout("Picked piece=" + piece + ", remaining=" + remainingPieces)
-      positions.flatMap(position => {
+      positions
+          .filter(position => {
+            val incompatiblePositions = piece.incompatPositions(position, table)
+            incompatiblePositions.intersect(picksSoFar.toSet).isEmpty
+          })
+        .flatMap(position => {
         sout("Picked position=" + position)
         val incompatiblePositions = piece.incompatPositions(position, table)
         val remainingPositions = positions - position -- incompatiblePositions
         sout("remainingPositions=" + remainingPositions)
 
         if (remainingPieces.isEmpty) {
-          val itIsOkToPickThisPieceInThisPosition = picksSoFar.intersect(incompatiblePositions).isEmpty
+          val itIsOkToPickThisPieceInThisPosition = incompatiblePositions.intersect(picksSoFar.toSet).isEmpty
           if (itIsOkToPickThisPieceInThisPosition) {
             val potentialSolution = PotentialSolution(Set((piece, position)))
             sout(" SOLUTION=" + potentialSolution)
@@ -36,7 +41,7 @@ object GenerationCore {
           }
         } else {
           val remainingInput = Input(table, remainingPieces, remainingPositions)
-          val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position, prefix + "  ")
+          val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar ++ Seq(position), prefix + "  ")
           sout("remainingPotentialSolutions=" + remainingPotentialSolutions)
 
           remainingPotentialSolutions.map(remainingPotentialSolution => {
