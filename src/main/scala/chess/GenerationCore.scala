@@ -2,7 +2,11 @@ package chess
 
 object GenerationCore {
   //todo in parallel? threadsafe? .par but..
-  def solutions(input: Input, picksSoFar: Set[Position], prefix: String): Iterable[PotentialSolution] = {
+  def solutions(input: Input): Iterable[PotentialSolution] = {
+    _solutions(input, Set(), "").filter(sol => sol.solution.size == input.pieces.size)
+  }
+
+  private def _solutions(input: Input, picksSoFar: Set[Position], prefix: String): Iterable[PotentialSolution] = {
     def sout(msg: Any): Unit = println(prefix + msg)
 
     val Input(table, pieces, positions) = input
@@ -12,28 +16,17 @@ object GenerationCore {
       val piece = pieces.head
       val remainingPieces = pieces.tail
       sout("Picked piece=" + piece + ", remaining=" + remainingPieces)
-      /*
-      val r = for (position <- positions;
-                   sout("Picked position=" + position);
-                   remainingPositions = positions - position -- piece.incompatPositions(position, table);
-                   sout("remainingPositions=" + remainingPositions);
-                   remainingInput = Input(table, remainingPieces, remainingPositions);
-                   sout("remainingInput=" + remainingInput);
-                   remainingPotentialSolution <- solutions(remainingInput);
-                   sout("remainingPotentialSolution=" + remainingPotentialSolution);
-                   potentialSolution = PotentialSolution((piece, position) :: remainingPotentialSolution.solution);
-                   sout("potentialSolution=" + potentialSolution))
-        yield potentialSolution*/
       positions.flatMap(position => {
         sout("Picked position=" + position)
         val remainingPositions = positions - position -- piece.incompatPositions(position, table)
         sout("remainingPositions=" + remainingPositions)
 
         if (remainingPositions.isEmpty) {
-          if (piece.incompatPositions(position, table).toSet.intersect(picksSoFar).isEmpty) {
-            val potentialSolution = Seq(PotentialSolution(Set((piece, position))))
-            sout("SOLUTION=" + potentialSolution)
-            potentialSolution
+          val itIsOkToPickThisPieceInThisPosition = piece.incompatPositions(position, table).toSet.intersect(picksSoFar).isEmpty
+          if (itIsOkToPickThisPieceInThisPosition) {
+            val potentialSolution = PotentialSolution(Set((piece, position)))
+            sout(" SOLUTION=" + potentialSolution)
+            Seq(potentialSolution)
           } else {
             sout("NOT A SOLUTION: already picked positions: " + picksSoFar +
               " are having an intersection with the incompatible positions of " + piece + " within " + table
@@ -42,7 +35,7 @@ object GenerationCore {
           }
         } else {
           val remainingInput = Input(table, remainingPieces, remainingPositions)
-          val remainingPotentialSolutions = solutions(remainingInput, picksSoFar ++ Seq(position), prefix + "  ")
+          val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position, prefix + "  ")
           sout("remainingPotentialSolutions=" + remainingPotentialSolutions)
 
           remainingPotentialSolutions.map(remainingPotentialSolution => {
