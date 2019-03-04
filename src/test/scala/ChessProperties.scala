@@ -18,14 +18,7 @@ object ChessProperties extends Properties("GenerationCore") {
   }
 
   //todo: asymettric table, 0x0 tables, intro rotations in algo
-  /**
-    * 00 10
-    * 01 00
-    * 11 01
-    * 10 11
-    *
-    */
-  /*property("example1") = forAll { _: Unit => {
+  property("example1") = forAll { _: Unit => {
     println("Example1:")
     val input = Input(Table(3, 3), Map[Piece, Int](King -> 2, Rook -> 1))
     val expectedBoards: Set[Board] = Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
@@ -33,7 +26,6 @@ object ChessProperties extends Properties("GenerationCore") {
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
-*/
   property("example2") = forAll { _: Unit => {
     println("Example2:")
     val input = Input(Table(4, 4), Map[Piece, Int](Rook -> 2, Knight -> 4))
@@ -45,14 +37,12 @@ object ChessProperties extends Properties("GenerationCore") {
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
-/*
   property("solutions") = forAll { input: Input => {
     val size = GenerationCore.solutions(input).size
     assert(size >= 0)
-    println("Generated " + size + " solutions")
     size >= 0
   }
-  }*/
+  }
 
   private def areResultingBoardsTheExpectedOnes
   (input: Input, expectedBoards: Set[Board]): Boolean = {
@@ -66,9 +56,9 @@ object ChessProperties extends Properties("GenerationCore") {
 
     def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
 
-    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
-    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
-    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
+//    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
+//    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
+//    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
     obtainedSolutions == allExpectedBoards
   }
 

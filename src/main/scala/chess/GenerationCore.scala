@@ -7,8 +7,6 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input, picksSoFar: Seq[Position], prefix: String): Iterable[PotentialSolution] = {
-    def sout(msg: Any): Unit = {} //println(prefix + msg)
-
     val Input(table, pieces, positions: Set[Position]) = input
     if (pieces.isEmpty || table.vert <= 0 || table.horiz <= 0) {
       Seq()
@@ -18,21 +16,17 @@ object GenerationCore {
       val r = for (position <- positions;
                    incompatiblePositions: Set[Position] = piece.incompatPositions(position, table);
                    _ <- Set(1) if incompatiblePositions.intersect(picksSoFar.toSet).isEmpty;
-                   incompatiblePositions: Set[Position] = piece.incompatPositions(position, table);
                    remainingPositions = positions - position -- incompatiblePositions)
         yield
           if (remainingPieces.isEmpty) {
             val potentialSolution = PotentialSolution(Set((piece, position)))
-            sout(" SOLUTION=" + potentialSolution)
             Seq(potentialSolution)
           } else {
             val remainingInput = Input(table, remainingPieces, remainingPositions)
             val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar ++ Seq(position), prefix + "  ")
-            sout("remainingPotentialSolutions=" + remainingPotentialSolutions)
 
             remainingPotentialSolutions.map(remainingPotentialSolution => {
               val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
-              sout("potentialSolution=" + potentialSolution)
               potentialSolution
             })
           }
