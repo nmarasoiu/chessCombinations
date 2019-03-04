@@ -9,13 +9,11 @@ object GenerationCore {
     } else {
       val piece = pieces.head
       val remainingPieces = pieces.tail
-      (for (position <- positions;
-            remainingPositions = positions - position -- piece.incompatPositions(position, table);
-            smallerInput = Input(table, remainingPieces, remainingPositions))
-        yield
-          for (PotentialSolution(pairs) <- solutions(smallerInput))
-            yield PotentialSolution(Stream.cons((piece, position), pairs))
-        ).flatten
+      for (position <- positions;
+           remainingPositions = positions - position -- piece.incompatPositions(position, table);
+           smallerInput = Input(table, remainingPieces, remainingPositions);
+           PotentialSolution(pairs) <- solutions(smallerInput))
+        yield PotentialSolution(Stream.cons((piece, position), pairs))
     }
   }
 }
