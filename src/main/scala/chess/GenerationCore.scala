@@ -1,7 +1,7 @@
 package chess
 
 object GenerationCore {
-  //todo in parallel? threadsafe? .par but..
+  //todo in parallel? thread safe? .par but..
   def solutions(input: Input): Iterable[PotentialSolution] = {
     _solutions(input, Seq(), "").filter(sol => sol.solution.size == input.pieces.size)
   }
@@ -13,6 +13,7 @@ object GenerationCore {
     } else {
       val piece = pieces.head
       val remainingPieces = pieces.tail
+      //todo refactor into a single for and get rid of flatten?
       val r = for (position <- positions;
                    incompatiblePositions: Set[Position] = piece.incompatPositions(position, table);
                    _ <- Set(1) if incompatiblePositions.intersect(picksSoFar.toSet).isEmpty;
