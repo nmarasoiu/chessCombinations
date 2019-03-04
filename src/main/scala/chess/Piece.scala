@@ -3,17 +3,15 @@ package chess
 import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable
-import scala.math.abs
 
 sealed abstract class Piece(val order: Int,
-                            val canAttack: Function[(Position, Position), Boolean],
                             protected val attackPositions: Function[(Position, Table), Seq[Position]], //currying?
-                                ) extends EnumEntry with Ordered[Piece] {
+                           ) extends EnumEntry with Ordered[Piece] {
   lazy val incompatPositions: Function[(Position, Table), Set[Position]] = {
     case (pos, table@Table(h, v)) =>
       val incompatiblePositions = attackPositions(pos, table).toSet
-      for (Position(x,y) <- incompatiblePositions if 0 <= x && x < h && 0 <= y && y <= v)
-        yield Position(x,y)
+      for (Position(x, y) <- incompatiblePositions if 0 <= x && x < h && 0 <= y && y <= v)
+        yield Position(x, y)
   }
 
   def compare(that: Piece): Int = this.order - that.order
@@ -23,8 +21,6 @@ object Piece extends Enum[Piece] {
   lazy val values: immutable.IndexedSeq[Piece] = findValues
 
   case object King extends Piece(2, {
-    case (Position(x, y), Position(a, b)) => abs(x - a) <= 1 && abs(y - b) <= 1
-  }, {
     case (Position(x, y), Table(h, v)) =>
       for (hOffset <- Seq(-1, 0, 1) if x + hOffset >= 0;
            vOffset <- Seq(-1, 0, 1) if y + vOffset >= 0)
@@ -32,22 +28,17 @@ object Piece extends Enum[Piece] {
   })
 
   case object Queen extends Piece(3,
-    pair => Bishop.canAttack(pair) || Knight.canAttack(pair),
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a))
 
 
   //nebun
   case object Bishop extends Piece(4, {
-    case (Position(x, y), Position(a, b)) => abs(x - a) == abs(y - b)
-  }, {
     case (Position(x, y), Table(h, v)) => //todo optimize
       for (hOffset <- -h until h) yield Position(x + hOffset, y + hOffset)
   })
 
   //cal
   case object Knight extends Piece(5, {
-    case (Position(x, y), Position(a, b)) => x == a || y == b
-  }, {
     case (Position(x, y), Table(h, v)) =>
       for ((absHorizOffset, absVertOffset) <- Seq((1, 2), (2, 1));
            (hOffset, vOffset) <- Seq(
@@ -58,10 +49,9 @@ object Piece extends Enum[Piece] {
 
   //tura
   case object Rook extends Piece(6, {
-    case (Position(x, y), Position(a, b)) => x == a || y == b
-  }, {
     case (Position(x, y), Table(h, v)) =>
-      (for (hOffset <- 0 until h) yield Position(hOffset, y)) ++ (for (vOffset <- 0 until v) yield Position(x, vOffset))
+      (for (hOffset <- 0 until h) yield Position(hOffset, y)) ++
+        (for (vOffset <- 0 until v) yield Position(x, vOffset))
   })
 
 }
