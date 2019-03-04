@@ -5,10 +5,10 @@ import enumeratum.{Enum, EnumEntry}
 import scala.collection.immutable
 import scala.math.abs
 
-sealed abstract class ChessPiece(val order: Int,
-                                 val eval: Function[(Position, Position), Boolean],
-                                 protected val attackPositions: Function[(Position, Table), Seq[Position]],//currying?
-                                ) extends EnumEntry with Ordered[ChessPiece] {
+sealed abstract class Piece(val order: Int,
+                            val eval: Function[(Position, Position), Boolean],
+                            protected val attackPositions: Function[(Position, Table), Seq[Position]], //currying?
+                                ) extends EnumEntry with Ordered[Piece] {
   lazy val incompatPositions: Function[(Position, Table), Seq[Position]] = {
     case (pos, table@Table(h, v)) =>
       val incompatiblePositions = attackPositions(pos, table)
@@ -16,13 +16,13 @@ sealed abstract class ChessPiece(val order: Int,
         yield Position(x,y)
   }
 
-  def compare(that: ChessPiece): Int = this.order - that.order
+  def compare(that: Piece): Int = this.order - that.order
 }
 
-object ChessPiece extends Enum[ChessPiece] {
-  lazy val values: immutable.IndexedSeq[ChessPiece] = findValues
+object Piece extends Enum[Piece] {
+  lazy val values: immutable.IndexedSeq[Piece] = findValues
 
-  case object King extends ChessPiece(2, {
+  case object King extends Piece(2, {
     case (Position(x, y), Position(a, b)) => abs(x - a) <= 1 && abs(y - b) <= 1
   }, {
     case (Position(x, y), Table(h, v)) =>
@@ -31,13 +31,13 @@ object ChessPiece extends Enum[ChessPiece] {
         yield Position(x + hOffset, y + vOffset)
   })
 
-  case object Queen extends ChessPiece(3,
+  case object Queen extends Piece(3,
     pair => Bishop.eval(pair) || Knight.eval(pair),
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a))
 
 
   //nebun
-  case object Bishop extends ChessPiece(4, {
+  case object Bishop extends Piece(4, {
     case (Position(x, y), Position(a, b)) => abs(x - a) == abs(y - b)
   }, {
     case (Position(x, y), Table(h, v)) => //todo optimize
@@ -45,7 +45,7 @@ object ChessPiece extends Enum[ChessPiece] {
   })
 
   //cal
-  case object Knight extends ChessPiece(5, {
+  case object Knight extends Piece(5, {
     case (Position(x, y), Position(a, b)) => x == a || y == b
   }, {
     case (Position(x, y), Table(h, v)) =>
@@ -57,7 +57,7 @@ object ChessPiece extends Enum[ChessPiece] {
   })
 
   //tura
-  case object Rook extends ChessPiece(6, {
+  case object Rook extends Piece(6, {
     case (Position(x, y), Position(a, b)) => x == a || y == b
   }, {
     case (Position(x, y), Table(h, v)) =>

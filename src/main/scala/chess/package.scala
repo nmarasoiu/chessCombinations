@@ -4,10 +4,10 @@ package object chess {
 
   case class Table(horiz: Int, vert: Int)
 
-  case class PotentialSolution(solution: Stream[(ChessPiece, Position)]) {
-    def isAnActualSolution(numberOfPiecesIncludingDuplicates: Int): Boolean = {
-      solution.size == numberOfPiecesIncludingDuplicates
-    }
+  case class PotentialSolution(solution: List[(Piece, Position)]) {
+//    def isAnActualSolution(numberOfPiecesIncludingDuplicates: Int): Boolean = {
+//      solution.size == numberOfPiecesIncludingDuplicates
+//    }
   }
 
 }

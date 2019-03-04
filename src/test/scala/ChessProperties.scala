@@ -1,4 +1,4 @@
-import chess.ChessPiece._
+import chess.Piece._
 import chess._
 import org.scalacheck.Prop.forAll
 import org.scalacheck.ScalacheckShapeless._
@@ -7,10 +7,10 @@ import org.scalacheck.{Arbitrary, Properties}
 object ChessProperties extends Properties("GenerationCore") {
   implicitly[Arbitrary[Input]]
 
-  def rotations(table: Table, solution: Seq[(ChessPiece, (Int, Int))]): Seq[Seq[(ChessPiece, (Int, Int))]] =
+  def rotations(table: Table, solution: Seq[(Piece, (Int, Int))]): Seq[Seq[(Piece, (Int, Int))]] =
     Stream.iterate(solution)(solution => rotation(table, solution)).take(4)
 
-  def rotation(table: Table, solution: Seq[(ChessPiece, (Int, Int))]): Seq[(ChessPiece, (Int, Int))] = {
+  def rotation(table: Table, solution: Seq[(Piece, (Int, Int))]): Seq[(Piece, (Int, Int))] = {
     def rotation(x: Int, y: Int): (Int, Int) = (table.vert - 1 - y, x)
 
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
@@ -26,8 +26,8 @@ object ChessProperties extends Properties("GenerationCore") {
     */
   property("example1") = forAll { _: Unit => {
     println("Example1:")
-    val input = Input(Table(3, 3), Map[ChessPiece,Int](King -> 2, Rook -> 1))
-    val expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]] = Seq(Seq((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
+    val input = Input(Table(3, 3), Map[Piece,Int](King -> 2, Rook -> 1))
+    val expectedBoards: Seq[Seq[(Piece, (Int, Int))]] = Seq(Seq((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
@@ -48,13 +48,13 @@ object ChessProperties extends Properties("GenerationCore") {
 */
 
   private def areResultingBoardsTheExpectedOnes
-  (input: Input, expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]]): Boolean = {
-    val solutions = GenerationCore.solutions(input)
+  (input: Input, expectedBoards: Seq[Seq[(Piece, (Int, Int))]]): Boolean = {
+    val solutions = GenerationCore.solutions(input,Seq(), "")
     val obtainedSolutions = solutions.map(_.solution.map {
       case (piece, Position(x, y)) => (piece, (x, y))
     })
     val allExpectedBoards = expectedBoards.flatMap(board => rotations(input.table, board))
-    def evalAndStringify(boards: Iterable[Iterable[(ChessPiece, (Int, Int))]]) =
+    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) =
       boards.toList.map(_.toList).mkString("\n")
     println("expectedBoards=\n" + evalAndStringify(allExpectedBoards))
     println("obtainedBoards=\n" + evalAndStringify(obtainedSolutions))
