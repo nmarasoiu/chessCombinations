@@ -9,7 +9,7 @@ object GenerationCore {
           remainingPositions = positions - position -- piece.attackPositions(position, input.table);
           smallerInput = Input(table, remainingPiecesCount, remainingPositions))
       yield {
-        solutions(smallerInput)
+        for(Solution(pairs)<-solutions(smallerInput)) yield Solution(Stream.cons((piece,position), pairs))
       }).flatten
   }
 }
