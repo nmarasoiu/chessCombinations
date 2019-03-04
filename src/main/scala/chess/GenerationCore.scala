@@ -13,7 +13,7 @@ object GenerationCore {
            remainingPositions = positions - position -- piece.incompatPositions(position, table);
            smallerInput = Input(table, remainingPieces, remainingPositions);
            PotentialSolution(pairs) <- solutions(smallerInput))
-        yield PotentialSolution(Stream.cons((piece, position), pairs))
+        yield PotentialSolution((piece, position) #:: pairs)
     }
   }
 }
