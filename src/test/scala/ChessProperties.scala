@@ -7,10 +7,10 @@ import org.scalacheck.{Arbitrary, Properties}
 object ChessProperties extends Properties("GenerationCore") {
   implicitly[Arbitrary[Input]]
 
-  def rotations(table: Table, solution: Seq[(Piece, (Int, Int))]): Seq[Seq[(Piece, (Int, Int))]] =
-    Stream.iterate(solution)(solution => rotation(table, solution)).take(4)
+  def rotations(table: Table, solution: Set[(Piece, (Int, Int))]): Set[Set[(Piece, (Int, Int))]] =
+    Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toSet
 
-  def rotation(table: Table, solution: Seq[(Piece, (Int, Int))]): Seq[(Piece, (Int, Int))] = {
+  def rotation(table: Table, solution: Set[(Piece, (Int, Int))]): Set[(Piece, (Int, Int))] = {
     def rotation(x: Int, y: Int): (Int, Int) = (table.vert - 1 - y, x)
 
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
@@ -26,39 +26,46 @@ object ChessProperties extends Properties("GenerationCore") {
     */
   property("example1") = forAll { _: Unit => {
     println("Example1:")
-    val input = Input(Table(3, 3), Map[Piece,Int](King -> 2, Rook -> 1))
-    val expectedBoards: Seq[Seq[(Piece, (Int, Int))]] = Seq(Seq((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
+    val input = Input(Table(3, 3), Map[Piece, Int](King -> 2, Rook -> 1))
+    val expectedBoards: Set[Set[(Piece, (Int, Int))]] = Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2))))
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
-/*
+  /*
 
-  property("example2") = forAll { _: Unit => {
-    println("Example2:")
-    val input = Input(Table(4, 4), Map(Rook -> 2, Knight -> 4))
-    val expectedBoards: Seq[Seq[(ChessPiece, (Int, Int))]] =
-      Seq(
-        Seq((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
-        Seq((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3))))
+    property("example2") = forAll { _: Unit => {
+      println("Example2:")
+      val input = Input(Table(4, 4), Map(Rook -> 2, Knight -> 4))
+      val expectedBoards: Set[Set[(ChessPiece, (Int, Int))]] =
+        Set(
+          Set((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
+          Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3))))
 
-    areResultingBoardsTheExpectedOnes(input, expectedBoards)
-  }
-  }
-*/
+      areResultingBoardsTheExpectedOnes(input, expectedBoards)
+    }
+    }
+  */
+
+  type Board = Set[(Piece, (Int, Int))]
 
   private def areResultingBoardsTheExpectedOnes
-  (input: Input, expectedBoards: Seq[Seq[(Piece, (Int, Int))]]): Boolean = {
-    val solutions = GenerationCore.solutions(input,Seq(), "")
-    val obtainedSolutions = solutions.map(_.solution.map {
-      case (piece, Position(x, y)) => (piece, (x, y))
-    })
-    val allExpectedBoards = expectedBoards.flatMap(board => rotations(input.table, board))
+  (input: Input, expectedBoards: Set[Board]): Boolean = {
+    val solutions: Set[PotentialSolution] = GenerationCore.solutions(input, Set(), "").toSet
+    val obtainedSolutions: Set[Board] = solutions.map((potentialSolution: PotentialSolution) =>
+      potentialSolution.solution.map {
+        case (piece: Piece, Position(x, y)) => (piece, (x, y))
+      })
+    val allExpectedBoards: Set[Board] =
+      expectedBoards.flatMap(board => rotations(input.table, board))
+
     def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) =
       boards.toList.map(_.toList).mkString("\n")
-    println("expectedBoards=\n" + evalAndStringify(allExpectedBoards))
-    println("obtainedBoards=\n" + evalAndStringify(obtainedSolutions))
-    obtainedSolutions.toSet == allExpectedBoards.toSet
+
+    println("expectedBoards intertsect obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
+    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards.diff(obtainedSolutions)))
+    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions.diff(allExpectedBoards)))
+    obtainedSolutions == allExpectedBoards
   }
 
   /*

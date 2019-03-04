@@ -2,7 +2,7 @@ package chess
 
 object GenerationCore {
   //todo in parallel? threadsafe? .par but..
-  def solutions(input: Input, picksSoFar: Seq[Position], prefix: String): Iterable[PotentialSolution] = {
+  def solutions(input: Input, picksSoFar: Set[Position], prefix: String): Iterable[PotentialSolution] = {
     def sout(msg: Any): Unit = println(prefix + msg)
 
     val Input(table, pieces, positions) = input
@@ -30,8 +30,8 @@ object GenerationCore {
         sout("remainingPositions=" + remainingPositions)
 
         if (remainingPositions.isEmpty) {
-          if (piece.incompatPositions(position, table).toSet.intersect(picksSoFar.toSet).isEmpty) {
-            val potentialSolution = Seq(PotentialSolution(List((piece, position))))
+          if (piece.incompatPositions(position, table).toSet.intersect(picksSoFar).isEmpty) {
+            val potentialSolution = Seq(PotentialSolution(Set((piece, position))))
             sout("SOLUTION=" + potentialSolution)
             potentialSolution
           } else {
@@ -46,7 +46,7 @@ object GenerationCore {
           sout("remainingPotentialSolutions=" + remainingPotentialSolutions)
 
           remainingPotentialSolutions.map(remainingPotentialSolution => {
-            val potentialSolution = PotentialSolution((piece, position) :: remainingPotentialSolution.solution)
+            val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
             sout("potentialSolution=" + potentialSolution)
             potentialSolution
           })
