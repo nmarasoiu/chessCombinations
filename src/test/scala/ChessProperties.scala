@@ -18,6 +18,7 @@ object ChessProperties extends Properties("GenerationCore") {
   }
 
   //todo: asymettric table, 0x0 tables, intro rotations in algo
+  //todo: every property executes 100 times; to rewrite with ScalaTest
   property("example1") = forAll { _: Unit => {
     println("Example1:")
     val input = Input(Table(3, 3), Map[Piece, Int](King -> 2, Rook -> 1))
