@@ -6,7 +6,7 @@ object GenerationCore {
     val Input(table, piecesCount, positions) = input
     (for (piece <- piecesCount.keySet.toStream if piecesCount(piece) > 0;
           position <- positions;
-          remainingPiecesCount = piecesCount.updated(piece, piecesCount(piece) - 1);
+          remainingPiecesCount = piecesCount.updated(piece, piecesCount(piece) - 1);//todo in parallel? threadsafe?
           remainingPositions = positions - position -- piece.incompatPositions(position,table);
           smallerInput = Input(table, remainingPiecesCount, remainingPositions))
       yield
