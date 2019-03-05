@@ -4,6 +4,8 @@ import java.time.{Clock, Duration}
 
 import chess.Piece.{Bishop, King, Knight, Queen}
 
+import scala.collection.{SortedSet, immutable}
+
 object GenerationCore {
   /**
     * todo:
@@ -25,29 +27,32 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input, picksSoFar: Set[Position]): Stream[PotentialSolution] = {
-    val Input(table, pieces: Stream[Piece], positions: Set[Position]) = input
+    val Input(table, pieces: Seq[PieceInt], positions: SortedSet[PositionInt]) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
       Stream()
     } else {
-      val piece = pieces.head
-      val remainingPieces = pieces.tail
+      val piece: Piece = Piece.values(pieces.head)
+      val remainingPieces: Seq[PieceInt] = pieces.tail
       val r: Stream[Stream[PotentialSolution]] =
-        for (position <- positions.toStream;
-             incompatiblePositions = piece.incompatiblePositions(position, table);
-             _ <- Stream(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-             remainingPositions = positions - position -- incompatiblePositions)
-          yield
+        for (positionInt: PositionInt <- positions.toStream;
+             position = Position.fromPositionInt(positionInt);
+             incompatiblePositions = piece.incompatiblePositions(position, table).map(_.toPositionInt);
+             _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
+             remainingPositions = positions - positionInt -- incompatiblePositions)
+          yield {
+            val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {
-              val potentialSolution = PotentialSolution(Set(PiecePosition(piece, position)))
+              val potentialSolution = PotentialSolution(Set(piecePosition))
               Stream(potentialSolution)
             } else {
               val remainingInput = Input(table, remainingPieces, remainingPositions)
               val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
 
               remainingPotentialSolutions.map(remainingPotentialSolution => {
-                PotentialSolution(remainingPotentialSolution.solution + PiecePosition(piece, position))
+                PotentialSolution(remainingPotentialSolution.solution + piecePosition)
               })
             }
+          }
       r.flatten
     }
   }
@@ -61,30 +66,3 @@ object GenerationCore {
     println(size + " computed in " + Duration.between(t0, t1))
   }
 }
-
-case class PiecePosition(piece: Piece, position: Position)
-
-case class Input(table: Table,
-                 pieces: Stream[Piece], //with duplicates
-                 positions: Set[Position])
-
-object Input {
-  def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
-    apply(table, toStream(piecesCount), positionsFor(table).toSet)
-
-  def positionsFor(table: Table): Stream[Position] = {
-    for (i <- (0 until table.horizontal).toStream;
-         j <- (0 until table.vertical).toStream)
-      yield Position(i, j)
-  }
-
-  def toStream(piecesCount: Map[Piece, Int]): Stream[Piece] = {
-    for (piece <- piecesCount.keys.toStream; _ <- 1 to piecesCount(piece)) yield piece
-  }
-}
-
-case class Position(x: Int, y: Int)
-
-case class Table(horizontal: Int, vertical: Int)
-
-case class PotentialSolution(solution: Set[PiecePosition])

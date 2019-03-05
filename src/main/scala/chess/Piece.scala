@@ -10,7 +10,7 @@ sealed abstract class Piece(val order: Int,
                            ) extends EnumEntry with Ordered[Piece] {
   def takes(piecePosition: Position, otherPosition: Position): Boolean
 
-  lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = {
+  val incompatiblePositions: Function[(Position, Table), Seq[Position]] = {
     case (pos, table@Table(h, v)) =>
       attackPositions(pos, table).filter {
         case Position(x, y) => 0 <= x && x < h && 0 <= y && y <= v
@@ -21,12 +21,12 @@ sealed abstract class Piece(val order: Int,
 }
 
 object Piece extends Enum[Piece] {
-  lazy val values: immutable.IndexedSeq[Piece] = findValues
+  val values: immutable.IndexedSeq[Piece] = findValues
 
-  case object King extends Piece(2, {
+  case object King extends Piece(1, {
     case (Position(x, y), Table(h, v)) =>
-      for (hOffset <- -1 to 1;
-           vOffset <- -1 to 1)
+      for (hOffset <- -1 to 1 if x + hOffset >= 0;
+           vOffset <- -1 to 1 if y + vOffset >= 0)
         yield Position(x + hOffset, y + vOffset)
   }) {
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
@@ -35,35 +35,39 @@ object Piece extends Enum[Piece] {
     }
   }
 
-  case object Queen extends Piece(3,
+  case object Queen extends Piece(2,
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a)) {
-    override lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
+    override val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
 
     override def takes(piecePosition: Position, otherPosition: Position): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
 
-
   //nebun
-  case object Bishop extends Piece(4, {
-    case (Position(x, y), Table(h, v)) => //todo optimize
-      for (hOffset <- (1 - h until h).toStream) yield Position(x + hOffset, y + hOffset)
+  case object Bishop extends Piece(3, {
+    case (Position(x, y), Table(h, v)) =>
+      for (hOffset <- (1 - h until h).toStream if 0 <= x + hOffset && 0 <= y + hOffset)
+        yield Position(x + hOffset, y + hOffset)
   }) {
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
       abs(piecePosition.x - otherPosition.x) == abs(piecePosition.y - otherPosition.y)
     }
   }
 
+  val horizontalVerticalOffsets: Seq[(Int, Int)] =
+    for ((absHorizontalOffset, absVerticalOffset) <- Seq((1, 2), (2, 1));
+         (hOffset, vOffset) <- Seq(
+           (absHorizontalOffset, absVerticalOffset), (-absHorizontalOffset, absVerticalOffset),
+           (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
+      yield (hOffset, vOffset)
+
   //cal
-  case object Knight extends Piece(5, {
+  case object Knight extends Piece(0, {
     case (Position(x, y), Table(h, v)) =>
-      for ((absHorizontalOffset, absVerticalOffset) <- Seq((1, 2), (2, 1));
-           (hOffset, vOffset) <- Seq(
-             (absHorizontalOffset, absVerticalOffset), (-absHorizontalOffset, absVerticalOffset),
-             (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
+      for ((hOffset, vOffset) <- horizontalVerticalOffsets if x + hOffset >= 0 && 0 <= y + vOffset)
         yield Position(x + hOffset, y + vOffset)
   }) {
-    override lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
+    override val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
 
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
       val tuple = (abs(piecePosition.x - otherPosition.x), abs(piecePosition.y - otherPosition.y))
@@ -72,7 +76,7 @@ object Piece extends Enum[Piece] {
   }
 
   //tura
-  case object Rook extends Piece(6, {
+  case object Rook extends Piece(4, {
     case (Position(x, y), Table(h, v)) =>
       Stream(
         for (hOffset <- (0 until h).toStream) yield Position(hOffset, y),
