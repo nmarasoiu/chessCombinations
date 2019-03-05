@@ -1,6 +1,17 @@
 package chess
 
 object GenerationCore {
+  /**
+    * todo:
+    * in parallel course grained, split the table
+    * scala test, add tests
+    * profile with their bigger example
+    * anything to cache/reuse, dynamic prog?
+    * refactor into a single for and get rid of flatten?
+    * inspect & remove todos
+    * refactoring, beautiful well organized code
+    * memory pressure, balance lazy with eager
+    */
   //todo in parallel? thread safe? .par but..
   def solutions(input: Input): Set[PotentialSolution] = {
     _solutions(input, Set()).filter(sol => sol.solution.size == input.pieces.size)
