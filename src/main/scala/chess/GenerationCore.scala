@@ -20,28 +20,26 @@ object GenerationCore {
     * too many sets? preallocate?
     */
   //todo in parallel? thread safe? .par but..
-  def solutions(input: Input): Seq[PotentialSolution] = {
+  def solutions(input: Input): Stream[PotentialSolution] = {
     _solutions(input, Set()).filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  //todo start not with set but with seq
-  private def _solutions(input: Input, picksSoFar: Set[Position]): Seq[PotentialSolution] = {
-    val Input(table, pieces: Seq[Piece], positions: Set[Position]) = input
+  private def _solutions(input: Input, picksSoFar: Set[Position]): Stream[PotentialSolution] = {
+    val Input(table, pieces: Stream[Piece], positions: Set[Position]) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Seq()
+      Stream()
     } else {
       val piece = pieces.head
       val remainingPieces = pieces.tail
-      //todo refactor into a single for and get rid of flatten?
-      val r: Seq[Seq[PotentialSolution]] =
-        for (position <- positions.toSeq;
+      val r: Stream[Stream[PotentialSolution]] =
+        for (position <- positions.toStream;
              incompatiblePositions = piece.incompatiblePositions(position, table);
-             _ <- Set(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
+             _ <- Stream(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
              remainingPositions = positions - position -- incompatiblePositions)
           yield
             if (remainingPieces.isEmpty) {
               val potentialSolution = PotentialSolution(Set((piece, position)))
-              Seq(potentialSolution)
+              Stream(potentialSolution)
             } else {
               val remainingInput = Input(table, remainingPieces, remainingPositions)
               val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
@@ -66,19 +64,21 @@ object GenerationCore {
 }
 
 case class Input(table: Table,
-                 pieces: Seq[Piece], //with duplicates
+                 pieces: Stream[Piece], //with duplicates
                  positions: Set[Position])
 
 object Input {
   def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
-    apply(table, toSeq(piecesCount), positionsFor(table).toSet)
+    apply(table, toStream(piecesCount), positionsFor(table).toSet)
 
-  def positionsFor(table: Table): Seq[Position] = {
-    for (i <- 0 until table.horizontal; j <- 0 until table.vertical) yield Position(i, j)
+  def positionsFor(table: Table): Stream[Position] = {
+    for (i <- (0 until table.horizontal).toStream;
+         j <- (0 until table.vertical).toStream)
+      yield Position(i, j)
   }
 
-  def toSeq(piecesCount: Map[Piece, Int]): Seq[Piece] = {
-    for (piece <- piecesCount.keys.toSeq; _ <- 1 to piecesCount(piece)) yield piece
+  def toStream(piecesCount: Map[Piece, Int]): Stream[Piece] = {
+    for (piece <- piecesCount.keys.toStream; _ <- 1 to piecesCount(piece)) yield piece
   }
 }
 
