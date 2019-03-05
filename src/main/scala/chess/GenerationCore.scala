@@ -1,5 +1,7 @@
 package chess
 
+import java.time.{Clock, Duration}
+
 import chess.Piece.{Bishop, King, Knight, Queen}
 
 object GenerationCore {
@@ -53,11 +55,12 @@ object GenerationCore {
   }
 
   def main(args: Array[String]): Unit = {
-    val t0 = System.nanoTime()
+    val clock = Clock.systemUTC()
+    val t0 = clock.instant()
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     val size = solutions(input).size
-    val t1 = System.nanoTime()
-    println(size+" computed in "+(t1-t0)*1.0D/1000./1000./1000.+" seconds")
+    val t1 = clock.instant()
+    println(size + " computed in " + Duration.between(t0, t1))
   }
 }
 

@@ -1,6 +1,5 @@
 package chess
 
-import chess.Piece.Queen.attackPositions
 import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable
@@ -39,6 +38,7 @@ object Piece extends Enum[Piece] {
   case object Queen extends Piece(3,
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a)) {
     override lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
+
     override def takes(piecePosition: Position, otherPosition: Position): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
@@ -64,8 +64,10 @@ object Piece extends Enum[Piece] {
         yield Position(x + hOffset, y + vOffset)
   }) {
     override lazy val incompatiblePositions: Function[(Position, Table), Seq[Position]] = attackPositions
+
     override def takes(piecePosition: Position, otherPosition: Position): Boolean = {
-      Seq((1, 2), (2, 1)).contains((abs(piecePosition.x - otherPosition.x), abs(piecePosition.y - otherPosition.y)))
+      val tuple = (abs(piecePosition.x - otherPosition.x), abs(piecePosition.y - otherPosition.y))
+      (1, 2) == tuple || (2, 1) == tuple
     }
   }
 
