@@ -7,6 +7,7 @@ import chess.Piece.{Bishop, King, Knight, Queen}
 object GenerationCore {
   /**
     * todo:
+    * OOM main
     * in parallel course grained, split the table
     * scala test, add tests
     * profile with their bigger example
