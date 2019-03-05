@@ -1,5 +1,7 @@
 package chess
 
+import chess.Piece.{Bishop, King, Knight, Queen}
+
 object GenerationCore {
   /**
     * todo:
@@ -11,45 +13,56 @@ object GenerationCore {
     * inspect & remove todos
     * refactoring, beautiful well organized code
     * memory pressure, balance lazy with eager
+    * cearsaf de pus la plapuma; de spalat coco in fiecare seara
+    * too many sets? preallocate?
     */
   //todo in parallel? thread safe? .par but..
-  def solutions(input: Input): Set[PotentialSolution] = {
+  def solutions(input: Input): Seq[PotentialSolution] = {
     _solutions(input, Set()).filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private def _solutions(input: Input, picksSoFar: Set[Position]): Set[PotentialSolution] = {
+  //todo start not with set but with seq
+  private def _solutions(input: Input, picksSoFar: Set[Position]): Seq[PotentialSolution] = {
     val Input(table, pieces: Seq[Piece], positions: Set[Position]) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Set()
+      Seq()
     } else {
       val piece = pieces.head
       val remainingPieces = pieces.tail
       //todo refactor into a single for and get rid of flatten?
-      val r = for (position <- positions;
-                   incompatiblePositions = piece.incompatiblePositions(position, table);
-                   _ <- Set(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-                   remainingPositions = positions - position -- incompatiblePositions)
-        yield
-          if (remainingPieces.isEmpty) {
-            val potentialSolution = PotentialSolution(Set((piece, position)))
-            Seq(potentialSolution)
-          } else {
-            val remainingInput = Input(table, remainingPieces, remainingPositions)
-            val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
+      val r: Seq[Seq[PotentialSolution]] =
+        for (position <- positions.toSeq;
+             incompatiblePositions = piece.incompatiblePositions(position, table);
+             _ <- Set(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
+             remainingPositions = positions - position -- incompatiblePositions)
+          yield
+            if (remainingPieces.isEmpty) {
+              val potentialSolution = PotentialSolution(Set((piece, position)))
+              Seq(potentialSolution)
+            } else {
+              val remainingInput = Input(table, remainingPieces, remainingPositions)
+              val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
 
-            remainingPotentialSolutions.map(remainingPotentialSolution => {
-              val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
-              potentialSolution
-            })
-          }
+              remainingPotentialSolutions.map(remainingPotentialSolution => {
+                val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
+                potentialSolution
+              })
+            }
       r.flatten
     }
   }
 
+  def main(args: Array[String]): Unit = {
+    val t0 = System.nanoTime()
+    val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
+    val size = solutions(input).size
+    val t1 = System.nanoTime()
+    println(size+" computed in "+(t1-t0)*1.0D/1000./1000./1000.+" seconds")
+  }
 }
 
 case class Input(table: Table,
-                 pieces: Seq[Piece],//with duplicates
+                 pieces: Seq[Piece], //with duplicates
                  positions: Set[Position])
 
 object Input {
