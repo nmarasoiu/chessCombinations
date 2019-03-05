@@ -50,7 +50,7 @@ object ChessProperties extends Properties("GenerationCore") {
     val solutions = GenerationCore.solutions(input)
     val obtainedSolutions: Set[Board] = solutions.map((potentialSolution: PotentialSolution) =>
       potentialSolution.solution.map {
-        case (piece: Piece, Position(x, y)) => (piece, (x, y))
+        case PiecePosition(piece: Piece, Position(x, y)) => (piece, (x, y))
       }).toSet
     val allExpectedBoards: Set[Board] =
       expectedBoards.flatMap(board => rotations(input.table, board))

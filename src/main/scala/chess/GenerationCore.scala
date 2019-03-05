@@ -38,15 +38,14 @@ object GenerationCore {
              remainingPositions = positions - position -- incompatiblePositions)
           yield
             if (remainingPieces.isEmpty) {
-              val potentialSolution = PotentialSolution(Set((piece, position)))
+              val potentialSolution = PotentialSolution(Set(PiecePosition(piece, position)))
               Stream(potentialSolution)
             } else {
               val remainingInput = Input(table, remainingPieces, remainingPositions)
               val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
 
               remainingPotentialSolutions.map(remainingPotentialSolution => {
-                val potentialSolution = PotentialSolution(Set((piece, position)) ++ remainingPotentialSolution.solution)
-                potentialSolution
+                PotentialSolution(remainingPotentialSolution.solution + PiecePosition(piece, position))
               })
             }
       r.flatten
@@ -62,6 +61,8 @@ object GenerationCore {
     println(size + " computed in " + Duration.between(t0, t1))
   }
 }
+
+case class PiecePosition(piece: Piece, position: Position)
 
 case class Input(table: Table,
                  pieces: Stream[Piece], //with duplicates
@@ -86,4 +87,4 @@ case class Position(x: Int, y: Int)
 
 case class Table(horizontal: Int, vertical: Int)
 
-case class PotentialSolution(solution: Set[(Piece, Position)])
+case class PotentialSolution(solution: Set[PiecePosition])
