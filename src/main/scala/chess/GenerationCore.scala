@@ -33,9 +33,9 @@ object GenerationCore {
       val r =
         for (positionInt: PositionInt <- positions;
              position = Position.fromPositionInt(positionInt);
-             incompatiblePositions = piece.incompatiblePositions(position, table).map(_.toPositionInt);
+             incompatiblePositions: Seq[PositionInt] = piece.incompatiblePositions(position, table).map(_.toPositionInt);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-             remainingPositions = positions - positionInt -- incompatiblePositions)
+             remainingPositions = positions -- Iterable.concat(Seq(positionInt), incompatiblePositions))
           yield {
             val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {
@@ -52,14 +52,5 @@ object GenerationCore {
           }
       r.flatten
     }
-  }
-
-  def main(args: Array[String]): Unit = {
-    val clock = Clock.systemUTC()
-    val t0 = clock.instant()
-    val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    val size = solutions(input).size
-    val t1 = clock.instant()
-    println(size + " computed in " + Duration.between(t0, t1))
   }
 }
