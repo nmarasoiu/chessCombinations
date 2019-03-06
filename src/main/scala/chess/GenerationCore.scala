@@ -28,13 +28,9 @@ object GenerationCore {
 
   private def _solutions(input: Input)(picksSoFar: Set[Position])(minPositionByPiece: Map[Piece, Position]): Future[Seq[PotentialSolution]] = {
     val Input(table, pieces: Seq[Piece], positions: Positions) = input
-    if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Future.successful(Seq())
-    } else {
+
+    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]) = {
       implicit val ec = ExecutionContext.global
-      val piece: Piece = pieces.head
-      val minPositionForPiece = minPositionByPiece(piece)
-      val remainingPieces: Seq[Piece] = pieces.tail
       val r: Seq[Future[Seq[PotentialSolution]]] =
         for (position: PositionInt <- positions.filter(pos => pos >= minPositionForPiece).toSeq; //todo try BitSet.range intersect with positions?
              incompatiblePositions = piece.attackPositions(position, table);
@@ -55,6 +51,16 @@ object GenerationCore {
             }
           }
       Future.sequence(r).map(_.flatten)
+    }
+
+    if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
+      Future.successful(Seq())
+    } else {
+      val piece: Piece = pieces.head
+      val minPositionForPiece = minPositionByPiece(piece)
+      val remainingPieces: Seq[Piece] = pieces.tail
+      implicit val ec = ExecutionContext.global
+      Future(__solutions(piece, minPositionForPiece, remainingPieces)).flatten
     }
   }
 }
