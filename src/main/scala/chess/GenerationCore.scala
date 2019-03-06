@@ -8,19 +8,15 @@ import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Futu
 object GenerationCore {
   /**
     * todo:
-    * - remove OOM
     * - error management on the async
     * in parallel: course grained, split the table, do .par on some collections, careful on granularity
     * scala test, add tests
     * refactor into a single for and get rid of flatten?
     * refactoring, beautiful well organized code
-    * done - proceed in the order of pieces that eliminate more positions, to minimize recursive search space
     */
-  //todo in parallel? thread safe? .par but..
   def solutions(input: Input): Seq[PotentialSolution] = {
     Await.result(_solutions(input)(Set())(Map().withDefaultValue(0)), Duration.Inf)
       .filter(sol => sol.solution.size == input.pieces.size)
-
   }
 
   private val maxParallelExecutions: Position = 2 * Runtime.getRuntime.availableProcessors()
