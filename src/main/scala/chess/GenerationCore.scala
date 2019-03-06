@@ -9,6 +9,8 @@ object GenerationCore {
     * error management on the async
     * scala test (replacing or in addition to scalascheck), add edge-case tests
     * more refactoring, beautiful well organized code; document the trade-offs
+    * collect warnings with codestyle, pmd, findbug
+    * check for a healthy way to create an immutable version/copy of the mutable bitset
     */
   def solutions(input: Input): Seq[PotentialSolution] = {
     Await.result(_solutions(input)(Set())(Map().withDefaultValue(0)), Duration.Inf)
