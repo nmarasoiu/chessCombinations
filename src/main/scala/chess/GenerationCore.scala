@@ -3,6 +3,7 @@ package chess
 object GenerationCore {
   /**
     * todo:
+    * check why we compute duplicates! try caching or dynamic programming because we recompute solutions too much
     * in parallel: course grained, split the table, do .par on some collections, careful on granularity
     * scala test, add tests
     * refactor into a single for and get rid of flatten?
