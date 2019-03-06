@@ -74,8 +74,8 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  val horizontalVerticalOffsets: Seq[(Int, Int)] =
-    for ((absHorizontalOffset, absVerticalOffset) <- Seq((1, 2), (2, 1));
+  val horizontalVerticalOffsets: Array[(Int, Int)] =
+    for ((absHorizontalOffset, absVerticalOffset) <- Array((1, 2), (2, 1));
          (hOffset, vOffset) <- Seq(
            (absHorizontalOffset, absVerticalOffset), (-absHorizontalOffset, absVerticalOffset),
            (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
