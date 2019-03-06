@@ -30,7 +30,7 @@ object GenerationCore {
       val minPositionForPiece = minPositionByPiece(piece)
       val remainingPieces: Seq[Piece] = pieces.tail
       val r: Seq[Iterable[PotentialSolution]] =
-        for (position: PositionInt <- positions.filter(pos => pos >= minPositionForPiece).toSeq;
+        for (position: PositionInt <- positions.filter(pos => pos >= minPositionForPiece).toSeq;//todo try BitSet.range intersect with positions?
              incompatiblePositions = piece.attackPositions(position, table);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
              remainingPositions = positions - position &~ incompatiblePositions)
