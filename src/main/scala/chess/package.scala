@@ -32,7 +32,10 @@ package object chess {
     }
   }
 
-  case class Table(horizontal: Int, vertical: Int)
+  case class Table(horizontal: Int, vertical: Int) {
+    if (horizontal < 0 || horizontal >= hh || vertical < 0 || vertical >= hh)
+      throw new IllegalArgumentException((horizontal,vertical) + " not within range: 0<=x<=" + hh + " and same for y")
+  }
 
   case class PotentialSolution(solution: Set[PiecePosition])
 
