@@ -9,16 +9,14 @@ import scala.collection.{SortedSet, immutable}
 object GenerationCore {
   /**
     * todo:
-    * OOM main
+    * remove streams: replace Stream[Piece] with Map[Piece,Int] and Stream[PotentialSolution] and any others
     * in parallel course grained, split the table
     * scala test, add tests
-    * profile with their bigger example
     * anything to cache/reuse, dynamic prog?
     * refactor into a single for and get rid of flatten?
     * inspect & remove todos
     * refactoring, beautiful well organized code
     * memory pressure, balance lazy with eager
-    * cearsaf de pus la plapuma; de spalat coco in fiecare seara
     * too many sets? preallocate?
     */
   //todo in parallel? thread safe? .par but..

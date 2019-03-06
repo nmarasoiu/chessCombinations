@@ -38,15 +38,13 @@ object ChessProperties extends Properties("GenerationCore") {
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
   }
-
-  /*
+/*
   property("solutions") = forAll { input: Input => {
     val size = GenerationCore.solutions(input).size
     assert(size >= 0)
     size >= 0
   }
-  }
-*/
+  }*/
   private def areResultingBoardsTheExpectedOnes
   (input: Input, expectedBoards: Set[Board]): Boolean = {
     val solutions = GenerationCore.solutions(input)
@@ -59,11 +57,11 @@ object ChessProperties extends Properties("GenerationCore") {
 
     def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
 
-    println("obtained " + obtainedSolutions.size)
-    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
-    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
-    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
-    println("obtained " + obtainedSolutions.size)
+//    println("obtained " + obtainedSolutions.size)
+//    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
+//    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
+//    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
+//    println("obtained " + obtainedSolutions.size)
     obtainedSolutions.size == obtainedSolutions.size &&
       obtainedSolutions == allExpectedBoards
   }
