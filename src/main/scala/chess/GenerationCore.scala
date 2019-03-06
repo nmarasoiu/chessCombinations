@@ -7,8 +7,9 @@ import chess.Piece.{Bishop, King, Knight, Queen}
 object GenerationCore {
   /**
     * todo:
-    * remove streams: replace Stream[Piece] with Map[Piece,Int] and Stream[PotentialSolution] and any others
-    * in parallel course grained, split the table
+    * replace Set[Position] with BitSet everywhere to make the set-set faster, in extreme implies refactoring Piece logic
+    * remove/replace more streams: e.g. replace Stream[Piece] with Map[Piece,Int]
+    * in parallel: course grained, split the table, do .par on some collections, careful on granularity
     * scala test, add tests
     * anything to cache/reuse, dynamic prog?
     * refactor into a single for and get rid of flatten?
@@ -42,7 +43,7 @@ object GenerationCore {
               Set(potentialSolution)
             } else {
               val remainingInput = Input(table, remainingPieces, remainingPositions)
-              val remainingPotentialSolutions: Set[PotentialSolution] = _solutions(remainingInput, picksSoFar + position)
+              val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
 
               remainingPotentialSolutions.map(remainingPotentialSolution => {
                 PotentialSolution(remainingPotentialSolution.solution + piecePosition)
