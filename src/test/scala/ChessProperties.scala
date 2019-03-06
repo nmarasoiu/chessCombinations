@@ -9,7 +9,7 @@ import org.scalacheck.{Arbitrary, Properties}
 
 object ChessProperties extends Properties("GenerationCore") {
   type Board = Set[(Piece, (Int, Int))]
-  implicitly[Arbitrary[Input]]
+//  implicitly[Arbitrary[Input]]
 
   def rotations(table: Table, solution: Board): Set[Board] =
     Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toSet
