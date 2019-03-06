@@ -20,7 +20,7 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input, picksSoFar: Set[Position]): Seq[PotentialSolution] = {
-    val Input(table, pieces: Seq[Piece], positions: Set[PositionInt]) = input
+    val Input(table, pieces: Seq[Piece], positions: Positions) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
       Seq()
     } else {
@@ -30,7 +30,7 @@ object GenerationCore {
         for (position: PositionInt <- positions.toSeq;
              incompatiblePositions = piece.incompatiblePositions(position, table);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-             remainingPositions = positions - position -- incompatiblePositions)
+             remainingPositions = positions - position &~ incompatiblePositions)
           yield {
             val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {

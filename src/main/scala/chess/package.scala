@@ -11,14 +11,14 @@ package object chess {
 
   case class Input(table: Table,
                    pieces: Seq[Piece], //with duplicates
-                   positions: Set[Int])
+                   positions: Positions)
 
   object Input {
 
     def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
       Input(table, toStream(piecesCount), positionsFor(table))
 
-    def positionsFor(table: Table): Set[Int] = {
+    def positionsFor(table: Table): Positions = {
       def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
       toSet(for (x <- 0 until table.horizontal;
                  y <- 0 until table.vertical;
