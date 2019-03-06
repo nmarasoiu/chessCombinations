@@ -10,7 +10,7 @@ package object chess {
   type Positions = BitSet //too concrete, but starting with that,get the performance then go towards Set[PositionInt] and check performance remains
 
   case class Input(table: Table,
-                   pieces: IndexedSeq[Piece], //with duplicates
+                   pieces: Seq[Piece], //with duplicates
                    positions: Positions)
 
   object Input {
@@ -27,7 +27,7 @@ package object chess {
                  aggNum: PositionInt = toPositionInt(x, y)) yield aggNum)
     }
 
-    def toSeq(piecesCount: Map[Piece, Int]): IndexedSeq[Piece] = {
+    def toSeq(piecesCount: Map[Piece, Int]): Seq[Piece] = {
       //todo this will not work for many pieces; work with Map(Piece->Int) instead
       for (piece <- piecesCount.keys.toList.sorted.toArray; _ <- 1 to piecesCount(piece)) yield piece
     }
