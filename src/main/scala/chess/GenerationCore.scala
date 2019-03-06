@@ -18,38 +18,36 @@ object GenerationCore {
     */
   //todo in parallel? thread safe? .par but..
   def solutions(input: Input): Seq[PotentialSolution] = {
-    _solutions(input)(Set()).filter(sol => sol.solution.size == input.pieces.size)
+    _solutions(input)(Set())(Map().withDefaultValue(0)).filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private def _solutions: Input => Set[Position] => Seq[PotentialSolution] = {
-    input: Input =>
-      (picksSoFar: Set[Position]) => {
-        val Input(table, pieces: Seq[Piece], positions: Positions) = input
-        if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-          Seq()
-        } else {
-          val piece: Piece = pieces.head
-          val remainingPieces: Seq[Piece] = pieces.tail
-          val r: Seq[Iterable[PotentialSolution]] =
-            for (position: PositionInt <- positions.toSeq;
-                 incompatiblePositions = piece.attackPositions(position, table);
-                 _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-                 remainingPositions = positions - position &~ incompatiblePositions)
-              yield {
-                val piecePosition = PiecePosition(piece, position)
-                if (remainingPieces.isEmpty) {
-                  Set(PotentialSolution(Set(piecePosition)))
-                } else {
-                  val remainingInput = Input(table, remainingPieces, remainingPositions)
-                  val remainingPotentialSolutions = _solutions(remainingInput)(picksSoFar + position)
+  private def _solutions(input: Input)(picksSoFar: Set[Position])(minPositionByPiece: Map[Piece, Position]): Seq[PotentialSolution] = {
+    val Input(table, pieces: Seq[Piece], positions: Positions) = input
+    if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
+      Seq()
+    } else {
+      val piece: Piece = pieces.head
+      val minPositionForPiece = minPositionByPiece(piece)
+      val remainingPieces: Seq[Piece] = pieces.tail
+      val r: Seq[Iterable[PotentialSolution]] =
+        for (position: PositionInt <- positions.filter(pos => pos >= minPositionForPiece).toSeq;
+             incompatiblePositions = piece.attackPositions(position, table);
+             _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
+             remainingPositions = positions - position &~ incompatiblePositions)
+          yield {
+            val piecePosition = PiecePosition(piece, position)
+            if (remainingPieces.isEmpty) {
+              Set(PotentialSolution(Set(piecePosition)))
+            } else {
+              val remainingInput = Input(table, remainingPieces, remainingPositions)
+              val remainingPotentialSolutions = _solutions(remainingInput)(picksSoFar + position)(minPositionByPiece.updated(piece, position + 1))
 
-                  remainingPotentialSolutions.map(remainingPotentialSolution => {
-                    PotentialSolution(remainingPotentialSolution.solution + piecePosition)
-                  })
-                }
-              }
-          r.flatten
-        }
-      }
+              remainingPotentialSolutions.map(remainingPotentialSolution => {
+                PotentialSolution(remainingPotentialSolution.solution + piecePosition)
+              })
+            }
+          }
+      r.flatten
+    }
   }
 }

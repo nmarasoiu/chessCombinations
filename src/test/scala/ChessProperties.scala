@@ -60,7 +60,7 @@ object ChessProperties extends Properties("GenerationCore") {
     }*/
 
   private def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]): Boolean = {
-    val solutions = GenerationCore.solutions(input)
+    val solutions: Seq[PotentialSolution] = GenerationCore.solutions(input)
     val obtainedSolutions: Seq[Board] = solutions.map((potentialSolution: PotentialSolution) =>
       potentialSolution.solution.map {
         case PiecePosition(piece: Piece, xy) => (piece, fromPositionInt(xy))
