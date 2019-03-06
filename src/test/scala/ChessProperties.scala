@@ -4,8 +4,8 @@ import chess.GenerationCore.solutions
 import chess.Piece._
 import chess._
 import org.scalacheck.Prop.forAll
+import org.scalacheck.Properties
 import org.scalacheck.ScalacheckShapeless._
-import org.scalacheck.{Arbitrary, Properties}
 
 object ChessProperties extends Properties("GenerationCore") {
   type Board = Set[(Piece, (Int, Int))]

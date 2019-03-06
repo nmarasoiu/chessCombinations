@@ -18,12 +18,12 @@ sealed abstract class Piece(val order: Int,
 
   val incompatiblePositions: Function[(Position, Table), Positions] = {
     case (pos, table@Table(h, v)) =>
-      attackPositions(pos, table).filter {
+      attackPositions(pos, table)/*.filter {
         xy => {
           val (x, y) = fromPositionInt(xy)
           0 <= x && x < h && 0 <= y && y <= v
         }
-      }
+      }*/
   }
 
   def compare(that: Piece): Int = this.order - that.order
