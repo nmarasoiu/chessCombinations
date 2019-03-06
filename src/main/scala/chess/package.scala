@@ -10,24 +10,26 @@ package object chess {
   type Positions = BitSet //too concrete, but starting with that,get the performance then go towards Set[PositionInt] and check performance remains
 
   case class Input(table: Table,
-                   pieces: Seq[Piece], //with duplicates
+                   pieces: IndexedSeq[Piece], //with duplicates
                    positions: Positions)
 
   object Input {
 
     def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
-      Input(table, toStream(piecesCount), positionsFor(table))
+      Input(table, toSeq(piecesCount), positionsFor(table))
 
     def positionsFor(table: Table): Positions = {
         //todo try BitSet.range
       def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
+
       toSet(for (x <- 0 until table.horizontal;
                  y <- 0 until table.vertical;
                  aggNum: PositionInt = toPositionInt(x, y)) yield aggNum)
     }
 
-    def toStream(piecesCount: Map[Piece, Int]): Stream[Piece] = {
-      for (piece <- piecesCount.keys.toList.sorted.toStream; _ <- 1 to piecesCount(piece)) yield piece
+    def toSeq(piecesCount: Map[Piece, Int]): IndexedSeq[Piece] = {
+      //todo this will not work for many pieces; work with Map(Piece->Int) instead
+      for (piece <- piecesCount.keys.toList.sorted.toArray; _ <- 1 to piecesCount(piece)) yield piece
     }
   }
 
