@@ -3,6 +3,7 @@ package chess
 /**
   * I still have two major things to do, which I am doing now, and I will send them as soon as I can:
   * - to figure out a way to not recompute solutions multiple times (which will improve orders of magnitude)
+  * (ideas: caching, dynamic programming, also for each solution there are other 3 solutions which just rotate the table when square)
   * - to allow for multi-core / hyper-threaded execution with coarse-grained "tasks" (also improve performance )
   */
 object GenerationCore {
