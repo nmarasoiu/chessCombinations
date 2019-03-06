@@ -2,7 +2,7 @@ package chess
 
 import enumeratum.{Enum, EnumEntry}
 
-import scala.collection.immutable
+import scala.collection.{immutable, mutable}
 import scala.math.abs
 
 sealed abstract class Piece(val order: Int,
@@ -35,9 +35,12 @@ object Piece extends Enum[Piece] {
   case object King extends Piece(1, {
     case (xy, Table(h, v)) =>
       val (x, y) = fromPositionInt(xy)
-      toSet(for (hOffset <- -1 to 1 if x + hOffset >= 0;
-                 vOffset <- -1 to 1 if y + vOffset >= 0)
-        yield toPositionInt(x + hOffset, y + vOffset))
+      build({ set =>
+        for (hOffset <- -1 to 1 if x + hOffset >= 0;
+             vOffset <- -1 to 1 if y + vOffset >= 0){
+          set += toPositionInt(x + hOffset, y + vOffset)
+        }
+      })
   }) {
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
@@ -58,8 +61,11 @@ object Piece extends Enum[Piece] {
   case object Bishop extends Piece(3, {
     case (xy, Table(h, v)) =>
       val (x, y) = fromPositionInt(xy)
-      toSet(for (hOffset <- (1 - h until h).toStream if 0 <= x + hOffset && 0 <= y + hOffset)
-        yield toPositionInt(x + hOffset, y + hOffset))
+      build({ set =>
+        for (hOffset <- 1 - h until h if 0 <= x + hOffset && 0 <= y + hOffset){
+          set += toPositionInt(x + hOffset, y + hOffset)
+        }
+      })
   }) {
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
@@ -79,8 +85,11 @@ object Piece extends Enum[Piece] {
   case object Knight extends Piece(0, {
     case (xy, Table(h, v)) =>
       val (x, y) = fromPositionInt(xy)
-      toSet(for ((hOffset, vOffset) <- horizontalVerticalOffsets if x + hOffset >= 0 && 0 <= y + vOffset)
-        yield toPositionInt(x + hOffset, y + vOffset))
+      build({ set =>
+        for ((hOffset, vOffset) <- horizontalVerticalOffsets if x + hOffset >= 0 && 0 <= y + vOffset) {
+          set += toPositionInt(x + hOffset, y + vOffset)
+        }
+      })
   }) {
     override val incompatiblePositions: Function[(Position, Table), Positions] = attackPositions
 
@@ -96,13 +105,26 @@ object Piece extends Enum[Piece] {
   case object Rook extends Piece(4, {
     case (xy, Table(h, v)) =>
       val (x, y) = fromPositionInt(xy)
-      toSet((for (hOffset <- 0 until h) yield toPositionInt(hOffset, y)) ++
-        (for (vOffset <- 0 until v) yield toPositionInt(x, vOffset)))
+      build({ set =>
+        for (hOffset <- 0 until h) {
+          set += toPositionInt(hOffset, y)
+        }
+        for (vOffset <- 0 until v) {
+          set += toPositionInt(x, vOffset)
+        }
+      })
   }) {
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) => x == x2 || y == y2
       }
   }
+
+  def build(adder: mutable.BitSet => Unit): immutable.BitSet = {
+    val set = mutable.BitSet.empty
+    adder.apply(set)
+    set.toImmutable //todo check this out
+  }
+
 
 }

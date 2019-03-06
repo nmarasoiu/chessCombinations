@@ -19,6 +19,7 @@ package object chess {
       Input(table, toStream(piecesCount), positionsFor(table))
 
     def positionsFor(table: Table): Set[Int] = {
+      def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
       toSet(for (x <- 0 until table.horizontal;
                  y <- 0 until table.vertical;
                  aggNum: PositionInt = toPositionInt(x, y)) yield aggNum)
@@ -42,5 +43,4 @@ package object chess {
 
   def fromPositionInt(xy: PositionInt): (PositionInt, PositionInt) = (xy % hh, xy / hh)
 
-  def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
 }
