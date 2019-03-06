@@ -19,13 +19,9 @@ package object chess {
       Input(table, toStream(piecesCount), positionsFor(table))
 
     def positionsFor(table: Table): Set[Int] = {
-      val positions: Seq[Int] =
-        for (x <- 0 until table.horizontal;
-             y <- 0 until table.vertical;
-             aggNum: PositionInt = toPositionInt(x, y)) yield aggNum
-      //this is not efficient: a new bit set generated every time; mutable bitset better; or look for BitSet(Iterable)
-      val emptySet: Set[Int] = BitSet.empty.asInstanceOf[Set[Int]]
-      positions.foldLeft(emptySet)((set: Set[Int], aggNum: Int) => set + aggNum)
+      toSet(for (x <- 0 until table.horizontal;
+                 y <- 0 until table.vertical;
+                 aggNum: PositionInt = toPositionInt(x, y)) yield aggNum)
     }
 
     def toStream(piecesCount: Map[Piece, Int]): Stream[Piece] = {
@@ -46,4 +42,5 @@ package object chess {
 
   def fromPositionInt(xy: PositionInt): (PositionInt, PositionInt) = (xy % hh, xy / hh)
 
+  def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
 }
