@@ -1,9 +1,9 @@
 package chess
 
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.Executors
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 
 object GenerationCore {
   /**
@@ -23,12 +23,11 @@ object GenerationCore {
 
   }
 
-  val parallelExecutions = new AtomicInteger()
-  val maxParallelExecutions = 1.5 * Runtime.getRuntime.availableProcessors()
+  private val maxParallelExecutions: Position = 2 * Runtime.getRuntime.availableProcessors()
+  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(maxParallelExecutions))
 
   private def _solutions(input: Input)(picksSoFar: Set[Position])(minPositionByPiece: Map[Piece, Position]): Future[Seq[PotentialSolution]] = {
     val Input(table, pieces: Seq[Piece], positions: Positions) = input
-    implicit val ec = ExecutionContext.global
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Future[Seq[PotentialSolution]] = {
       val r: Seq[Future[Seq[PotentialSolution]]] =
@@ -60,13 +59,8 @@ object GenerationCore {
       val minPositionForPiece = minPositionByPiece(piece)
       val remainingPieces: Seq[Piece] = pieces.tail
       val eventualSolutionsSupplier: () => Future[Seq[PotentialSolution]] = () => __solutions(piece, minPositionForPiece, remainingPieces)
-      if (remainingPieces.size > 1
-        && remainingPieces.size * positions.size > 9
-        && parallelExecutions.incrementAndGet() <= maxParallelExecutions) {
-
-        val future = Future(eventualSolutionsSupplier.apply()).flatten
-        future.onComplete(_ => parallelExecutions.decrementAndGet())
-        future
+      if (remainingPieces.size > 2 && remainingPieces.size * positions.size > 40) {
+        Future(eventualSolutionsSupplier.apply()).flatten
       } else {
         eventualSolutionsSupplier.apply()
       }
