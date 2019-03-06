@@ -75,7 +75,7 @@ object ChessProperties extends Properties("GenerationCore") {
     //    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
     //    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
     println("obtained " + obtainedSolutions.size)
-    obtainedSolutions.size == obtainedSolutions.size &&
+    obtainedSolutions.size == allExpectedBoards.size &&
       obtainedSolutions.toSet == allExpectedBoards
   }
 
