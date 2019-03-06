@@ -3,12 +3,11 @@ package chess
 object GenerationCore {
   /**
     * todo:
-    * proceed in the order of pieces that eliminate more positions, to minimize recursive search space
     * in parallel: course grained, split the table, do .par on some collections, careful on granularity
     * scala test, add tests
     * refactor into a single for and get rid of flatten?
-    * inspect & remove todos
     * refactoring, beautiful well organized code
+    * done - proceed in the order of pieces that eliminate more positions, to minimize recursive search space
     */
   //todo in parallel? thread safe? .par but..
   def solutions(input: Input): Seq[PotentialSolution] = {

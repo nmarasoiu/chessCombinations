@@ -19,7 +19,7 @@ package object chess {
       Input(table, toStream(piecesCount), positionsFor(table))
 
     def positionsFor(table: Table): Positions = {
-        //todo use BitSet.range
+        //todo try BitSet.range
       def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
       toSet(for (x <- 0 until table.horizontal;
                  y <- 0 until table.vertical;
@@ -27,7 +27,7 @@ package object chess {
     }
 
     def toStream(piecesCount: Map[Piece, Int]): Stream[Piece] = {
-      for (piece <- piecesCount.keys.toStream; _ <- 1 to piecesCount(piece)) yield piece
+      for (piece <- piecesCount.keys.toList.sorted.toStream; _ <- 1 to piecesCount(piece)) yield piece
     }
   }
 

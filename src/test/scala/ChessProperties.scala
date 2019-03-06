@@ -9,7 +9,6 @@ import org.scalacheck.ScalacheckShapeless._
 
 object ChessProperties extends Properties("GenerationCore") {
   type Board = Set[(Piece, (Int, Int))]
-//  implicitly[Arbitrary[Input]]
 
   def rotations(table: Table, solution: Board): Set[Board] =
     Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toSet
@@ -48,38 +47,36 @@ object ChessProperties extends Properties("GenerationCore") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     val size = solutions(input).size
     val t1 = clock.instant()
-    println(size + " computed in " + Duration.between(t0, t1))
+    println(size + " computed in " + Duration.between(t0, t1) + " -> " + size + " solutions found")
     size > 0
   }
   }
-    /*
-      property("solutions") = forAll { input: Input => {
-        val size = GenerationCore.solutions(input).size
-        assert(size >= 0)
-        size >= 0
-      }
-      }*/
-    private def areResultingBoardsTheExpectedOnes
-    (input: Input, expectedBoards: Set[Board]): Boolean
-    =
-    {
-      val solutions = GenerationCore.solutions(input)
-      val obtainedSolutions: Set[Board] = solutions.map((potentialSolution: PotentialSolution) =>
-        potentialSolution.solution.map {
-          case PiecePosition(piece: Piece, xy) => (piece, fromPositionInt(xy))
-        }).toSet
-      val allExpectedBoards: Set[Board] =
-        expectedBoards.flatMap(board => rotations(input.table, board))
-
-      def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
-
-      //    println("obtained " + obtainedSolutions.size)
-      //    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
-      //    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
-      //    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
-          println("obtained " + obtainedSolutions.size)
-      obtainedSolutions.size == obtainedSolutions.size &&
-        obtainedSolutions == allExpectedBoards
+  /*
+    property("solutions") = forAll { input: Input => {
+      val size = GenerationCore.solutions(input).size
+      assert(size >= 0)
+      size >= 0
     }
+    }*/
 
+  private def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]): Boolean = {
+    val solutions = GenerationCore.solutions(input)
+    val obtainedSolutions: Set[Board] = solutions.map((potentialSolution: PotentialSolution) =>
+      potentialSolution.solution.map {
+        case PiecePosition(piece: Piece, xy) => (piece, fromPositionInt(xy))
+      }).toSet
+    val allExpectedBoards: Set[Board] =
+      expectedBoards.flatMap(board => rotations(input.table, board))
+
+    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
+
+    //    println("obtained " + obtainedSolutions.size)
+    //    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
+    //    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
+    //    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
+    println("obtained " + obtainedSolutions.size)
+    obtainedSolutions.size == obtainedSolutions.size &&
+      obtainedSolutions == allExpectedBoards
   }
+
+}
