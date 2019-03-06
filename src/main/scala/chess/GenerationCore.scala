@@ -1,26 +1,22 @@
 package chess
 
-import java.util.concurrent.Executors
-
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 object GenerationCore {
   /**
-    * todo:
+    * todos:
     * - error management on the async
-    * in parallel: course grained, split the table, do .par on some collections, careful on granularity
-    * scala test, add tests
-    * refactor into a single for and get rid of flatten?
-    * refactoring, beautiful well organized code
+    * scala test (replacing or in addition to scalascheck), add edge-case tests
+    * refactor into a single for and get rid of flatten: is this possible?
+    * more refactoring, beautiful well organized code; document the tradeoffs
     */
   def solutions(input: Input): Seq[PotentialSolution] = {
     Await.result(_solutions(input)(Set())(Map().withDefaultValue(0)), Duration.Inf)
       .filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private val maxParallelExecutions: Position = 2 * Runtime.getRuntime.availableProcessors()
-  private implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(maxParallelExecutions))
+  private implicit val ec = ExecutionContext.global
 
   private def _solutions(input: Input)(picksSoFar: Set[Position])(minPositionByPiece: Map[Piece, Position]): Future[Seq[PotentialSolution]] = {
     val Input(table, pieces: Seq[Piece], positions: Positions) = input
@@ -60,7 +56,6 @@ object GenerationCore {
       } else {
         eventualSolutionsSupplier.apply()
       }
-
     }
   }
 }
