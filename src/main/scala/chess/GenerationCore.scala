@@ -3,16 +3,10 @@ package chess
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
-/**
-  * I still have two major things to do, which I am doing now, and I will send them as soon as I can:
-  * - remove permutations & rotations! impose an order on the piecePostion list of the solution, to only search in that order; was: to figure out a way to not recompute solutions multiple times (which will improve orders of magnitude)
-  * (ideas: caching, dynamic programming, also for each solution there are other 3 solutions which just rotate the table when square)
-  * - to allow for multi-core / hyper-threaded execution with coarse-grained "tasks" (also improve performance )
-  */
 object GenerationCore {
   /**
     * todo:
-    * check why we compute duplicates! try caching or dynamic programming because we recompute solutions too much
+    * - remove OOM
     * in parallel: course grained, split the table, do .par on some collections, careful on granularity
     * scala test, add tests
     * refactor into a single for and get rid of flatten?
