@@ -3,7 +3,6 @@ package chess
 import enumeratum.{Enum, EnumEntry}
 
 import scala.collection.immutable
-import scala.collection.immutable.BitSet
 import scala.math.abs
 
 sealed abstract class Piece(val order: Int,
@@ -51,14 +50,14 @@ object Piece extends Enum[Piece] {
     a => Rook.attackPositions(a) ++ Bishop.attackPositions(a)) {
     override val incompatiblePositions: Function[(Position, Table), Positions] = attackPositions
 
-    override def takes(piecePosition: (Int,Int), otherPosition: (Int,Int)): Boolean =
+    override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
 
   //nebun
   case object Bishop extends Piece(3, {
     case (xy, Table(h, v)) =>
-      val (x,y)=fromPositionInt(xy)
+      val (x, y) = fromPositionInt(xy)
       toSet(for (hOffset <- (1 - h until h).toStream if 0 <= x + hOffset && 0 <= y + hOffset)
         yield toPositionInt(x + hOffset, y + hOffset))
   }) {
@@ -79,7 +78,7 @@ object Piece extends Enum[Piece] {
   //cal
   case object Knight extends Piece(0, {
     case (xy, Table(h, v)) =>
-      val (x,y)=fromPositionInt(xy)
+      val (x, y) = fromPositionInt(xy)
       toSet(for ((hOffset, vOffset) <- horizontalVerticalOffsets if x + hOffset >= 0 && 0 <= y + vOffset)
         yield toPositionInt(x + hOffset, y + vOffset))
   }) {
@@ -96,14 +95,14 @@ object Piece extends Enum[Piece] {
   //tura
   case object Rook extends Piece(4, {
     case (xy, Table(h, v)) =>
-      val (x,y)=fromPositionInt(xy)
-      toSet(Stream(
-        for (hOffset <- (0 until h).toStream) yield toPositionInt(hOffset, y),
-        for (vOffset <- (0 until v).toStream) yield toPositionInt(x, vOffset)).flatten)
+      val (x, y) = fromPositionInt(xy)
+      toSet((for (hOffset <- 0 until h) yield toPositionInt(hOffset, y)) ++
+        (for (vOffset <- 0 until v) yield toPositionInt(x, vOffset)))
   }) {
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) => x == x2 || y == y2
       }
   }
+
 }
