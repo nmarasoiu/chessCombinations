@@ -4,8 +4,6 @@ import java.time.{Clock, Duration}
 
 import chess.Piece.{Bishop, King, Knight, Queen}
 
-import scala.collection.{SortedSet, immutable}
-
 object GenerationCore {
   /**
     * todo:
@@ -20,19 +18,19 @@ object GenerationCore {
     * too many sets? preallocate?
     */
   //todo in parallel? thread safe? .par but..
-  def solutions(input: Input): Stream[PotentialSolution] = {
+  def solutions(input: Input): Set[PotentialSolution] = {
     _solutions(input, Set()).filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private def _solutions(input: Input, picksSoFar: Set[Position]): Stream[PotentialSolution] = {
-    val Input(table, pieces: Seq[Piece], positions: SortedSet[PositionInt]) = input
+  private def _solutions(input: Input, picksSoFar: Set[Position]): Set[PotentialSolution] = {
+    val Input(table, pieces: Seq[Piece], positions: Set[PositionInt]) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Stream()
+      Set()
     } else {
       val piece: Piece = pieces.head
       val remainingPieces: Seq[Piece] = pieces.tail
-      val r: Stream[Stream[PotentialSolution]] =
-        for (positionInt: PositionInt <- positions.toStream;
+      val r =
+        for (positionInt: PositionInt <- positions;
              position = Position.fromPositionInt(positionInt);
              incompatiblePositions = piece.incompatiblePositions(position, table).map(_.toPositionInt);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
@@ -41,10 +39,10 @@ object GenerationCore {
             val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {
               val potentialSolution = PotentialSolution(Set(piecePosition))
-              Stream(potentialSolution)
+              Set(potentialSolution)
             } else {
               val remainingInput = Input(table, remainingPieces, remainingPositions)
-              val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
+              val remainingPotentialSolutions: Set[PotentialSolution] = _solutions(remainingInput, picksSoFar + position)
 
               remainingPotentialSolutions.map(remainingPotentialSolution => {
                 PotentialSolution(remainingPotentialSolution.solution + piecePosition)
