@@ -27,11 +27,10 @@ object GenerationCore {
       val piece: Piece = pieces.head
       val remainingPieces: Seq[Piece] = pieces.tail
       val r =
-        for (positionInt: PositionInt <- positions;
-             position = Position.fromPositionInt(positionInt);
-             incompatiblePositions: Seq[PositionInt] = piece.incompatiblePositions(position, table).map(_.toPositionInt);
+        for (position: PositionInt <- positions;
+             incompatiblePositions = piece.incompatiblePositions(position, table);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-             remainingPositions = positions -- Iterable.concat(Seq(positionInt), incompatiblePositions))
+             remainingPositions = positions -- Iterable.concat(Seq(position), incompatiblePositions))
           yield {
             val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {

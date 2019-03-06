@@ -66,7 +66,7 @@ object ChessProperties extends Properties("GenerationCore") {
       val solutions = GenerationCore.solutions(input)
       val obtainedSolutions: Set[Board] = solutions.map((potentialSolution: PotentialSolution) =>
         potentialSolution.solution.map {
-          case PiecePosition(piece: Piece, Position(x, y)) => (piece, (x, y))
+          case PiecePosition(piece: Piece, xy) => (piece, fromPositionInt(xy))
         }).toSet
       val allExpectedBoards: Set[Board] =
         expectedBoards.flatMap(board => rotations(input.table, board))
@@ -77,7 +77,7 @@ object ChessProperties extends Properties("GenerationCore") {
       //    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedSolutions)))
       //    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedSolutions))
       //    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedSolutions -- allExpectedBoards))
-      //    println("obtained " + obtainedSolutions.size)
+          println("obtained " + obtainedSolutions.size)
       obtainedSolutions.size == obtainedSolutions.size &&
         obtainedSolutions == allExpectedBoards
     }
