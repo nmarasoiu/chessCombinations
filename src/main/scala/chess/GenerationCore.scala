@@ -1,13 +1,9 @@
 package chess
 
-import java.time.{Clock, Duration}
-
-import chess.Piece.{Bishop, King, Knight, Queen}
-
 object GenerationCore {
   /**
     * todo:
-    * replace Set[Position] with BitSet everywhere to make the set-set faster, in extreme implies refactoring Piece logic
+    * replace Set[Position] with BitSet everywhere to make the set construction faster & set-set O(1), i.e. refactoring Piece logic to PieceSet a type alias of BitSet (immutable?)
     * remove/replace more streams: e.g. replace Stream[Piece] with Map[Piece,Int]
     * in parallel: course grained, split the table, do .par on some collections, careful on granularity
     * scala test, add tests

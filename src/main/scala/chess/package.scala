@@ -20,6 +20,7 @@ package object chess {
         for (x <- 0 until table.horizontal;
              y <- 0 until table.vertical;
              aggNum: PositionInt = Position(x, y).toPositionInt) yield aggNum
+      //this is not efficient: a new bit set generated every time; mutable bitset better; or look for BitSet(Iterable)
       val emptySet: Set[Int] = BitSet.empty.asInstanceOf[Set[Int]]
       positions.foldLeft(emptySet)((set: Set[Int], aggNum: Int) => set + aggNum)
     }
