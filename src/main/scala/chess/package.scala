@@ -6,11 +6,10 @@ package object chess {
 
   case class PiecePosition(piece: Piece, position: Position)
 
-  type PieceInt = Int //Piece ordinal
   type PositionInt = Int // high+little endian xy
 
   case class Input(table: Table,
-                   pieces: Seq[PieceInt], //with duplicates
+                   pieces: Seq[Piece], //with duplicates
                    positions: SortedSet[Int])
 
   object Input {
@@ -27,8 +26,8 @@ package object chess {
       positions.foldLeft(emptySet)((set: SortedSet[Int], aggNum: Int) => set + aggNum)
     }
 
-    def toStream(piecesCount: Map[Piece, Int]): Stream[PieceInt] = {
-      for (piece <- piecesCount.keys.toStream; _ <- 1 to piecesCount(piece)) yield piece.order
+    def toStream(piecesCount: Map[Piece, Int]): Stream[Piece] = {
+      for (piece <- piecesCount.keys.toStream; _ <- 1 to piecesCount(piece)) yield piece
     }
   }
 

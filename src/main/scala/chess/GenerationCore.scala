@@ -27,12 +27,12 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input, picksSoFar: Set[Position]): Stream[PotentialSolution] = {
-    val Input(table, pieces: Seq[PieceInt], positions: SortedSet[PositionInt]) = input
+    val Input(table, pieces: Seq[Piece], positions: SortedSet[PositionInt]) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
       Stream()
     } else {
-      val piece: Piece = Piece.values(pieces.head)
-      val remainingPieces: Seq[PieceInt] = pieces.tail
+      val piece: Piece = pieces.head
+      val remainingPieces: Seq[Piece] = pieces.tail
       val r: Stream[Stream[PotentialSolution]] =
         for (positionInt: PositionInt <- positions.toStream;
              position = Position.fromPositionInt(positionInt);
