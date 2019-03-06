@@ -15,27 +15,26 @@ object GenerationCore {
     * too many sets? preallocate?
     */
   //todo in parallel? thread safe? .par but..
-  def solutions(input: Input): Set[PotentialSolution] = {
+  def solutions(input: Input): Seq[PotentialSolution] = {
     _solutions(input, Set()).filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  private def _solutions(input: Input, picksSoFar: Set[Position]): Set[PotentialSolution] = {
+  private def _solutions(input: Input, picksSoFar: Set[Position]): Seq[PotentialSolution] = {
     val Input(table, pieces: Seq[Piece], positions: Set[PositionInt]) = input
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Set()
+      Seq()
     } else {
       val piece: Piece = pieces.head
       val remainingPieces: Seq[Piece] = pieces.tail
-      val r =
-        for (position: PositionInt <- positions;
+      val r: Seq[Iterable[PotentialSolution]] =
+        for (position: PositionInt <- positions.toSeq;
              incompatiblePositions = piece.incompatiblePositions(position, table);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
              remainingPositions = positions - position -- incompatiblePositions)
           yield {
             val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {
-              val potentialSolution = PotentialSolution(Set(piecePosition))
-              Set(potentialSolution)
+              Set(PotentialSolution(Set(piecePosition)))
             } else {
               val remainingInput = Input(table, remainingPieces, remainingPositions)
               val remainingPotentialSolutions = _solutions(remainingInput, picksSoFar + position)
