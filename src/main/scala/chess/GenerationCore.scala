@@ -5,11 +5,10 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 object GenerationCore {
   /**
-    * todos:
-    * - error management on the async
+    * todo:
+    * error management on the async
     * scala test (replacing or in addition to scalascheck), add edge-case tests
-    * refactor into a single for and get rid of flatten: is this possible?
-    * more refactoring, beautiful well organized code; document the tradeoffs
+    * more refactoring, beautiful well organized code; document the trade-offs
     */
   def solutions(input: Input): Seq[PotentialSolution] = {
     Await.result(_solutions(input)(Set())(Map().withDefaultValue(0)), Duration.Inf)
