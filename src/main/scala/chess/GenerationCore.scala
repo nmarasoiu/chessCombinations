@@ -30,7 +30,7 @@ object GenerationCore {
         for (position: PositionInt <- positions;
              incompatiblePositions = piece.incompatiblePositions(position, table);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
-             remainingPositions = positions -- Iterable.concat(Seq(position), incompatiblePositions))
+             remainingPositions = positions - position -- incompatiblePositions)
           yield {
             val piecePosition = PiecePosition(piece, position)
             if (remainingPieces.isEmpty) {
