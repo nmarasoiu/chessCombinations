@@ -4,7 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.Try
 
 object GenerationCore {
   /**
@@ -25,7 +24,7 @@ object GenerationCore {
   }
 
   val parallelExecutions = new AtomicInteger()
-  val maxParallelExecutions = Runtime.getRuntime.availableProcessors()
+  val maxParallelExecutions = 1.5 * Runtime.getRuntime.availableProcessors()
 
   private def _solutions(input: Input)(picksSoFar: Set[Position])(minPositionByPiece: Map[Piece, Position]): Future[Seq[PotentialSolution]] = {
     val Input(table, pieces: Seq[Piece], positions: Positions) = input
@@ -61,7 +60,10 @@ object GenerationCore {
       val minPositionForPiece = minPositionByPiece(piece)
       val remainingPieces: Seq[Piece] = pieces.tail
       val eventualSolutionsSupplier: () => Future[Seq[PotentialSolution]] = () => __solutions(piece, minPositionForPiece, remainingPieces)
-      if (remainingPieces.size > 1 && positions.size > 9 && parallelExecutions.incrementAndGet() <= maxParallelExecutions) {
+      if (remainingPieces.size > 1
+        && remainingPieces.size * positions.size > 9
+        && parallelExecutions.incrementAndGet() <= maxParallelExecutions) {
+
         val future = Future(eventualSolutionsSupplier.apply()).flatten
         future.onComplete(_ => parallelExecutions.decrementAndGet())
         future
