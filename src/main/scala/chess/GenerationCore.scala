@@ -28,7 +28,7 @@ object GenerationCore {
       val remainingPieces: Seq[Piece] = pieces.tail
       val r: Seq[Iterable[PotentialSolution]] =
         for (position: PositionInt <- positions.toSeq;
-             incompatiblePositions = piece.incompatiblePositions(position, table);
+             incompatiblePositions = piece.attackPositions(position, table);
              _ <- Seq(1) if !picksSoFar.exists(otherPosition => piece.takes(position, otherPosition));
              remainingPositions = positions - position &~ incompatiblePositions)
           yield {
