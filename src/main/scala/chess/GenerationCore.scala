@@ -21,8 +21,7 @@ object GenerationCore {
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
     val observable = _solutions(input)(Set())(Map().withDefaultValue(0))
-    import monixImplicits.global
-    observable.foreach(println)
+//    {import monixImplicits.global;    observable.foreach(println)}
     observable
   }
 
