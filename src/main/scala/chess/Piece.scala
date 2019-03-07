@@ -7,38 +7,34 @@ import scala.collection.{immutable, mutable}
 import scala.math.abs
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
+  final def attackPositions(position: Position, table: Table): Positions = attackPositions(position.x, position.y)(table)
+
+  final def takes(piecePosition: Position, otherPosition: Position): Boolean = takes(piecePosition.pair, otherPosition.pair)
+
+  def attackPositions(x: Int, y: Int)(table: Table): Positions
+
   def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean
 
-  def attackPositions(position: Position, table: Table): Positions
-
-  def takes(piecePosition: Position, otherPosition: Position): Boolean = {
-    val xy1 = fromPosition(piecePosition)
-    val xy2 = fromPosition(otherPosition)
-    takes(xy1, xy2)
-  }
-
-  def compare(that: Piece): Int = this.order - that.order
+  final def compare(that: Piece): Int = this.order - that.order
 }
 
 object Piece extends Enum[Piece] {
   val values: immutable.IndexedSeq[Piece] = findValues
 
   case object Queen extends Piece(0) {
-    override def attackPositions(a: Position, table: Table): Positions = {
-      Rook.attackPositions(a, table) | Bishop.attackPositions(a, table)
-    }
+    override def attackPositions(x: Int, y: Int)(table: Table): Positions =
+      Rook.attackPositions(x, y)(table) | Bishop.attackPositions(x, y)(table)
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
 
   case object Bishop extends Piece(1) {
-    override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPosition(xy)
+    override def attackPositions(x: Int, y: Int)(table: Table): Positions = {
       build({ set =>
         val h = table.horizontal
-        for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset)) {
-          set += toPosition(x + hOffset, y + hOffset)
+        for (hOffset <- 1 - h until h if fittingXY(table)(Position(x + hOffset, y + hOffset))) {
+          set += Position(x + hOffset, y + hOffset).xy
         }
       })
     }
@@ -51,14 +47,13 @@ object Piece extends Enum[Piece] {
   }
 
   case object Rook extends Piece(2) {
-    override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPosition(xy)
+    override def attackPositions(x: Int, y: Int)(table: Table): Positions = {
       build({ set =>
         for (hOffset <- 0 until table.horizontal) {
-          set += toPosition(hOffset, y)
+          set += Position(hOffset, y).xy
         }
         for (vOffset <- 0 until table.vertical) {
-          set += toPosition(x, vOffset)
+          set += Position(x, vOffset).xy
         }
       })
     }
@@ -77,11 +72,10 @@ object Piece extends Enum[Piece] {
              (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
         yield (hOffset, vOffset)
 
-    override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPosition(xy)
+    override def attackPositions(x: Int, y: Int)(table: Table): Positions = {
       build({ set =>
-        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(x + hOffset, y + vOffset)) {
-          set += toPosition(x + hOffset, y + vOffset)
+        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(Position(x + hOffset, y + vOffset))) {
+          set += Position(x + hOffset, y + vOffset).xy
         }
       })
     }
@@ -97,12 +91,11 @@ object Piece extends Enum[Piece] {
   case object King extends Piece(4) {
     val minusOneToOne = Array(-1, 0, 1)
 
-    override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPosition(xy)
+    override def attackPositions(x: Int, y: Int)(table: Table): Positions = {
       build({ set =>
         for (hOffset <- minusOneToOne if fittingX(table)(x + hOffset);
              vOffset <- minusOneToOne if fittingY(table)(y + vOffset)) {
-          set += toPosition(x + hOffset, y + vOffset)
+          set += Position(x + hOffset, y + vOffset).xy
         }
       })
     }
@@ -118,7 +111,7 @@ object Piece extends Enum[Piece] {
 
   def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
 
-  def fittingXY(table: Table)(x: Int, y: Int): Boolean = fittingX(table)(x) && fittingY(table)(y)
+  def fittingXY(table: Table)(position: Position): Boolean = fittingX(table)(position.x) && fittingY(table)(position.y)
 
   def build(adder: mutable.BitSet => Unit): BitSet = {
     val set = mutable.BitSet.empty

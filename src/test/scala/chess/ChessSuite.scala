@@ -32,7 +32,7 @@ class ChessSuite extends FunSuite {
     val obtainedBoards: Iterable[Board] = block(GenerationCore.solutions(input), checkDuplication = true)
       .map((potentialSolution: PotentialSolution) =>
         potentialSolution.solution.map {
-          case PiecePosition(piece: Piece, xy) => (piece, fromPosition(xy))
+          case PiecePosition(piece: Piece, xy: Position) => (piece, xy.pair)
         })
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(input.table, board))
 

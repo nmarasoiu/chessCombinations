@@ -32,7 +32,7 @@ object MonixBlockingUtil {
       println(solution)
     })
     if(checkDuplication) {
-      println("Checking for duplicates ")
+      println("Checking for duplicates..")
       assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
     }
     solutions

@@ -7,6 +7,7 @@ import scala.collection.immutable.Map
 import scala.concurrent.Future
 
 object GenerationCore {
+  val devMode:Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
   /**
     * todo:
     * i have about 20% GC, to investigate the causes of thrashing
@@ -18,8 +19,11 @@ object GenerationCore {
     * done?: use async testing? or apply this in tests?: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext (currently blocking in tests seems in an ok way)
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
-    val observable = _solutions(input)(Set())(Map().withDefaultValue(0))
-    //    {import monixImplicits.global;    observable.foreach(println)}
+    val observable = _solutions(input)(Set())(Map[Piece, Position]().withDefaultValue(Position.zero))
+    if(devMode) {
+      import monixImplicits.global
+      observable.foreach(println)
+    }
     observable
   }
 
@@ -28,11 +32,12 @@ object GenerationCore {
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       val observables: Iterable[Observable[PotentialSolution]] =
-        for (position: Position <- positions.toIndexedSeq if position >= minPositionForPiece && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
+        for (position: Position <- positions.toIndexedSeq.map(Position(_)) if position.xy >= minPositionForPiece.xy
+          && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.attackPositions(position, table);
-             remainingPositions: Positions = positions - position &~ incompatiblePositions;
+             remainingPositions: Positions = positions - position.xy &~ incompatiblePositions;
              remainingInput: Input = Input(table, remainingPieces, remainingPositions);
-             remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, position + 1);
+             remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, Position(position.xy + 1));
              newPicks: Set[PiecePosition] = picksSoFar + PiecePosition(piece, position))
           yield _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
       Observable.fromIterable(observables).flatten
