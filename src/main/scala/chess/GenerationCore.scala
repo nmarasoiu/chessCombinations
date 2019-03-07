@@ -7,6 +7,7 @@ object GenerationCore {
   /**
     * todo:
     * error management on the async
+    * introduce reactive streams to replace Future+Seq and free up memory
     * scala test (replacing or in addition to scalascheck), add edge-case tests
     * more refactoring, beautiful well organized code; document the trade-offs
     * collect warnings with codestyle, pmd, findbug
