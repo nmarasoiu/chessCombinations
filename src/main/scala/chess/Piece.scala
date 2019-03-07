@@ -38,7 +38,7 @@ object Piece extends Enum[Piece] {
       val (x, y) = fromPosition(xy)
       build({ set =>
         val h = table.horizontal
-        for (hOffset <- 1 - h until h if 0 <= x + hOffset && 0 <= y + hOffset) {
+        for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset)) {
           set += toPosition(x + hOffset, y + hOffset)
         }
       })
@@ -83,7 +83,7 @@ object Piece extends Enum[Piece] {
     override def attackPositions(xy: Position, table: Table): Positions = {
       val (x, y) = fromPosition(xy)
       build({ set =>
-        for ((hOffset, vOffset) <- horizontalVerticalOffsets if x + hOffset >= 0 && 0 <= y + vOffset) {
+        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(x + hOffset, y + vOffset)) {
           set += toPosition(x + hOffset, y + vOffset)
         }
       })
@@ -98,11 +98,13 @@ object Piece extends Enum[Piece] {
   }
 
   case object King extends Piece(4) {
+    val minusOneToOne = Array(-1, 0, 1)
+
     override def attackPositions(xy: Position, table: Table): Positions = {
       val (x, y) = fromPosition(xy)
       build({ set =>
-        for (hOffset <- -1 to 1 if x + hOffset >= 0;
-             vOffset <- -1 to 1 if y + vOffset >= 0) {
+        for (hOffset <- minusOneToOne if fittingX(table)(x + hOffset);
+             vOffset <- minusOneToOne if fittingY(table)(y + vOffset)) {
           set += toPosition(x + hOffset, y + vOffset)
         }
       })
@@ -114,6 +116,12 @@ object Piece extends Enum[Piece] {
           abs(x - x2) <= 1 && abs(y - y2) <= 1
       }
   }
+
+  def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
+
+  def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
+
+  def fittingXY(table: Table)(x: Int, y: Int): Boolean = fittingX(table)(x) && fittingY(table)(y)
 
   def build(adder: mutable.BitSet => Unit): BitSet = {
     val set = mutable.BitSet.empty
