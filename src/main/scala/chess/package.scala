@@ -17,12 +17,10 @@ package object chess {
       Input(table, toSeq(piecesCount), positionsFor(table))
 
     def positionsFor(table: Table): Positions = {
-        //todo try BitSet.range
-      def toSet(values: Iterable[Int]): Positions = BitSet.empty ++ values
-
-      toSet(for (x <- 0 until table.horizontal;
-                 y <- 0 until table.vertical;
-                 aggNum: Position = toPosition(x, y)) yield aggNum)
+      val positions = for (x <- 0 until table.horizontal;
+                    y <- 0 until table.vertical;
+                    aggNum: Position = toPosition(x, y)) yield aggNum
+      BitSet(positions: _*)
     }
 
     def toSeq(piecesCount: Map[Piece, Int]): Seq[Piece] = {
