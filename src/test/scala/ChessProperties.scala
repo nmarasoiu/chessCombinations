@@ -1,8 +1,9 @@
-import java.time.{Clock, Duration}
+import java.time.Clock
 
-import chess.GenerationCore.solutions
 import chess.Piece._
 import chess._
+import monix.eval.Task
+import monix.reactive.Observable
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 import org.scalacheck.ScalacheckShapeless._
@@ -18,6 +19,7 @@ object ChessProperties extends Properties("GenerationCore") {
 
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
   }
+
   //todo: asymettric table, 0x0 tables, intro rotations in algo
   //todo: every property executes 100 times; to rewrite with ScalaTest
   property("example1") = forAll { _: Unit => {
@@ -44,10 +46,10 @@ object ChessProperties extends Properties("GenerationCore") {
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    val size = solutions(input).size
+    val size = block(GenerationCore.solutions(input)).size
     val t1 = clock.instant()
-    println(size + " computed in " + Duration.between(t0, t1) + " -> " + size + " solutions found")
-    size > 0
+    println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + size + " solutions found")
+    size > 10 * 1000 * 1000
   }
   }
   /*
@@ -58,8 +60,18 @@ object ChessProperties extends Properties("GenerationCore") {
     }
     }*/
 
+  def block(o: Observable[PotentialSolution]): Iterable[PotentialSolution] = {
+    import monix.execution.Scheduler.Implicits.global
+    import scala.concurrent.Await
+    import scala.concurrent.duration._
+
+    val task = Task.fork(o.toListL)
+    val future = task.runAsync
+    Await.result(future, Duration.Inf)
+  }
+
   private def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]): Boolean = {
-    val solutions: Iterable[PotentialSolution] = GenerationCore.solutions(input)
+    val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
     val obtainedSolutions: Iterable[Board] = solutions.map((potentialSolution: PotentialSolution) =>
       potentialSolution.solution.map {
         case PiecePosition(piece: Piece, xy) => (piece, fromPositionInt(xy))

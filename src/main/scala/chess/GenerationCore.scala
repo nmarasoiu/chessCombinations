@@ -1,13 +1,15 @@
 package chess
 
+
+import monix.reactive.Observable
+
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Future}
 
 object GenerationCore {
-  private implicit val ec = ExecutionContext.global
-
   /**
     * todo:
+    * use async testing or apply this in tests: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext
     * error management on the async
     * introduce reactive streams to replace Future+Seq and free up memory; or Seq[Future[x;
     * can i convert both ways between Future[Seq and Seq[Future ? .sequence is right to left but in reverse don't think it is possible?
@@ -18,23 +20,16 @@ object GenerationCore {
     * collect warnings with codestyle, pmd, findbug
     * check for a healthy way to create an immutable version/copy of the mutable bitset
     */
-  def solutions(input: Input): Iterable[PotentialSolution] = {
-    val eventualSolutions: Future[Iterable[Future[PotentialSolution]]] = _solutions(input)(Set())(Map().withDefaultValue(0))
-    eventualSolutions.foreach(x => println("overall future: " + x))
-    eventualSolutions.foreach(_.foreach(x => println("each future: " + x)))
-    eventualSolutions.foreach(_.foreach(_.foreach(x => println("each solution: " + x))))
-    await(eventualSolutions)
-      .map(s => await(s))
+  def solutions(input: Input): Observable[PotentialSolution] = {
+    _solutions(input)(Set())(Map().withDefaultValue(0))
 //      .filter(sol => sol.solution.size == input.pieces.size)
   }
 
-  def await[T](future: Future[T]): T = Await.result(future, Duration.Inf)
-
-  private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Future[Iterable[Future[PotentialSolution]]] = {
+  private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
     val Input(table, pieces: Seq[Piece], positions: Positions) = input
 
-    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Future[Iterable[Future[PotentialSolution]]] = {
-      val futureSolutions: Iterable[Future[Iterable[Future[PotentialSolution]]]] =
+    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Observable[PotentialSolution] = {
+      val observables: Iterable[Observable[PotentialSolution]] =
         for (position: Position <- positions if position >= minPositionForPiece && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.attackPositions(position, table);
              remainingPositions: Positions = positions - position &~ incompatiblePositions;
@@ -42,20 +37,21 @@ object GenerationCore {
              remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, position + 1);
              newPicks: Set[PiecePosition] = picksSoFar + PiecePosition(piece, position))
           yield _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
-      Future.successful(Future.sequence(futureSolutions).map(ss => ss.flatten)).flatten
+      Observable.fromIterable(observables).flatten
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Future.successful(Seq(Future.successful(PotentialSolution(picksSoFar))))
+      Observable(PotentialSolution(picksSoFar))
     } else {
       val piece: Piece = pieces.head
       val minPositionForPiece = minPositionByPiece(piece)
       val remainingPieces: Seq[Piece] = pieces.tail
-      lazy val eventualSolutionsSupplier = __solutions(piece, minPositionForPiece, remainingPieces)
+      lazy val eventualSolutions = __solutions(piece, minPositionForPiece, remainingPieces)
       if (remainingPieces.size > 2 && remainingPieces.size * positions.size > 40) {
-        Future(eventualSolutionsSupplier).flatten
+        import monix.execution.Scheduler.Implicits.global
+        Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
       } else {
-        eventualSolutionsSupplier
+        eventualSolutions
       }
     }
   }
