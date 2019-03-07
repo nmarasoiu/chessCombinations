@@ -32,7 +32,6 @@ object Piece extends Enum[Piece] {
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
 
-  //nebun
   case object Bishop extends Piece(1) {
     override def attackPositions(xy: Position, table: Table): Positions = {
       val (x, y) = fromPosition(xy)
@@ -51,7 +50,6 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  //tura
   case object Rook extends Piece(2) {
     override def attackPositions(xy: Position, table: Table): Positions = {
       val (x, y) = fromPosition(xy)
@@ -71,7 +69,6 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  //cal
   case object Knight extends Piece(3) {
     val horizontalVerticalOffsets: Array[(Int, Int)] =
       for ((absHorizontalOffset, absVerticalOffset) <- Array((1, 2), (2, 1));
