@@ -42,10 +42,8 @@ object GenerationCore {
       Observable(PotentialSolution(picksSoFar))
     } else {
       val (piece, pieceCount) = pieces.min
-      println("Picked "+piece +" out of "+pieces.keys)
-      val minPositionForPiece = minPositionByPiece(piece)
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
-      lazy val eventualSolutions = __solutions(piece, minPositionForPiece, remainingPieces)
+      lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
       if (remainingPieces.values.sum > 2) {
         import monixImplicits.global
         Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
