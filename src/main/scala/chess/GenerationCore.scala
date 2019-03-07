@@ -9,8 +9,8 @@ object GenerationCore {
   /**
     * todo:
     * error management on the async
-    * introduce reactive streams to replace Future+Seq and free up memory; or Stream[Future[x;
-    * can i convert both ways between Future[Stream and Stream[Future ? .sequence is right to left but in reverse don't think it is possible?
+    * introduce reactive streams to replace Future+Seq and free up memory; or Seq[Future[x;
+    * can i convert both ways between Future[Seq and Seq[Future ? .sequence is right to left but in reverse don't think it is possible?
     * use async/await
     * print as you go
     * scala test (replacing or in addition to scalascheck), add edge-case tests
@@ -18,24 +18,24 @@ object GenerationCore {
     * collect warnings with codestyle, pmd, findbug
     * check for a healthy way to create an immutable version/copy of the mutable bitset
     */
-  def solutions(input: Input): Seq[PotentialSolution] = {
-    val eventualSolutions: Future[Stream[Future[PotentialSolution]]] = _solutions(input)(Set())(Map().withDefaultValue(0))
+  def solutions(input: Input): Iterable[PotentialSolution] = {
+    val eventualSolutions: Future[Iterable[Future[PotentialSolution]]] = _solutions(input)(Set())(Map().withDefaultValue(0))
     eventualSolutions.foreach(x => println("overall future: " + x))
     eventualSolutions.foreach(_.foreach(x => println("each future: " + x)))
     eventualSolutions.foreach(_.foreach(_.foreach(x => println("each solution: " + x))))
     await(eventualSolutions)
       .map(s => await(s))
-      .filter(sol => sol.solution.size == input.pieces.size)
+//      .filter(sol => sol.solution.size == input.pieces.size)
   }
 
   def await[T](future: Future[T]): T = Await.result(future, Duration.Inf)
 
-  private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Future[Stream[Future[PotentialSolution]]] = {
+  private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Future[Iterable[Future[PotentialSolution]]] = {
     val Input(table, pieces: Seq[Piece], positions: Positions) = input
 
-    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Future[Stream[Future[PotentialSolution]]] = {
-      val futureSolutions: Stream[Future[Stream[Future[PotentialSolution]]]] =
-        for (position: Position <- positions.toStream if position >= minPositionForPiece && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
+    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Future[Iterable[Future[PotentialSolution]]] = {
+      val futureSolutions: Iterable[Future[Iterable[Future[PotentialSolution]]]] =
+        for (position: Position <- positions if position >= minPositionForPiece && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.attackPositions(position, table);
              remainingPositions: Positions = positions - position &~ incompatiblePositions;
              remainingInput: Input = Input(table, remainingPieces, remainingPositions);
@@ -46,7 +46,7 @@ object GenerationCore {
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Future.successful(Stream(Future.successful(PotentialSolution(picksSoFar))))
+      Future.successful(Seq(Future.successful(PotentialSolution(picksSoFar))))
     } else {
       val piece: Piece = pieces.head
       val minPositionForPiece = minPositionByPiece(piece)
