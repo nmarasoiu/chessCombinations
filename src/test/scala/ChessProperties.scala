@@ -51,7 +51,7 @@ object ChessProperties extends Properties("GenerationCore") {
     val size = block(GenerationCore.solutions(input)).size
     val t1 = clock.instant()
     println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + size + " solutions found")
-    size > 10 * 1000 * 1000 && size < 10300200
+    size == 10206726
   }
   }
   /*
