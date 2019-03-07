@@ -19,10 +19,10 @@ object GenerationCore {
     * check for a healthy way to create an immutable version/copy of the mutable bitset
     */
   def solutions(input: Input): Seq[PotentialSolution] = {
-    val eventualSolutions = _solutions(input)(Set())(Map().withDefaultValue(0))
-    eventualSolutions.foreach(println(_))
-    eventualSolutions.foreach(_.foreach(println(_)))
-    eventualSolutions.foreach(_.foreach(_.foreach(println(_))))
+    val eventualSolutions: Future[Stream[Future[PotentialSolution]]] = _solutions(input)(Set())(Map().withDefaultValue(0))
+    eventualSolutions.foreach(x => println("overall future: " + x))
+    eventualSolutions.foreach(_.foreach(x => println("each future: " + x)))
+    eventualSolutions.foreach(_.foreach(_.foreach(x => println("each solution: " + x))))
     await(eventualSolutions)
       .map(s => await(s))
       .filter(sol => sol.solution.size == input.pieces.size)
