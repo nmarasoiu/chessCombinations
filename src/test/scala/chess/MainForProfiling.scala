@@ -15,6 +15,3 @@ object MainForProfiling {
     }
   }
 }
-
-}
-}
