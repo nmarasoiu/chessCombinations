@@ -72,7 +72,7 @@ object Piece extends Enum[Piece] {
   }
 
   //cal
-  case object Knight extends Piece(0) {
+  case object Knight extends Piece(3) {
     val horizontalVerticalOffsets: Array[(Int, Int)] =
       for ((absHorizontalOffset, absVerticalOffset) <- Array((1, 2), (2, 1));
            (hOffset, vOffset) <- Seq(
@@ -97,7 +97,7 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  case object King extends Piece(1) {
+  case object King extends Piece(4) {
     override def attackPositions(xy: Position, table: Table): Positions = {
       val (x, y) = fromPosition(xy)
       build({ set =>

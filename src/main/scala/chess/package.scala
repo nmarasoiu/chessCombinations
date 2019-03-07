@@ -1,19 +1,20 @@
-import scala.collection.immutable.BitSet
+import scala.collection.immutable.{BitSet, SortedMap}
 
 package object chess {
 
   case class PiecePosition(piece: Piece, position: Position)
 
   type Position = Int
-  type Positions = BitSet //too concrete (for performance of bitset ops - could it still be achieved with Set[Int]?, but starting with that,get the performance then go towards Set[Position] and check performance remains
+  type Positions = BitSet //todo this is too concrete? (for performance of bitset ops - could it still be achieved with Set[Int]?, but starting with that,get the performance then go towards Set[Position] and check performance remains
+  type OrderedPiecesWithCount = SortedMap[Piece, Int]
 
   case class Input(table: Table,
-                   pieces: Map[Piece, Int],
+                   pieces: OrderedPiecesWithCount,
                    positions: Positions)
 
   object Input {
 
-    def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
+    def apply(table: Table, piecesCount: OrderedPiecesWithCount): Input =
       Input(table, piecesCount, positionsFor(table))
 
     def positionsFor(table: Table): Positions = {

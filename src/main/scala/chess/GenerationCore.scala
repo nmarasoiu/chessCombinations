@@ -3,12 +3,15 @@ package chess
 import monix.execution.Scheduler.{Implicits => monixImplicits}
 import monix.reactive.Observable
 
+import scala.collection.immutable.SortedMap
 import scala.concurrent.Future
 
 object GenerationCore {
   /**
     * todo:
+    * SortedMap to iterate thru pieces in an order that decreases fast the search space
     * add edge-case tests with zero and negative numbers/dimensions etc
+    * i got 2 different results for the number of the solutions for the 7x7 problem, both a bit over 10M but still different...
     * document the trade-offs between performance / memory / type power (e.g. avoided a Position(Int,Int) case class which also took care of Position Int <-> (Int,Int) conversion via companion object, in favor of  two functions to convert directly without allocating memory..maybe it should be put back for a better model?)
     * collect warnings with codestyle, pmd, findbug, sonar, qr & fix them
     * any explicit error management on the async/Observable ?
@@ -21,9 +24,9 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
-    val Input(table, pieces: Map[Piece, Int], positions: Positions) = input
+    val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
-    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Map[Piece, Int]): Observable[PotentialSolution] = {
+    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       val observables: Iterable[Observable[PotentialSolution]] =
         for (position: Position <- positions.toSeq if position >= minPositionForPiece && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.attackPositions(position, table);

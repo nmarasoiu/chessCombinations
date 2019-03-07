@@ -1,9 +1,10 @@
-import java.time.Clock
+package chess
 
-import MonixBlockingUtil.block
+import chess.MonixBlockingUtil.block
 import chess.Piece._
-import chess._
 import org.scalatest.FunSuite
+
+import scala.collection.immutable.SortedMap
 
 class ChessSuite extends FunSuite {
 
@@ -11,26 +12,22 @@ class ChessSuite extends FunSuite {
 
   test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
-      Input(Table(3, 3), Map[Piece, Int](King -> 2, Rook -> 1)),
+      Input(Table(3, 3), SortedMap(King -> 2, Rook -> 1)),
       Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2)))))
   }
   test("Example 2 should return the 8 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
-      Input(Table(4, 4), Map[Piece, Int](Rook -> 2, Knight -> 4)),
+      Input(Table(4, 4), SortedMap(Rook -> 2, Knight -> 4)),
       Set(
         Set((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
   test("Example 3 should return the ~10M solutions with no duplicates") {
-    val clock = Clock.systemUTC()
-    val t0 = clock.instant()
-    val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
+    val input = Input(Table(7, 7), SortedMap(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
     val obtainedSolutionCount = solutions.size
-    val t1 = clock.instant()
-    println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + obtainedSolutionCount + " solutions found")
     assert(solutions.toArray.distinct.length == obtainedSolutionCount)
-    assert(Set(10086030, 10206726).contains(obtainedSolutionCount))//todo: which of these is correct? i got 10086030 with Map[Piece,Int] and with Seq[Int] 10206726
+    assert(295288 == obtainedSolutionCount)
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
