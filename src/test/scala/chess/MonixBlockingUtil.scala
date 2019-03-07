@@ -11,12 +11,12 @@ import monix.execution.Scheduler.{Implicits => monixImplicits}
 object MonixBlockingUtil {
   //todo this is in fact keeping all the potential solutions in memory; to implement in truly streaming mode, emitting as it goes & letting go of emitted solutions
   //still the current implementation is streaming if the processing e.g. printing the solutions is done in foreach on the observable
-  def block(o: Observable[PotentialSolution]): Iterable[PotentialSolution] = {
+  def block(stream: Observable[PotentialSolution], checkDuplication:Boolean): Iterable[PotentialSolution] = {
     import scala.concurrent.Await
     import scala.concurrent.duration._
     import monixImplicits.global
 
-    val task = Task.fork(o.toListL)
+    val task = Task.fork(stream.toListL)
     val future: CancelableFuture[List[PotentialSolution]] = task.runAsync
 
     val clock = Clock.systemUTC()
@@ -31,9 +31,10 @@ object MonixBlockingUtil {
     Seq(solutions.head,solutions.last).distinct.foreach(solution =>{
       println(solution)
     })
-    println("Checking for duplicates ")
-    assert(solutions.distinct.length == solutions.size)//todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
-
+    if(checkDuplication) {
+      println("Checking for duplicates ")
+      assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
+    }
     solutions
   }
 
