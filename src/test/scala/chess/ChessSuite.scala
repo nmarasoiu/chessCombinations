@@ -25,12 +25,7 @@ class ChessSuite extends FunSuite {
   test("Example 3 should return the ~18M solutions with no duplicates") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
-    val obtainedSolutionCount = solutions.size
-    assert(solutions.nonEmpty)
-    println(solutions.head)
-    println(solutions.last)
-    assert(solutions.toArray.distinct.length == obtainedSolutionCount)
-    assert(17515306 == obtainedSolutionCount)
+    assert(17515306 == solutions.size)
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {

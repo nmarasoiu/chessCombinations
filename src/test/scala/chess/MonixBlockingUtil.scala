@@ -22,12 +22,17 @@ object MonixBlockingUtil {
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val solutions: Iterable[PotentialSolution] = Await.result(future, Duration.Inf)
+    val solutions: IndexedSeq[PotentialSolution] = Await.result(future, Duration.Inf).toIndexedSeq
 
     val t1 = clock.instant()
     println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + solutions.size + " solutions found")
-    // yes size is O(n) not O(1) but the real streaming on printing/processing and/or the memory freeup as elements are emitted+processed and then freed
-    //ok seems we need to go implementing Reactive Publisher and not use toListL, if we want to really stream and have memory collectible for processed elements/solutions/boards
+
+    assert(solutions.nonEmpty)
+    Seq(solutions.head,solutions.last).distinct.foreach(solution =>{
+      println(solution)
+    })
+    assert(solutions.distinct.length == solutions.size)
+
     solutions
   }
 
