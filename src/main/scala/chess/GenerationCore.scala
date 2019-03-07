@@ -8,15 +8,10 @@ import scala.concurrent.Future
 object GenerationCore {
   /**
     * todo:
-    * use bitset in set of positions too
     * use async testing or apply this in tests: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext
     * error management on the async
-    * introduce reactive streams to replace Future+Seq and free up memory; or Seq[Future[x;
-    * can i convert both ways between Future[Seq and Seq[Future ? .sequence is right to left but in reverse don't think it is possible?
-    * use async/await
-    * print as you go
-    * scala test (replacing or in addition to scalascheck), add edge-case tests
-    * more refactoring, beautiful well organized code; document the trade-offs
+    * add edge-case tests
+    * document the trade-offs
     * collect warnings with codestyle, pmd, findbug
     * check for a healthy way to create an immutable version/copy of the mutable bitset
     */
