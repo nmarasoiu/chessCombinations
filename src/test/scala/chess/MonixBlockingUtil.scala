@@ -31,7 +31,8 @@ object MonixBlockingUtil {
     Seq(solutions.head,solutions.last).distinct.foreach(solution =>{
       println(solution)
     })
-    assert(solutions.distinct.length == solutions.size)
+    println("Checking for duplicates ")
+    assert(solutions.distinct.length == solutions.size)//todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
 
     solutions
   }
