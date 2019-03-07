@@ -27,9 +27,9 @@ object GenerationCore {
   }
 
   private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
-    val Input(table, pieces: IndexedSeq[Piece], positions: Positions) = input
+    val Input(table, pieces: Map[Piece, Int], positions: Positions) = input
 
-    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Observable[PotentialSolution] = {
+    def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Map[Piece, Int]): Observable[PotentialSolution] = {
       val observables: Iterable[Observable[PotentialSolution]] =
         for (position: Position <- positions if position >= minPositionForPiece && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.attackPositions(position, table);
@@ -44,11 +44,11 @@ object GenerationCore {
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
       Observable(PotentialSolution(picksSoFar))
     } else {
-      val piece: Piece = pieces.head
+      val (piece, firstPieceCount) = pieces.head
       val minPositionForPiece = minPositionByPiece(piece)
-      val remainingPieces: IndexedSeq[Piece] = pieces.tail
+      val remainingPieces = if (firstPieceCount == 1) pieces - piece else pieces + (piece -> (firstPieceCount - 1))
       lazy val eventualSolutions = __solutions(piece, minPositionForPiece, remainingPieces)
-      if (remainingPieces.size > 2) {
+      if (remainingPieces.values.sum > 2) {
         import monixImplicits.global
         Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
       } else {
