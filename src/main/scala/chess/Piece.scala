@@ -11,8 +11,8 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
   def attackPositions(position: Position, table: Table): Positions
 
   def takes(piecePosition: Position, otherPosition: Position): Boolean = {
-    val xy1 = fromPositionInt(piecePosition)
-    val xy2 = fromPositionInt(otherPosition)
+    val xy1 = fromPosition(piecePosition)
+    val xy2 = fromPosition(otherPosition)
     takes(xy1, xy2)
   }
 
@@ -33,11 +33,11 @@ object Piece extends Enum[Piece] {
   //nebun
   case object Bishop extends Piece(1) {
     override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPositionInt(xy)
+      val (x, y) = fromPosition(xy)
       build({ set =>
         val h = table.horizontal
         for (hOffset <- 1 - h until h if 0 <= x + hOffset && 0 <= y + hOffset) {
-          set += toPositionInt(x + hOffset, y + hOffset)
+          set += toPosition(x + hOffset, y + hOffset)
         }
       })
     }
@@ -51,13 +51,13 @@ object Piece extends Enum[Piece] {
   //tura
   case object Rook extends Piece(2) {
     override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPositionInt(xy)
+      val (x, y) = fromPosition(xy)
       build({ set =>
         for (hOffset <- 0 until table.horizontal) {
-          set += toPositionInt(hOffset, y)
+          set += toPosition(hOffset, y)
         }
         for (vOffset <- 0 until table.vertical) {
-          set += toPositionInt(x, vOffset)
+          set += toPosition(x, vOffset)
         }
       })
     }
@@ -77,10 +77,10 @@ object Piece extends Enum[Piece] {
         yield (hOffset, vOffset)
 
     override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPositionInt(xy)
+      val (x, y) = fromPosition(xy)
       build({ set =>
         for ((hOffset, vOffset) <- horizontalVerticalOffsets if x + hOffset >= 0 && 0 <= y + vOffset) {
-          set += toPositionInt(x + hOffset, y + vOffset)
+          set += toPosition(x + hOffset, y + vOffset)
         }
       })
     }
@@ -95,11 +95,11 @@ object Piece extends Enum[Piece] {
 
   case object King extends Piece(1) {
     override def attackPositions(xy: Position, table: Table): Positions = {
-      val (x, y) = fromPositionInt(xy)
+      val (x, y) = fromPosition(xy)
       build({ set =>
         for (hOffset <- -1 to 1 if x + hOffset >= 0;
              vOffset <- -1 to 1 if y + vOffset >= 0) {
-          set += toPositionInt(x + hOffset, y + vOffset)
+          set += toPosition(x + hOffset, y + vOffset)
         }
       })
     }
@@ -113,8 +113,7 @@ object Piece extends Enum[Piece] {
   def build(adder: mutable.BitSet => Unit): immutable.BitSet = {
     val set = mutable.BitSet.empty
     adder.apply(set)
-    set.clone().toImmutable //todo check this out
+    set.clone().toImmutable //todo to create an immutable (copy) BitSet from a mutable BitSet?
   }
-
 
 }

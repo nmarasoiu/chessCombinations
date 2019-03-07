@@ -2,15 +2,13 @@ import scala.collection.immutable.BitSet
 
 package object chess {
 
-  case class PiecePosition(piece: Piece, position: PositionInt)
+  case class PiecePosition(piece: Piece, position: Position)
 
-  type PositionInt = Int
-  type Position = PositionInt
-  type PieceInt = Int
-  type Positions = BitSet //too concrete, but starting with that,get the performance then go towards Set[PositionInt] and check performance remains
+  type Position = Int
+  type Positions = BitSet //too concrete (for performance of bitset ops - could it still be achieved with Set[Int]?, but starting with that,get the performance then go towards Set[Position] and check performance remains
 
   case class Input(table: Table,
-                   pieces: Seq[Piece], //with duplicates
+                   pieces: Seq[Piece], //with duplicates (to rewrite back to Map to Int
                    positions: Positions)
 
   object Input {
@@ -24,7 +22,7 @@ package object chess {
 
       toSet(for (x <- 0 until table.horizontal;
                  y <- 0 until table.vertical;
-                 aggNum: PositionInt = toPositionInt(x, y)) yield aggNum)
+                 aggNum: Position = toPosition(x, y)) yield aggNum)
     }
 
     def toSeq(piecesCount: Map[Piece, Int]): Seq[Piece] = {
@@ -42,8 +40,8 @@ package object chess {
 
   case class PotentialSolution(solution: Set[PiecePosition])
 
-  def toPositionInt(x: Int, y: Int): PositionInt = x + y * hh
+  def toPosition(x: Int, y: Int): Position = x + y * hh
 
-  def fromPositionInt(xy: PositionInt): (PositionInt, PositionInt) = (xy % hh, xy / hh)
+  def fromPosition(xy: Position): (Position, Position) = (xy % hh, xy / hh)
 
 }

@@ -1,10 +1,8 @@
 package chess
 
-
 import monix.reactive.Observable
-
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Future}
+import scala.concurrent.Future
+import monix.execution.Scheduler.{Implicits => monixImplicits}
 
 object GenerationCore {
   /**
@@ -23,13 +21,13 @@ object GenerationCore {
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
     val observable = _solutions(input)(Set())(Map().withDefaultValue(0))
-    import monix.execution.Scheduler.Implicits.global
+    import monixImplicits.global
     observable.foreach(println)
     observable
   }
 
   private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
-    val Input(table, pieces: Seq[Piece], positions: Positions) = input
+    val Input(table, pieces: IndexedSeq[Piece], positions: Positions) = input
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: Seq[Piece]): Observable[PotentialSolution] = {
       val observables: Iterable[Observable[PotentialSolution]] =
@@ -48,10 +46,10 @@ object GenerationCore {
     } else {
       val piece: Piece = pieces.head
       val minPositionForPiece = minPositionByPiece(piece)
-      val remainingPieces: Seq[Piece] = pieces.tail
+      val remainingPieces: IndexedSeq[Piece] = pieces.tail
       lazy val eventualSolutions = __solutions(piece, minPositionForPiece, remainingPieces)
-      if (remainingPieces.size > 2 && remainingPieces.size * positions.size > 40) {
-        import monix.execution.Scheduler.Implicits.global
+      if (remainingPieces.size > 2) {
+        import monixImplicits.global
         Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
       } else {
         eventualSolutions

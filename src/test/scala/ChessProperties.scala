@@ -7,6 +7,8 @@ import monix.reactive.Observable
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Properties
 import org.scalacheck.ScalacheckShapeless._
+import monix.execution.Scheduler.{Implicits => monixImplicits}
+
 
 object ChessProperties extends Properties("GenerationCore") {
   type Board = Set[(Piece, (Int, Int))]
@@ -61,7 +63,7 @@ object ChessProperties extends Properties("GenerationCore") {
     }*/
 
   def block(o: Observable[PotentialSolution]): Iterable[PotentialSolution] = {
-    import monix.execution.Scheduler.Implicits.global
+    import monixImplicits.global
     import scala.concurrent.Await
     import scala.concurrent.duration._
 
@@ -74,7 +76,7 @@ object ChessProperties extends Properties("GenerationCore") {
     val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
     val obtainedSolutions: Iterable[Board] = solutions.map((potentialSolution: PotentialSolution) =>
       potentialSolution.solution.map {
-        case PiecePosition(piece: Piece, xy) => (piece, fromPositionInt(xy))
+        case PiecePosition(piece: Piece, xy) => (piece, fromPosition(xy))
       })
     val allExpectedBoards: Set[Board] =
       expectedBoards.flatMap(board => rotations(input.table, board))
