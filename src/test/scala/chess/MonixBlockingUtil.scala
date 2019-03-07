@@ -11,7 +11,7 @@ import monix.execution.Scheduler.{Implicits => monixImplicits}
 object MonixBlockingUtil {
   //todo this is in fact keeping all the potential solutions in memory; to implement in truly streaming mode, emitting as it goes & letting go of emitted solutions
   //still the current implementation is streaming if the processing e.g. printing the solutions is done in foreach on the observable
-  def block(stream: Observable[PotentialSolution], checkDuplication:Boolean): Iterable[PotentialSolution] = {
+  def block(stream: Observable[PotentialSolution], checkDuplication:Boolean=false): Iterable[PotentialSolution] = {
     import scala.concurrent.Await
     import scala.concurrent.duration._
     import monixImplicits.global
