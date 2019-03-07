@@ -2,6 +2,7 @@ package chess
 
 import enumeratum.{Enum, EnumEntry}
 
+import scala.collection.immutable.BitSet
 import scala.collection.{immutable, mutable}
 import scala.math.abs
 
@@ -114,10 +115,10 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  def build(adder: mutable.BitSet => Unit): immutable.BitSet = {
+  def build(adder: mutable.BitSet => Unit): BitSet = {
     val set = mutable.BitSet.empty
     adder.apply(set)
-    set.clone().toImmutable //todo to create an immutable (copy) BitSet from a mutable BitSet?
+    BitSet.fromBitMask(set.toBitMask)
   }
 
 }

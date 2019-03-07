@@ -8,12 +8,11 @@ import scala.concurrent.Future
 object GenerationCore {
   /**
     * todo:
-    * use async testing or apply this in tests: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext
-    * error management on the async
-    * add edge-case tests
-    * document the trade-offs
-    * collect warnings with codestyle, pmd, findbug
-    * check for a healthy way to create an immutable version/copy of the mutable bitset
+    * add edge-case tests with zero and negative numbers/dimensions etc
+    * document the trade-offs between performance / memory / type power (e.g. avoided a Position(Int,Int) case class which also took care of Position Int <-> (Int,Int) conversion via companion object, in favor of  two functions to convert directly without allocating memory..maybe it should be put back for a better model?)
+    * collect warnings with codestyle, pmd, findbug, sonar, qr & fix them
+    * any explicit error management on the async/Observable ?
+    * done?: use async testing? or apply this in tests?: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext (currently blocking in tests seems in an ok way)
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
     val observable = _solutions(input)(Set())(Map().withDefaultValue(0))
