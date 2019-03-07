@@ -24,8 +24,9 @@ object Piece extends Enum[Piece] {
 
   case object Queen extends Piece(0) {
     override def attackPositions(a: Position, table: Table): Positions = {
-        Rook.attackPositions(a, table) | Bishop.attackPositions(a, table)
+      Rook.attackPositions(a, table) | Bishop.attackPositions(a, table)
     }
+
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
@@ -41,6 +42,7 @@ object Piece extends Enum[Piece] {
         }
       })
     }
+
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) =>
@@ -61,6 +63,7 @@ object Piece extends Enum[Piece] {
         }
       })
     }
+
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) => x == x2 || y == y2
@@ -103,6 +106,7 @@ object Piece extends Enum[Piece] {
         }
       })
     }
+
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) =>

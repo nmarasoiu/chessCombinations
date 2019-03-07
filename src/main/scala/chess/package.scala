@@ -18,8 +18,8 @@ package object chess {
 
     def positionsFor(table: Table): Positions = {
       val positions = for (x <- 0 until table.horizontal;
-                    y <- 0 until table.vertical;
-                    aggNum: Position = toPosition(x, y)) yield aggNum
+                           y <- 0 until table.vertical;
+                           aggNum: Position = toPosition(x, y)) yield aggNum
       BitSet(positions: _*)
     }
 

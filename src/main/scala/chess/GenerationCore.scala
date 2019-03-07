@@ -1,8 +1,9 @@
 package chess
 
-import monix.reactive.Observable
-import scala.concurrent.Future
 import monix.execution.Scheduler.{Implicits => monixImplicits}
+import monix.reactive.Observable
+
+import scala.concurrent.Future
 
 object GenerationCore {
   /**
@@ -21,7 +22,7 @@ object GenerationCore {
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
     val observable = _solutions(input)(Set())(Map().withDefaultValue(0))
-//    {import monixImplicits.global;    observable.foreach(println)}
+    //    {import monixImplicits.global;    observable.foreach(println)}
     observable
   }
 
