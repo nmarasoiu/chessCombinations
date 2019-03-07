@@ -9,6 +9,7 @@ import scala.concurrent.{Future}
 object GenerationCore {
   /**
     * todo:
+    * use bitset in set of positions too
     * use async testing or apply this in tests: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext
     * error management on the async
     * introduce reactive streams to replace Future+Seq and free up memory; or Seq[Future[x;
@@ -21,8 +22,10 @@ object GenerationCore {
     * check for a healthy way to create an immutable version/copy of the mutable bitset
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
-    _solutions(input)(Set())(Map().withDefaultValue(0))
-//      .filter(sol => sol.solution.size == input.pieces.size)
+    val observable = _solutions(input)(Set())(Map().withDefaultValue(0))
+    import monix.execution.Scheduler.Implicits.global
+    observable.foreach(println)
+    observable
   }
 
   private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
