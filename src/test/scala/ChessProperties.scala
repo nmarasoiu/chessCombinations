@@ -18,7 +18,7 @@ object ChessProperties extends Properties("GenerationCore") {
 
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
   }
-
+/*
   //todo: asymettric table, 0x0 tables, intro rotations in algo
   //todo: every property executes 100 times; to rewrite with ScalaTest
   property("example1") = forAll { _: Unit => {
@@ -39,7 +39,7 @@ object ChessProperties extends Properties("GenerationCore") {
 
     areResultingBoardsTheExpectedOnes(input, expectedBoards)
   }
-  }
+  }*/
   property("example3") = forAll { _: Unit => {
     println("Example3:")
     val clock = Clock.systemUTC()
