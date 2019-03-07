@@ -4,7 +4,7 @@ import chess.MonixBlockingUtil.block
 import chess.Piece._
 import org.scalatest.FunSuite
 
-import scala.collection.immutable.SortedMap
+import scala.collection.immutable.Map
 
 class ChessSuite extends FunSuite {
 
@@ -12,22 +12,25 @@ class ChessSuite extends FunSuite {
 
   test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
-      Input(Table(3, 3), SortedMap(King -> 2, Rook -> 1)),
+      Input(Table(3, 3), Map(King -> 2, Rook -> 1)),
       Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2)))))
   }
   test("Example 2 should return the 8 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
-      Input(Table(4, 4), SortedMap(Rook -> 2, Knight -> 4)),
+      Input(Table(4, 4), Map(Rook -> 2, Knight -> 4)),
       Set(
         Set((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
   test("Example 3 should return the ~300K solutions with no duplicates") {
-    val input = Input(Table(7, 7), SortedMap(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
+    val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
     val obtainedSolutionCount = solutions.size
+    assert(solutions.nonEmpty)
+    println(solutions.head)
+    println(solutions.last)
     assert(solutions.toArray.distinct.length == obtainedSolutionCount)
-    assert(295288 == obtainedSolutionCount)
+    assert(17515306 == obtainedSolutionCount)
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
