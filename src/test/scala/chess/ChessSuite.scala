@@ -24,12 +24,12 @@ class ChessSuite extends FunSuite {
   }
   test("Example 3 should return the ~17.5M solutions, and that there are no duplicates in the returned solutions") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input), checkDuplication = true)
+    val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
     assert(17515306 == solutions.size)
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
-    val obtainedBoards: Iterable[Board] = block(GenerationCore.solutions(input), checkDuplication = true)
+    val obtainedBoards: Iterable[Board] = block(GenerationCore.solutions(input))
       .map((potentialSolution: PotentialSolution) =>
         potentialSolution.solution.map {
           case PiecePosition(piece: Piece, xy: Position) => (piece, xy.pair)
