@@ -7,7 +7,8 @@ import scala.collection.immutable.Map
 import scala.concurrent.Future
 
 object GenerationCore {
-  val devMode:Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
+  val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
+
   /**
     * todo:
     * i have about 20% GC, to investigate the causes of thrashing
@@ -20,7 +21,7 @@ object GenerationCore {
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
     val observable = _solutions(input)(Set())(Map[Piece, Position]().withDefaultValue(Position.zero))
-    if(devMode) {
+    if (devMode) {
       import monixImplicits.global
       observable.foreach(println)
     }
@@ -32,8 +33,9 @@ object GenerationCore {
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       val observables: Iterable[Observable[PotentialSolution]] =
-        for (position: Position <- positions.from(minPositionForPiece.xy).toIndexedSeq.map(Position(_))
-          if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
+        for (positionInt: Int <- positions.toIndexedSeq if minPositionForPiece.xy <= positionInt;
+             position = Position(positionInt);
+             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.incompatiblePositions(position, table);
              remainingPositions: Positions = positions &~ incompatiblePositions;
              remainingInput: Input = Input(table, remainingPieces, remainingPositions);
