@@ -11,7 +11,9 @@ object GenerationCore {
 
   /**
     * todo:
-    * i have about 20% GC, to investigate the causes of thrashing
+    * gc too much - sometimes a sinusoidal, while for other ones flat between 9% - 21%
+        * check parallelism / granularity of tasks: remainingPieces>2 may be too small for some configs & thrashing is too much, gc spiking
+        * i have about 20% GC, to investigate the causes of thrashing
     * add edge-case tests with zero and negative numbers/dimensions etc
     * i got 2 different results for the number of the solutions for the 7x7 problem, both a bit over 10M but still different...
     * document the trade-offs between performance / memory / type power (e.g. avoided a Position(Int,Int) case class which also took care of Position Int <-> (Int,Int) conversion via companion object, in favor of  two functions to convert directly without allocating memory..maybe it should be put back for a better model?)
