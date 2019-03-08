@@ -89,14 +89,15 @@ object Piece extends Enum[Piece] {
   }
 
   case object King extends Piece(4) {
-    val minusOneToOne = Array(-1, 0, 1)
 
     override def attackPositions(x: Int, y: Int)(table: Table): Positions = {
-      build({ set =>
-        for (hOffset <- minusOneToOne if fittingX(table)(x + hOffset);
-             vOffset <- minusOneToOne if fittingY(table)(y + vOffset)) {
-          set += Position(x + hOffset, y + vOffset).xy
+      build({ set => {
+        val xs: immutable.IndexedSeq[Int] = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
+        val ys: immutable.IndexedSeq[Int] = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
+        for (x <- xs; y <- ys) {
+          set += Position(x, y).xy
         }
+      }
       })
     }
 
@@ -107,13 +108,17 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
+  @inline
+  final def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
 
-  def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
+  @inline
+  final def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
 
-  def fittingXY(table: Table)(position: Position): Boolean = fittingX(table)(position.x) && fittingY(table)(position.y)
+  @inline
+  final def fittingXY(table: Table)(position: Position): Boolean = fittingX(table)(position.x) && fittingY(table)(position.y)
 
-  def build(adder: mutable.BitSet => Unit): BitSet = {
+  @inline
+  final def build(adder: mutable.BitSet => Unit): BitSet = {
     val set = mutable.BitSet.empty
     adder.apply(set)
     BitSet.fromBitMask(set.toBitMask)
