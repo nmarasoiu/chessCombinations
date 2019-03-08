@@ -32,7 +32,7 @@ object GenerationCore {
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       val observables: Iterable[Observable[PotentialSolution]] =
-        for (position: Position <- positions.iteratorFrom(minPositionForPiece.xy).toIndexedSeq.map(Position(_))
+        for (position: Position <- positions.from(minPositionForPiece.xy).toIndexedSeq.map(Position(_))
           if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions: Positions = piece.incompatiblePositions(position, table);
              remainingPositions: Positions = positions &~ incompatiblePositions;
