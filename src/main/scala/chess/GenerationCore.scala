@@ -52,7 +52,7 @@ object GenerationCore {
       val (piece, pieceCount) = pieces.min
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
       lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
-      if (remainingPieces.values.sum > 2) {
+      if (remainingPieces.size >= 2 && remainingPieces.values.sum >= 4) {
         import monixImplicits.global
         Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
       } else {
