@@ -32,17 +32,16 @@ object GenerationCore {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
-      val observables: Iterable[Observable[PotentialSolution]] =
+      Observable.fromIterable(
         for (positionInt: Int <- positions.toIndexedSeq if minPositionForPiece.xy <= positionInt;
-             position = Position(positionInt);
+             position = Position(positionInt)
              if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
-             incompatiblePositions: Positions = piece.incompatiblePositions(position, table);
-             remainingPositions: Positions = positions &~ incompatiblePositions;
-             remainingInput: Input = Input(table, remainingPieces, remainingPositions);
-             remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, Position(position.xy + 1));
-             newPicks: Set[PiecePosition] = picksSoFar + PiecePosition(piece, position))
-          yield _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
-      Observable.fromIterable(observables).flatten
+             incompatiblePositions = piece.incompatiblePositions(position, table);
+             remainingPositions = positions &~ incompatiblePositions;
+             remainingInput = Input(table, remainingPieces, remainingPositions);
+             remainingMinPosByPiece = minPositionByPiece.updated(piece, Position(position.xy + 1));
+             newPicks = picksSoFar + PiecePosition(piece, position))
+          yield _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)).flatten
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
