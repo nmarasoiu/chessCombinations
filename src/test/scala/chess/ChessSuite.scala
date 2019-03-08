@@ -22,7 +22,7 @@ class ChessSuite extends FunSuite {
         Set((Rook, (0, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (2, 2)), (Knight, (1, 3)), (Knight, (3, 3))),
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
-  test("Example 3 should return the ~18M solutions with no duplicates") {
+  test("Example 3 should return the ~17.5M solutions, and that there are no duplicates in the returned solutions") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input), checkDuplication = true)
     assert(17515306 == solutions.size)
