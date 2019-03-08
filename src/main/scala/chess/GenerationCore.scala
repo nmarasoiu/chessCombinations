@@ -35,7 +35,7 @@ object GenerationCore {
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       Observable.fromIterable(
-        for (positionInt: Int <- positions.toIndexedSeq if minPositionForPiece.xy <= positionInt;
+        for (positionInt: Int <- positions/*.from(a)*/.toSeq if minPositionForPiece.xy <= positionInt;
              position = Position(positionInt)
              if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
              incompatiblePositions = piece.incompatiblePositions(position, table);
