@@ -81,6 +81,7 @@ object Piece extends Enum[Piece] {
 
     override def attackPositions(x: Int, y: Int, table: Table): Positions = {
       build({ set =>
+        set += Position(x,y).xy
         for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(Position(x + hOffset, y + vOffset))) {
           set += Position(x + hOffset, y + vOffset).xy
         }
@@ -126,7 +127,7 @@ object Piece extends Enum[Piece] {
 
   @inline
   final def build(adder: mutable.BitSet => Unit): BitSet = {
-    val set = mutable.BitSet.empty
+    val set = mutable.BitSet()
     adder.apply(set)
     BitSet.fromBitMask(set.toBitMask)
   }
