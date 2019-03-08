@@ -11,6 +11,7 @@ object GenerationCore {
 
   /**
     * todo:
+    * taking a minimum, ideally constant amount of memory per level, so that the program can run in decent Xmx e.g. use Iterables not Seq, BitSet not Set etc
     * gc too much - sometimes a sinusoidal, while for other ones flat between 9% - 21%
         * check parallelism / granularity of tasks: remainingPieces>2 may be too small for some configs & thrashing is too much, gc spiking
         * i have about 20% GC, to investigate the causes of thrashing
