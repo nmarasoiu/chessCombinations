@@ -3,8 +3,8 @@ package chess
 import enumeratum.{Enum, EnumEntry}
 import scalaz.Memo
 
+import scala.collection.immutable
 import scala.collection.immutable.BitSet
-import scala.collection.{immutable, mutable}
 import scala.math.abs
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
@@ -47,12 +47,12 @@ object Piece extends Enum[Piece] {
 
   case object Bishop extends Piece(1) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      build({ set =>
-        val h = table.horizontal
-        for (hOffset <- 1 - h until h if fittingXY(table)(Position(x + hOffset, y + hOffset))) {
-          set += Position(x + hOffset, y + hOffset).xy
-        }
-      })
+      val h = table.horizontal
+      val xys: IndexedSeq[Int] =
+        for (hOffset <- 1 - h until h if fittingXY(table)(Position(x + hOffset, y + hOffset)))
+          yield Position(x + hOffset, y + hOffset).xy
+
+      BitSet(xys: _*)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -64,14 +64,13 @@ object Piece extends Enum[Piece] {
 
   case object Rook extends Piece(2) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      build({ set =>
-        for (hOffset <- 0 until table.horizontal) {
-          set += Position(hOffset, y).xy
-        }
-        for (vOffset <- 0 until table.vertical) {
-          set += Position(x, vOffset).xy
-        }
-      })
+      val xs: IndexedSeq[Int] =
+        for (hOffset <- 0 until table.horizontal)
+          yield Position(hOffset, y).xy
+      val ys: IndexedSeq[Int] =
+        for (vOffset <- 0 until table.vertical)
+          yield Position(x, vOffset).xy
+      BitSet(xs ++ ys: _*)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -89,12 +88,10 @@ object Piece extends Enum[Piece] {
         yield (hOffset, vOffset)
 
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      build({ set =>
-        set += Position(x,y).xy
-        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(Position(x + hOffset, y + vOffset))) {
-          set += Position(x + hOffset, y + vOffset).xy
-        }
-      })
+      val xys: IndexedSeq[Int] =
+        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(Position(x + hOffset, y + vOffset)))
+          yield Position(x + hOffset, y + vOffset).xy
+      BitSet(xys ++ Array(Position(x, y).xy): _*)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -108,14 +105,10 @@ object Piece extends Enum[Piece] {
   case object King extends Piece(4) {
 
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      build({ set => {
-        val xs: immutable.IndexedSeq[Int] = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
-        val ys: immutable.IndexedSeq[Int] = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
-        for (x <- xs; y <- ys) {
-          set += Position(x, y).xy
-        }
-      }
-      })
+      val xs: IndexedSeq[Int] = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
+      val ys: IndexedSeq[Int] = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
+      val xys: IndexedSeq[Int] = for (x <- xs; y <- ys) yield Position(x, y).xy
+      BitSet(xys: _*)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -133,12 +126,5 @@ object Piece extends Enum[Piece] {
 
   @inline
   final def fittingXY(table: Table)(position: Position): Boolean = fittingX(table)(position.x) && fittingY(table)(position.y)
-
-  @inline
-  final def build(adder: mutable.BitSet => Unit): BitSet = {
-    val set = mutable.BitSet()
-    adder.apply(set)
-    BitSet.fromBitMask(set.toBitMask)
-  }
 
 }
