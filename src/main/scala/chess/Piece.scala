@@ -10,17 +10,26 @@ import scala.math.abs
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
   final def takes(piecePosition: Position, otherPosition: Position): Boolean = takes(piecePosition.pair, otherPosition.pair)
 
+  /**
+    * Returns true if this Piece, situated at piecePosition, can take out another piece situated at otherPosition
+    */
   def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean
 
-  final def attackPositions(position: Position, table: Table): Positions = attackPositions.apply(position.x, position.y, table)
+  final def incompatiblePositions(position: Position, table: Table): Positions = incompatiblePositions.apply(position.x, position.y, table)
 
   type KIntIntTable = (Int, Int, Table)
-  final val attackPositions: KIntIntTable => Positions =
+  final val incompatiblePositions: KIntIntTable => Positions =
     Memo.immutableHashMapMemo[KIntIntTable, Positions] {
-      case (x: Int, y: Int, t: Table) => attackPositions(x, y, t)
+      case (x: Int, y: Int, t: Table) => incompatiblePositions(x, y, t)
     }
 
-  def attackPositions(x: Int, y: Int, table: Table): Positions
+  /**
+    * @return the BitSet of positions that cannot be filled by other pieces:
+    *         this BitSet of positions includes this piece position itself,
+    *         as well as all the positions on the table which this piece can attack
+    *         and therefore cannot be occupied by other pieces part of this solution
+    */
+  def incompatiblePositions(x: Int, y: Int, table: Table): Positions
 
   final def compare(that: Piece): Int = this.order - that.order
 }
@@ -29,15 +38,15 @@ object Piece extends Enum[Piece] {
   val values: immutable.IndexedSeq[Piece] = findValues
 
   case object Queen extends Piece(0) {
-    override def attackPositions(x: Int, y: Int, table: Table): Positions =
-      Rook.attackPositions(x, y, table) | Bishop.attackPositions(x, y, table)
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions =
+      Rook.incompatiblePositions(x, y, table) | Bishop.incompatiblePositions(x, y, table)
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
 
   case object Bishop extends Piece(1) {
-    override def attackPositions(x: Int, y: Int, table: Table): Positions = {
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       build({ set =>
         val h = table.horizontal
         for (hOffset <- 1 - h until h if fittingXY(table)(Position(x + hOffset, y + hOffset))) {
@@ -54,7 +63,7 @@ object Piece extends Enum[Piece] {
   }
 
   case object Rook extends Piece(2) {
-    override def attackPositions(x: Int, y: Int, table: Table): Positions = {
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       build({ set =>
         for (hOffset <- 0 until table.horizontal) {
           set += Position(hOffset, y).xy
@@ -79,7 +88,7 @@ object Piece extends Enum[Piece] {
              (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
         yield (hOffset, vOffset)
 
-    override def attackPositions(x: Int, y: Int, table: Table): Positions = {
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       build({ set =>
         set += Position(x,y).xy
         for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(Position(x + hOffset, y + vOffset))) {
@@ -98,7 +107,7 @@ object Piece extends Enum[Piece] {
 
   case object King extends Piece(4) {
 
-    override def attackPositions(x: Int, y: Int, table: Table): Positions = {
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       build({ set => {
         val xs: immutable.IndexedSeq[Int] = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
         val ys: immutable.IndexedSeq[Int] = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)

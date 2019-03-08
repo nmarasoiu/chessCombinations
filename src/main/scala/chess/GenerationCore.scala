@@ -34,7 +34,7 @@ object GenerationCore {
       val observables: Iterable[Observable[PotentialSolution]] =
         for (position: Position <- positions.toIndexedSeq.map(Position(_)) if position.xy >= minPositionForPiece.xy
           && !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
-             incompatiblePositions: Positions = piece.attackPositions(position, table);
+             incompatiblePositions: Positions = piece.incompatiblePositions(position, table);
              remainingPositions: Positions = positions &~ incompatiblePositions;
              remainingInput: Input = Input(table, remainingPieces, remainingPositions);
              remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, Position(position.xy + 1));
