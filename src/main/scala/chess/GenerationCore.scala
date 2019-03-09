@@ -9,20 +9,6 @@ import scala.concurrent.Future
 object GenerationCore {
   val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
 
-  /**
-    * todo:
-    * gc thrashing: check out removing Position class, and revert to the functions in Position object converting between (Int,Int) positions and Int positions (for BitSet)
-    * taking a minimum, ideally constant amount of memory per level, so that the program can run in decent Xmx e.g. use Iterables not Seq, BitSet not Set etc
-    * gc too much - sometimes a sinusoidal, while for other ones flat between 9% - 21% - investigate further
-    * check parallelism / granularity of tasks: remainingPieces>2 may be too small for some configs & thrashing is too much, gc spiking
-    * i have about 20% GC, to investigate the causes of thrashing
-    * add edge-case tests with zero and negative numbers/dimensions etc
-    * i got 2 different results for the number of the solutions for the 7x7 problem, both a bit over 10M but still different...
-    * document the trade-offs between performance / memory / type power (e.g. avoided a Position(Int,Int) case class which also took care of Position Int <-> (Int,Int) conversion via companion object, in favor of  two functions to convert directly without allocating memory..maybe it should be put back for a better model?)
-    * collect warnings with codestyle, pmd, findbug, sonar, qr & fix them
-    * any explicit error management on the async/Observable ?
-    * done?: use async testing? or apply this in tests?: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext (currently blocking in tests seems in an ok way)
-    */
   def solutions(input: Input): Observable[PotentialSolution] = {
     val observable = _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))
     if (devMode) {

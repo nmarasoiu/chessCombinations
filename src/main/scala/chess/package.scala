@@ -2,7 +2,7 @@ import scala.collection.immutable.{BitSet, Map}
 
 package object chess {
   type Position = Int
-  type Positions = BitSet //todo this is too concrete? (for performance of bitset ops - could it still be achieved with Set[Int]?, but starting with that,get the performance then go towards Set[Position] and check performance remains
+  type Positions = BitSet
   type OrderedPiecesWithCount = Map[Piece, Int]
 
   case class Input(table: Table,
