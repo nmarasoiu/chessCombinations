@@ -35,17 +35,19 @@ object GenerationCore {
   private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
+    def recursion(piece: Piece, remainingPieces: OrderedPiecesWithCount, position: Position): Observable[PotentialSolution] = {
+      val remainingPositions = positions &~ piece.incompatiblePositions(position)
+      val remainingInput = Input(table, remainingPieces, remainingPositions)
+      val remainingMinPosByPiece = minPositionByPiece.updated(piece, Position(position.xy + 1, table))
+      val newPicks = picksSoFar + PiecePosition(piece, position)
+      _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
+    }
+
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       Observable.fromIterable(
-        for (positionInt: Int <- positions.from(minPositionForPiece.xy).toIterable;
-             position = Position(positionInt,table)
-             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
-             incompatiblePositions = piece.incompatiblePositions(position);
-             remainingPositions = positions &~ incompatiblePositions;
-             remainingInput = Input(table, remainingPieces, remainingPositions);
-             remainingMinPosByPiece = minPositionByPiece.updated(piece, Position(position.xy + 1,table));
-             newPicks = picksSoFar + PiecePosition(piece, position))
-          yield _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)).flatten
+        for (positionInt: Int <- positions.from(minPositionForPiece.xy).toSeq
+             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(Position(positionInt, table), otherPosition) })
+          yield recursion(piece, remainingPieces, Position(positionInt, table))).flatten
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
