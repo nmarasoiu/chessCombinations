@@ -49,8 +49,8 @@ object Piece extends Enum[Piece] {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       val h = table.horizontal
       val xys: IndexedSeq[Int] =
-        for (hOffset <- 1 - h until h if fittingXY(table)(Position(x + hOffset, y + hOffset,table)))
-          yield Position(x + hOffset, y + hOffset,table).xy
+        for (hOffset <- 1 - h until h if fittingXY(Position(x + hOffset, y + hOffset, table)))
+          yield Position(x + hOffset, y + hOffset, table).xy
 
       BitSet(xys: _*)
     }
@@ -66,10 +66,10 @@ object Piece extends Enum[Piece] {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       val xs: IndexedSeq[Int] =
         for (hOffset <- 0 until table.horizontal)
-          yield Position(hOffset, y,table).xy
+          yield Position(hOffset, y, table).xy
       val ys: IndexedSeq[Int] =
         for (vOffset <- 0 until table.vertical)
-          yield Position(x, vOffset,table).xy
+          yield Position(x, vOffset, table).xy
       BitSet(xs ++ ys: _*)
     }
 
@@ -81,7 +81,7 @@ object Piece extends Enum[Piece] {
 
   case object Knight extends Piece(3) {
     val horizontalVerticalOffsets: Array[(Int, Int)] =
-      for ((absHorizontalOffset, absVerticalOffset) <- Array((0,0),(1, 2), (2, 1));
+      for ((absHorizontalOffset, absVerticalOffset) <- Array((0, 0), (1, 2), (2, 1));
            (hOffset, vOffset) <- Set(
              (absHorizontalOffset, absVerticalOffset), (-absHorizontalOffset, absVerticalOffset),
              (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
@@ -89,8 +89,8 @@ object Piece extends Enum[Piece] {
 
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       val xys: Seq[Int] =
-        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(Position(x + hOffset, y + vOffset,table)))
-          yield Position(x + hOffset, y + vOffset,table).xy
+        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(Position(x + hOffset, y + vOffset, table)))
+          yield Position(x + hOffset, y + vOffset, table).xy
       BitSet(xys: _*)
     }
 
@@ -107,7 +107,7 @@ object Piece extends Enum[Piece] {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
       val xs: IndexedSeq[Int] = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
       val ys: IndexedSeq[Int] = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
-      val xys: IndexedSeq[Int] = for (x <- xs; y <- ys) yield Position(x, y,table).xy
+      val xys: IndexedSeq[Int] = for (x <- xs; y <- ys) yield Position(x, y, table).xy
       BitSet(xys: _*)
     }
 
@@ -118,13 +118,8 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  @inline
   final def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
-
-  @inline
   final def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
-
-  @inline
-  final def fittingXY(table: Table)(position: Position): Boolean = fittingX(table)(position.x) && fittingY(table)(position.y)
+  final def fittingXY(position: Position): Boolean = fittingX(position.table)(position.x) && fittingY(position.table)(position.y)
 
 }
