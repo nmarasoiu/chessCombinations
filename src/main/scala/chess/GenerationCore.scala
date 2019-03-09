@@ -11,8 +11,9 @@ object GenerationCore {
 
   /**
     * todo:
+    * gc thrashing: check out removing Position class, and revert to the functions in Position object converting between (Int,Int) positions and Int positions (for BitSet)
     * taking a minimum, ideally constant amount of memory per level, so that the program can run in decent Xmx e.g. use Iterables not Seq, BitSet not Set etc
-    * gc too much - sometimes a sinusoidal, while for other ones flat between 9% - 21%
+    * gc too much - sometimes a sinusoidal, while for other ones flat between 9% - 21% - investigate further
     * check parallelism / granularity of tasks: remainingPieces>2 may be too small for some configs & thrashing is too much, gc spiking
     * i have about 20% GC, to investigate the causes of thrashing
     * add edge-case tests with zero and negative numbers/dimensions etc
