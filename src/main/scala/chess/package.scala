@@ -28,11 +28,11 @@ package object chess {
     override def toString: String = (piece, position).toString
   }
 
-  case class Position(xy:Int,table:Table){
-    val hh = Position.horizontal(table)
-    def x: Int = xy % hh
-    def y: Int = xy / hh
-    def pair: (Int, Int) = (x, y)
+  final case class Position(xy:Int,table:Table){
+    val hh: Int = Position.horizontal(table)
+    @inline def x: Int = xy % hh
+    @inline def y: Int = xy / hh
+    @inline def pair: (Int, Int) = (x, y)
   }
   object Position {
     def apply(x: Int, y: Int, table:Table): Position = Position(x + y * horizontal(table), table)
