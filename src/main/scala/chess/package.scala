@@ -44,7 +44,7 @@ package object chess {
 
   }
 
-  case class PotentialSolution(solution: Set[PiecePosition])
+  case class PotentialSolution(solution: List[PiecePosition])
 
 
 }
