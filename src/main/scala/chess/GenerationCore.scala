@@ -40,7 +40,7 @@ object GenerationCore {
         for (positionInt: Int <- positions.from(minPositionForPiece.xy).toIterable;
              position = Position(positionInt,table)
              if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition) };
-             incompatiblePositions = piece.incompatiblePositions(position, table);
+             incompatiblePositions = piece.incompatiblePositions(position);
              remainingPositions = positions &~ incompatiblePositions;
              remainingInput = Input(table, remainingPieces, remainingPositions);
              remainingMinPosByPiece = minPositionByPiece.updated(piece, Position(position.xy + 1,table));
