@@ -36,7 +36,7 @@ object GenerationCore {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def recursion(piece: Piece, remainingPieces: OrderedPiecesWithCount, position: Position): Observable[PotentialSolution] = {
-      val remainingPositions = positions &~ piece.incompatiblePositions(position,table)
+      val remainingPositions = positions &~ piece.incompatiblePositions(position, table)
       val remainingInput = Input(table, remainingPieces, remainingPositions)
       val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
       val newPicks = picksSoFar + PiecePosition(piece, position)
@@ -46,7 +46,7 @@ object GenerationCore {
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       Observable.fromIterable(
         for (positionInt: Int <- positions.from(minPositionForPiece).toStream
-             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionInt, otherPosition,table) })
+             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionInt, otherPosition, table) })
           yield recursion(piece, remainingPieces, positionInt)).flatten
     }
 
@@ -56,10 +56,21 @@ object GenerationCore {
       val (piece, pieceCount) = pieces.min
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
       lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
-      if (remainingPieces.size >= 2 && remainingPieces.values.sum >= 4) {
+
+      val minRemainingPieceCount: Double = 1
+      if (remainingPieces.size >= minRemainingPieceCount && {
+        val remainingPiecesCount: Double = remainingPieces.values.sum
+        remainingPiecesCount >= minRemainingPieceCount && {
+          val remainingPositionCount: Double = positions.size
+          val tableArea: Double = table.horizontal.toDouble * table.vertical
+          remainingPositionCount >= tableArea / 8 &&
+            remainingPiecesCount * remainingPositionCount >= minRemainingPieceCount * tableArea / 4
+        }
+      }) {
         import monixImplicits.global
         Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
-      } else {
+      }
+      else {
         eventualSolutions
       }
     }
