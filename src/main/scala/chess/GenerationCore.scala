@@ -24,8 +24,7 @@ object GenerationCore {
     * done?: use async testing? or apply this in tests?: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext (currently blocking in tests seems in an ok way)
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
-    val positionZero = Position.zero(input.table)
-    val observable = _solutions(input)(Set())(Map[Piece, Position]().withDefaultValue(positionZero))
+    val observable = _solutions(input)(Set())(Map[Piece, Position]().withDefaultValue(0))
     if (devMode) {
       import monixImplicits.global
       observable.foreach(println)
@@ -37,18 +36,18 @@ object GenerationCore {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def recursion(piece: Piece, remainingPieces: OrderedPiecesWithCount, position: Position): Observable[PotentialSolution] = {
-      val remainingPositions = positions &~ piece.incompatiblePositions(position)
+      val remainingPositions = positions &~ piece.incompatiblePositions(position,table)
       val remainingInput = Input(table, remainingPieces, remainingPositions)
-      val remainingMinPosByPiece = minPositionByPiece.updated(piece, Position(position.xy + 1, table))
+      val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
       val newPicks = picksSoFar + PiecePosition(piece, position)
       _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
     }
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       Observable.fromIterable(
-        for (positionInt: Int <- positions.from(minPositionForPiece.xy).toStream
-             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(Position(positionInt, table), otherPosition) })
-          yield recursion(piece, remainingPieces, Position(positionInt, table))).flatten
+        for (positionInt: Int <- positions.from(minPositionForPiece).toStream
+             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionInt, otherPosition,table) })
+          yield recursion(piece, remainingPieces, positionInt)).flatten
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {

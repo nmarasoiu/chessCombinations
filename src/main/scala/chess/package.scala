@@ -1,7 +1,7 @@
 import scala.collection.immutable.{BitSet, Map}
 
 package object chess {
-
+  type Position = Int
   type Positions = BitSet //todo this is too concrete? (for performance of bitset ops - could it still be achieved with Set[Int]?, but starting with that,get the performance then go towards Set[Position] and check performance remains
   type OrderedPiecesWithCount = Map[Piece, Int]
 
@@ -17,30 +17,29 @@ package object chess {
     def positionsFor(table: Table): Positions = {
       val positions = for (x <- 0 until table.horizontal;
                            y <- 0 until table.vertical;
-                           aggNum = Position(x, y,table).xy) yield aggNum
+                           aggNum = Position.fromPairToInt(x, y, table)) yield aggNum
       BitSet(positions: _*)
     }
   }
 
   case class Table(horizontal: Int, vertical: Int) {
   }
+
   case class PiecePosition(piece: Piece, position: Position) {
     override def toString: String = (piece, position).toString
   }
 
-  final case class Position(xy:Int,table:Table){
-    val hh: Int = Position.horizontal(table)
-    def x: Int = xy % hh
-    def y: Int = xy / hh
-    def pair: (Int, Int) = (x, y)
-  }
   object Position {
-    def apply(x: Int, y: Int, table:Table): Position = Position(x + y * horizontal(table), table)
+    def fromPairToInt(x: Int, y: Int, table: Table): Int = x + y * horizontal(table)
 
-    def zero(table:Table): Position = Position(0, table)
+    def fromPairToX(xy: Int, table: Table): Int = xy % horizontal(table)
 
-    def horizontal(table:Table): Int ={
-      table.horizontal+1
+    def fromPairToY(xy: Int, table: Table): Int = xy / horizontal(table)
+
+    def fromIntToPair(xy: Int, table: Table): (Int, Int) = (fromPairToX(xy, table), fromPairToY(xy, table))
+
+    final def horizontal(table: Table): Int = {
+      table.horizontal + 1
     }
 
   }
