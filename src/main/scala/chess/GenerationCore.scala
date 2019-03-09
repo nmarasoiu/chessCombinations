@@ -24,7 +24,7 @@ object GenerationCore {
     * done?: use async testing? or apply this in tests?: https://monix.io/docs/2x/best-practices/blocking.html#if-blocking-use-scalas-blockcontext (currently blocking in tests seems in an ok way)
     */
   def solutions(input: Input): Observable[PotentialSolution] = {
-    val observable = _solutions(input)(Set())(Map[Piece, Position]().withDefaultValue(0))
+    val observable = _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))
     if (devMode) {
       import monixImplicits.global
       observable.foreach(println)
@@ -32,14 +32,14 @@ object GenerationCore {
     observable
   }
 
-  private def _solutions(input: Input)(picksSoFar: Set[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
+  private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def recursion(piece: Piece, remainingPieces: OrderedPiecesWithCount, position: Position): Observable[PotentialSolution] = {
       val remainingPositions = positions &~ piece.incompatiblePositions(position, table)
       val remainingInput = Input(table, remainingPieces, remainingPositions)
       val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
-      val newPicks = picksSoFar + PiecePosition(piece, position)
+      val newPicks = PiecePosition(piece, position) :: picksSoFar
       _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
     }
 
@@ -57,7 +57,7 @@ object GenerationCore {
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
       lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
 
-      val minRemainingPieceCount: Double = 10
+      val minRemainingPieceCount: Double = 2
       if (remainingPieces.size >= minRemainingPieceCount && {
         val remainingPiecesCount: Double = remainingPieces.values.sum
         remainingPiecesCount >= minRemainingPieceCount && {
