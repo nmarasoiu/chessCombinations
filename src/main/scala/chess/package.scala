@@ -17,30 +17,31 @@ package object chess {
     def positionsFor(table: Table): Positions = {
       val positions = for (x <- 0 until table.horizontal;
                            y <- 0 until table.vertical;
-                           aggNum = Position(x, y).xy) yield aggNum
+                           aggNum = Position(x, y,table).xy) yield aggNum
       BitSet(positions: _*)
     }
   }
 
-  private val hh = 32768 //todo find a name
-
   case class Table(horizontal: Int, vertical: Int) {
-    if (horizontal < 0 || horizontal >= hh || vertical < 0 || vertical >= hh)
-      throw new IllegalArgumentException((horizontal, vertical) + " not within range: 0<=x<=" + hh + " and same for y")
   }
   case class PiecePosition(piece: Piece, position: Position) {
     override def toString: String = (piece, position).toString
   }
 
-  case class Position(xy:Int){
+  case class Position(xy:Int,table:Table){
+    val hh = Position.horizontal(table)
     def x: Int = xy % hh
     def y: Int = xy / hh
     def pair: (Int, Int) = (x, y)
   }
   object Position {
-    def apply(x: Int, y: Int): Position = Position(x + y * hh)
+    def apply(x: Int, y: Int, table:Table): Position = Position(x + y * horizontal(table), table)
 
-    val zero: Position = Position(0)
+    def zero(table:Table): Position = Position(0, table)
+
+    def horizontal(table:Table): Int ={
+      table.horizontal+1
+    }
 
   }
 
