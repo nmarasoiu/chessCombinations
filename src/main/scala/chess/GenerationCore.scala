@@ -1,5 +1,7 @@
 package chess
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import monix.execution.Scheduler.{Implicits => monixImplicits}
 import monix.reactive.Observable
 
@@ -57,15 +59,17 @@ object GenerationCore {
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
       lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
 
-      val minRemainingPieceCount: Double = 2
-      if (remainingPieces.size >= minRemainingPieceCount && {
+      val minRemainingPieceCountNoDuplicates: Int = 1
+      val minRemainingPieceCountWithDuplicates: Double = 2
+      val areaDivisor: Int = 9
+      if (remainingPieces.size >= minRemainingPieceCountNoDuplicates && {
         val remainingPiecesCount: Double = remainingPieces.values.sum
-        remainingPiecesCount >= minRemainingPieceCount && {
+        remainingPiecesCount >= minRemainingPieceCountWithDuplicates && {
           val remainingPositionCount: Double = positions.size
           val tableArea: Double = table.horizontal.toDouble * table.vertical
-          val minRemainingPositionCount = tableArea / 8
+          val minRemainingPositionCount = tableArea / areaDivisor
           remainingPositionCount >= minRemainingPositionCount &&
-            remainingPiecesCount * remainingPositionCount >= minRemainingPieceCount * minRemainingPositionCount * 1.1
+            remainingPiecesCount * remainingPositionCount >= minRemainingPieceCountWithDuplicates * minRemainingPositionCount * 7
         }
       }) {
         import monixImplicits.global
