@@ -6,26 +6,20 @@ import scalaz.Memo
 import scala.collection.immutable
 import scala.collection.immutable.BitSet
 import scala.math.abs
-import Position._
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
-  final def takes(piecePosition: Int, otherPosition: Int, table: Table): Boolean =
-    takes(Position.fromIntToPair(piecePosition, table), Position.fromIntToPair(otherPosition, table))
 
   /**
     * Returns true if this Piece, situated at piecePosition, can take out another piece situated at otherPosition
     */
   def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean
 
-  def incompatiblePositions(position: Position, table: Table): Positions = {
-    val pair = Position.fromIntToPair(position, table)
-    incompatiblePositions.apply(pair._1, pair._2, table)
-  }
-
   type KIntIntTable = (Int, Int, Table)
   final val incompatiblePositions: KIntIntTable => Positions =
     Memo.immutableHashMapMemo[KIntIntTable, Positions] {
-      case (x: Int, y: Int, t: Table) => incompatiblePositions(x, y, t)
+      case (x: Int, y: Int, table: Table) =>
+        val ints = for ((x, y) <- incompatiblePositions(x, y, table)) yield Position.fromPairToInt(x, y, table)
+        BitSet(ints: _*)
     }
 
   /**
@@ -34,7 +28,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
     *         as well as all the positions on the table which this piece can attack
     *         and therefore cannot be occupied by other pieces part of this solution
     */
-  def incompatiblePositions(x: Int, y: Int, table: Table): Positions
+  protected def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)]
 
   final def compare(that: Piece): Int = this.order - that.order
 }
@@ -43,21 +37,18 @@ object Piece extends Enum[Piece] {
   val values: immutable.IndexedSeq[Piece] = findValues
 
   case object Queen extends Piece(0) {
-    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions =
-      Rook.incompatiblePositions(x, y, table) | Bishop.incompatiblePositions(x, y, table)
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] =
+      Rook.incompatiblePositions(x, y, table) ++ Bishop.incompatiblePositions(x, y, table) //todo bitSet |
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
   }
 
   case object Bishop extends Piece(1) {
-    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
       val h = table.horizontal
-      val xys: IndexedSeq[Int] =
-        for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset))
-          yield fromPairToInt(x + hOffset, y + hOffset, table)
-
-      BitSet(xys: _*)
+      for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset))
+        yield (x + hOffset, y + hOffset)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -68,14 +59,14 @@ object Piece extends Enum[Piece] {
   }
 
   case object Rook extends Piece(2) {
-    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      val xs: Seq[Int] =
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
+      val xs =
         for (hOffset <- 0 until table.horizontal)
-          yield fromPairToInt(hOffset, y, table)
-      val ys: Seq[Int] =
+          yield (hOffset, y)
+      val ys =
         for (vOffset <- 0 until table.vertical)
-          yield fromPairToInt(x, vOffset, table)
-      BitSet(xs ++ ys: _*)
+          yield (x, vOffset)
+      xs ++ ys
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -92,11 +83,9 @@ object Piece extends Enum[Piece] {
              (absHorizontalOffset, -absVerticalOffset), (-absHorizontalOffset, -absVerticalOffset)))
         yield (hOffset, vOffset)
 
-    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      val xys: Seq[Int] =
-        for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(x + hOffset, y + vOffset))
-          yield fromPairToInt(x + hOffset, y + vOffset, table)
-      BitSet(xys: _*)
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
+      for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(x + hOffset, y + vOffset))
+        yield (x + hOffset, y + vOffset)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -109,11 +98,10 @@ object Piece extends Enum[Piece] {
 
   case object King extends Piece(4) {
 
-    override def incompatiblePositions(x: Int, y: Int, table: Table): Positions = {
-      val xs: IndexedSeq[Int] = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
-      val ys: IndexedSeq[Int] = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
-      val xys: IndexedSeq[Int] = for (x <- xs; y <- ys) yield Position.fromPairToInt(x, y, table)
-      BitSet(xys: _*)
+    override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
+      val xs = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
+      val ys = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
+      for (x <- xs; y <- ys) yield (x, y)
     }
 
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
@@ -123,10 +111,12 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  final def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
+  final def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
 
-  final def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
+    def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
 
-  final def fittingXY(table: Table)(position: (Int,Int)): Boolean = fittingX(table)(position._1) && fittingY(table)(position._2)
+    def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
 
+    fittingX(table)(position._1) && fittingY(table)(position._2)
+  }
 }

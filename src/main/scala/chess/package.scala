@@ -25,18 +25,14 @@ package object chess {
   case class Table(horizontal: Int, vertical: Int) {
   }
 
-  case class PiecePosition(piece: Piece, position: Position) {
+  case class PiecePosition(piece: Piece, position: (Int,Int)) {
     override def toString: String = (piece, position).toString
   }
 
   object Position {
     def fromPairToInt(x: Int, y: Int, table: Table): Int = x + y * horizontal(table)
 
-    def fromPairToX(xy: Int, table: Table): Int = xy % horizontal(table)
-
-    def fromPairToY(xy: Int, table: Table): Int = xy / horizontal(table)
-
-    def fromIntToPair(xy: Int, table: Table): (Int, Int) = (fromPairToX(xy, table), fromPairToY(xy, table))
+    def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
 
     final def horizontal(table: Table): Int = {
       table.horizontal + 1

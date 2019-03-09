@@ -1,7 +1,5 @@
 package chess
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import monix.execution.Scheduler.{Implicits => monixImplicits}
 import monix.reactive.Observable
 
@@ -37,19 +35,18 @@ object GenerationCore {
   private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Observable[PotentialSolution] = {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
-    def recursion(piece: Piece, remainingPieces: OrderedPiecesWithCount, position: Position): Observable[PotentialSolution] = {
-      val remainingPositions = positions &~ piece.incompatiblePositions(position, table)
-      val remainingInput = Input(table, remainingPieces, remainingPositions)
-      val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
-      val newPicks = PiecePosition(piece, position) :: picksSoFar
-      _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
-    }
-
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       Observable.fromIterable(
-        for (positionInt: Int <- positions.from(minPositionForPiece).toStream
-             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionInt, otherPosition, table) })
-          yield recursion(piece, remainingPieces, positionInt)).flatten
+        for (positionInt: Int <- positions.from(minPositionForPiece).toStream;
+             positionPair = Position.fromIntToPair(positionInt, table)
+             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition) })
+          yield {
+            val remainingPositions = positions &~ piece.incompatiblePositions(positionPair._1, positionPair._2, table)
+            val remainingInput = Input(table, remainingPieces, remainingPositions)
+            val remainingMinPosByPiece: Map[Piece, Int] = minPositionByPiece.updated(piece, positionInt + 1)
+            val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
+            _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
+          }).flatten
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
@@ -59,20 +56,20 @@ object GenerationCore {
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
       lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
 
-      val minRemainingPieceCountNoDuplicates: Int = 1
-      val minRemainingPieceCountWithDuplicates: Double = 2
-      val areaDivisor: Int = 9
+      val minRemainingPieceCountNoDuplicates: Double = 1
+      val minRemainingPieceCountWithDuplicates: Double = 1
+      val areaDivisor: Double = 20
       if (remainingPieces.size >= minRemainingPieceCountNoDuplicates && {
         val remainingPiecesCount: Double = remainingPieces.values.sum
         remainingPiecesCount >= minRemainingPieceCountWithDuplicates && {
           val remainingPositionCount: Double = positions.size
           val tableArea: Double = table.horizontal.toDouble * table.vertical
-          val minRemainingPositionCount = tableArea / areaDivisor
+          val minRemainingPositionCount: Double = tableArea / areaDivisor
           remainingPositionCount >= minRemainingPositionCount &&
-            remainingPiecesCount * remainingPositionCount >= minRemainingPieceCountWithDuplicates * minRemainingPositionCount * 7
+            remainingPiecesCount * remainingPositionCount >= minRemainingPieceCountWithDuplicates * minRemainingPositionCount * 40
         }
       }) {
-        import monixImplicits.global
+        import scala.concurrent.ExecutionContext.Implicits.global
         Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
       }
       else {
