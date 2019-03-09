@@ -15,7 +15,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
     */
   def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean
 
-  final def incompatiblePositions(position: Position, table: Table): Positions = incompatiblePositions.apply(position.x, position.y, table)
+  final def incompatiblePositions(position: Position): Positions = incompatiblePositions.apply(position.x, position.y, position.table)
 
   type KIntIntTable = (Int, Int, Table)
   final val incompatiblePositions: KIntIntTable => Positions =
