@@ -55,8 +55,25 @@ object GenerationCore {
     } else {
       val (piece, pieceCount) = pieces.min
       val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
-      import monixImplicits.global
-      Observable(Future(__solutions(piece, minPositionByPiece(piece), remainingPieces))).mapFuture(a => a).flatten
+      lazy val eventualSolutions = __solutions(piece, minPositionByPiece(piece), remainingPieces)
+
+      val minRemainingPieceCount: Double = 10
+      if (remainingPieces.size >= minRemainingPieceCount && {
+        val remainingPiecesCount: Double = remainingPieces.values.sum
+        remainingPiecesCount >= minRemainingPieceCount && {
+          val remainingPositionCount: Double = positions.size
+          val tableArea: Double = table.horizontal.toDouble * table.vertical
+          val minRemainingPositionCount = tableArea / 8
+          remainingPositionCount >= minRemainingPositionCount &&
+            remainingPiecesCount * remainingPositionCount >= minRemainingPieceCount * minRemainingPositionCount * 1.1
+        }
+      }) {
+        import monixImplicits.global
+        Observable(Future(eventualSolutions)).mapFuture(a => a).flatten
+      }
+      else {
+        eventualSolutions
+      }
     }
   }
 }
