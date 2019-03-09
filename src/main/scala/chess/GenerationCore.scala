@@ -45,7 +45,7 @@ object GenerationCore {
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Observable[PotentialSolution] = {
       Observable.fromIterable(
-        for (positionInt: Int <- positions.from(minPositionForPiece.xy).toSeq
+        for (positionInt: Int <- positions.from(minPositionForPiece.xy).toStream
              if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(Position(positionInt, table), otherPosition) })
           yield recursion(piece, remainingPieces, Position(positionInt, table))).flatten
     }
