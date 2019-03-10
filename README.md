@@ -4,7 +4,7 @@ Given any number of chess pieces of same color Map[Piece, Int], print their arra
 
 Given 2 Kings, 2 Queens, 2 Bishops and 2 Knights (all same colour), there are about 17.5 million ways to arrange the pieces so they do not attack each other on a 7 by 7 table.
 
-solutions(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)) -> a Monix Observable with 17M results.
+solutions(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)) -> a Monix Flowable with 17M results.
 
 Given 2 Rooks as well, the number of arrangements go down to about 300K.
 
