@@ -2,7 +2,7 @@ name := "chesspieces"
 version := "0.1"
 scalaVersion := "2.12.8"
 
-val monixVersion = "2.3.3"
+//val monixVersion = "2.3.3"
 val enumeratumVersion = "1.5.13"
 val scalaTestVersion = "3.0.5"
 val scalazVersion = "7.2.27"
@@ -12,7 +12,7 @@ val scalazVersion = "7.2.27"
 
 libraryDependencies ++= Seq(
   "com.beachape" %% "enumeratum" % enumeratumVersion,
-  "io.monix" %% "monix-reactive" % monixVersion,
+  "io.reactivex.rxjava2" % "rxjava" % "2.2.7",
   "org.scalaz" %% "scalaz-core" % scalazVersion,
   "org.scalatest" % "scalatest_2.12" % scalaTestVersion % Test
 )

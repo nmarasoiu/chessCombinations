@@ -2,26 +2,15 @@ package chess
 
 import java.time.Clock
 
-import monix.eval.Task
-import monix.execution.CancelableFuture
-import monix.reactive.Observable
-import monix.execution.Scheduler.{Implicits => monixImplicits}
+import io.reactivex.Flowable
 
 
 object MonixBlockingUtil {
-  def block(stream: Observable[PotentialSolution], checkDuplication:Boolean=true): Iterable[PotentialSolution] = {
-    import scala.concurrent.Await
-    import scala.concurrent.duration._
-    import monixImplicits.global
-
-    val task = Task.fork(stream.toListL)
-    val future: CancelableFuture[List[PotentialSolution]] = task.runAsync
-
-    val clock = Clock.systemUTC()
+  def block(stream: Flowable[PotentialSolution], checkDuplication:Boolean=true): Iterable[PotentialSolution] = {
+    val clock = Clock.systemDefaultZone()
     val t0 = clock.instant()
-
-    val solutions: IndexedSeq[PotentialSolution] = Await.result(future, Duration.Inf).toIndexedSeq
-
+    import scala.collection.JavaConverters._
+    val solutions = stream.blockingIterable().asScala.toIndexedSeq
     val t1 = clock.instant()
     println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + solutions.size + " solutions found")
 
