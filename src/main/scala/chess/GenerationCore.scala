@@ -1,6 +1,7 @@
 package chess
 
 import io.reactivex.Flowable
+import io.reactivex.schedulers.Schedulers
 
 import scala.collection.immutable.Map
 
@@ -8,10 +9,10 @@ object GenerationCore {
   //  val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
 
   def solutions(input: Input): Flowable[PotentialSolution] = {
-    _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))
+    _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))(firstLevel = true)
   }
 
-  private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
+  private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position])(firstLevel: Boolean): Flowable[PotentialSolution] = {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Flowable[PotentialSolution] = {
@@ -24,10 +25,15 @@ object GenerationCore {
             val remainingInput = Input(table, remainingPieces, remainingPositions)
             val remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, positionInt + 1)
             val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
-            _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
+            _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)(firstLevel = false)
           }
       import scala.collection.JavaConverters._
-      Flowable.fromIterable(iterable.asJava).flatMap(a => a)
+      Flowable.fromIterable(iterable.asJava)
+        .flatMap(solutionObservable =>
+          if (firstLevel)
+            solutionObservable.subscribeOn(Schedulers.computation())
+          else
+            solutionObservable)
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
