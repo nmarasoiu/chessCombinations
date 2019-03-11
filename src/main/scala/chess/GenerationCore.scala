@@ -18,7 +18,8 @@ object GenerationCore {
     flowableFrom({
       val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
       if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-        Flowable.fromArray(PotentialSolution(picksSoFar))
+        Flowable
+          .fromArray(PotentialSolution(picksSoFar))
       } else {
         val (piece, pieceCount) = pieces.min
         val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
@@ -53,7 +54,9 @@ object GenerationCore {
   }
 
   private def flowableFrom[T](lazyEvalObservable: => Flowable[T]): Flowable[T] = {
-    Flowable.fromCallable(() => lazyEvalObservable).flatMap(stream => stream)
+    Flowable.fromCallable(() => lazyEvalObservable)
+      .observeOn(Schedulers.computation())
+      .flatMap(stream => stream)
   }
 
   class WrapperIterable[T](underlying: Iterable[T]) extends AbstractIterable[T] {
