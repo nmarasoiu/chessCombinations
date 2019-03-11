@@ -1,6 +1,6 @@
 package chess
 
-import chess.MonixBlockingUtil.block
+import chess.BlockingUtil.block
 import chess.Piece._
 import org.scalatest.FunSuite
 
@@ -24,14 +24,15 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example 4 should return the solutions, and that there are no duplicates in the returned solutions") {
-    val input = Input(Table(9, 9), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
-    for (_ <- 1 to 1234)
-      block(GenerationCore.solutions(input))
+    val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
+    block(GenerationCore.solutions(input), checkDuplication = true)
   }
 
   test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    block(GenerationCore.solutions(input))
+    while(true)
+      block(GenerationCore.solutions(input), checkDuplication = false)
+    Thread.sleep(230)
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
