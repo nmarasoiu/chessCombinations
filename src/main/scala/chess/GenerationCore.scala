@@ -7,25 +7,24 @@ import scala.collection.AbstractIterable
 import scala.collection.immutable.Map
 
 object GenerationCore {
-  val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
-
   def solutions(input: Input): Flowable[PotentialSolution] = {
-    println("Computing..")
-    val res = _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))
-    println("Computing..ended")
-    res
+    printBeforeAndAfter({
+      _solutions(input, picksSoFar = List(), minPositionByPiece = Map[Piece, Position]().withDefaultValue(0))
+        .subscribeOn(Schedulers.computation())
+    })
   }
 
-  private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
-    val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
-
-    if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-      Flowable.fromArray(PotentialSolution(picksSoFar))
-    } else {
-      val (piece, pieceCount) = pieces.min
-      val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
-      __solutions(table, picksSoFar, piece, positions, remainingPieces, minPositionByPiece)
-    }
+  private def _solutions(input: Input, picksSoFar: List[PiecePosition], minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
+    flowableFrom({
+      val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
+      if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
+        Flowable.fromArray(PotentialSolution(picksSoFar))
+      } else {
+        val (piece, pieceCount) = pieces.min
+        val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
+        __solutions(table, picksSoFar, piece, positions, remainingPieces, minPositionByPiece)
+      }
+    })
   }
 
   private def __solutions(table: Table,
@@ -34,30 +33,27 @@ object GenerationCore {
                           positions: Positions,
                           remainingPieces: OrderedPiecesWithCount,
                           minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
-    val iterable: Iterable[Flowable[PotentialSolution]] =
-      for (positionInt: Position <- toIterable(positions.from(minPositionByPiece(piece)));
-           positionPair = Position.fromIntToPair(positionInt, table)
-           if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition) })
-        yield {
-          val remainingPositions = positions &~ piece.incompatiblePositions(positionPair._1, positionPair._2, table)
-          val remainingInput = Input(table, remainingPieces, remainingPositions)
-          val remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, positionInt + 1)
-          val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
-          val observable = _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)
-
-          if (remainingPieces.values.sum * remainingPositions.size >= 150)
-            observable
-              .subscribeOn(Schedulers.computation())
-              .observeOn(Schedulers.computation())
-          else
-            observable
-        }
-
-    Flowable.fromIterable({
-      import scala.collection.JavaConverters._
-      iterable.asJava
+    flowableFrom({
+      val iterable: Iterable[Flowable[PotentialSolution]] =
+        for (positionInt: Position <- toIterable(positions.from(minPositionByPiece(piece)));
+             positionPair = Position.fromIntToPair(positionInt, table)
+             if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition) })
+          yield {
+            val remainingPositions = positions &~ piece.incompatiblePositions(positionPair._1, positionPair._2, table)
+            val remainingInput = Input(table, remainingPieces, remainingPositions)
+            val remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, positionInt + 1)
+            val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
+            _solutions(remainingInput, newPicks, remainingMinPosByPiece)
+          }
+      Flowable.fromIterable({
+        import scala.collection.JavaConverters._
+        iterable.asJava
+      }).flatMap(stream => stream)
     })
-      .flatMap(stream => stream)
+  }
+
+  private def flowableFrom[T](lazyEvalObservable: => Flowable[T]): Flowable[T] = {
+    Flowable.fromCallable(() => lazyEvalObservable).flatMap(stream => stream)
   }
 
   class WrapperIterable[T](underlying: Iterable[T]) extends AbstractIterable[T] {
@@ -66,5 +62,17 @@ object GenerationCore {
 
   def toIterable[T](underlying: Iterable[T]): Iterable[T] = {
     new WrapperIterable[T](underlying)
+  }
+
+  private def printlnAndFlush(any: => Any): Unit = {
+    println(any)
+    Console.flush()
+  }
+
+  private def printBeforeAndAfter[T](code: => T): T = {
+    printlnAndFlush("Computing..")
+    val result = code
+    printlnAndFlush("Computing..ended")
+    result
   }
 }
