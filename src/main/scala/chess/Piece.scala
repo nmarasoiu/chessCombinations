@@ -91,8 +91,11 @@ object Piece extends Enum[Piece] {
     override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) =>
-          val tuple = (abs(x - x2), abs(y - y2))
-          (1, 2) == tuple || (2, 1) == tuple
+          def betweenOneAndTwo(x: Int): Boolean = 1 <= x && x <= 2
+
+          val xDiff = abs(x - x2)
+          val yDiff = abs(y - y2)
+          xDiff != yDiff && betweenOneAndTwo(xDiff) && betweenOneAndTwo(yDiff)
       }
   }
 
