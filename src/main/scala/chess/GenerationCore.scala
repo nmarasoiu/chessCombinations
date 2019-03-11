@@ -3,6 +3,7 @@ package chess
 import io.reactivex.Flowable
 import io.reactivex.schedulers.Schedulers
 
+import scala.collection.AbstractIterable
 import scala.collection.immutable.Map
 
 object GenerationCore {
@@ -12,12 +13,20 @@ object GenerationCore {
     _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))(firstLevel = true)
   }
 
+  def toIterable(set: Positions): Iterable[Position] = {
+    new AbstractIterable[Position]{
+      override def iterator: Iterator[Position] = {
+        set.iterator
+      }
+    }
+  }
+
   private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position])(firstLevel: Boolean): Flowable[PotentialSolution] = {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Flowable[PotentialSolution] = {
       val iterable: Iterable[Flowable[PotentialSolution]] =
-        for (positionInt: Position <- positions.from(minPositionForPiece).toStream.toIterable;
+        for (positionInt: Position <- toIterable(positions.from(minPositionForPiece));
              positionPair = Position.fromIntToPair(positionInt, table)
              if !picksSoFar.exists { case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition) })
           yield {
