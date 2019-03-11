@@ -29,7 +29,7 @@ package object chess {
     override def toString: String = (piece, position).toString
   }
 
-  object Position {
+  final object Position {
     def fromPairToInt(x: Int, y: Int, table: Table): Int = x + y * horizontal(table)
 
     def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
