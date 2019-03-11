@@ -6,7 +6,7 @@ import io.reactivex.Flowable
 
 
 object MonixBlockingUtil {
-  def block(stream: Flowable[PotentialSolution], checkDuplication:Boolean=true): Iterable[PotentialSolution] = {
+  def block(stream: Flowable[PotentialSolution], checkDuplication:Boolean=false): Iterable[PotentialSolution] = {
     val clock = Clock.systemDefaultZone()
     val t0 = clock.instant()
     import scala.collection.JavaConverters._

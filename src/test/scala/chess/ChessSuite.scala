@@ -30,14 +30,14 @@ class ChessSuite extends FunSuite {
 
   test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
+    for (_ <- 1 to 1234) block(GenerationCore.solutions(input))
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
-    val obtainedBoards: Iterable[Board] = block(GenerationCore.solutions(input))
+    val obtainedBoards: Iterable[Board] = block(GenerationCore.solutions(input), checkDuplication = true)
       .map((potentialSolution: PotentialSolution) =>
         potentialSolution.solution.map {
-          case PiecePosition(piece: Piece, xy: (Int,Int)) => (piece, xy)
+          case PiecePosition(piece: Piece, xy: (Int, Int)) => (piece, xy)
         }.toSet)
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(input.table, board))
 
