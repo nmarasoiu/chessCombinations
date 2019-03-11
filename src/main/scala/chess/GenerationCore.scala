@@ -10,7 +10,7 @@ object GenerationCore {
   def solutions(input: Input): Flowable[PotentialSolution] = {
     printBeforeAndAfter({
       _solutions(input, picksSoFar = List(), minPositionByPiece = Map[Piece, Position]().withDefaultValue(0))
-        .subscribeOn(Schedulers.computation())
+//        .subscribeOn(Schedulers.computation())
     })
   }
 
@@ -44,18 +44,23 @@ object GenerationCore {
             val remainingInput = Input(table, remainingPieces, remainingPositions)
             val remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, positionInt + 1)
             val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
-            _solutions(remainingInput, newPicks, remainingMinPosByPiece)
+            val stream = _solutions(remainingInput, newPicks, remainingMinPosByPiece)
+            /*if(remainingPositions.size * remainingPieces.values.sum > 99)
+              stream.subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation())
+            else*/
+              stream
           }
       Flowable.fromIterable({
         import scala.collection.JavaConverters._
         iterable.asJava
-      }).flatMap(stream => stream)
+      })
+        .flatMap(stream => stream)
     })
   }
 
   private def flowableFrom[T](lazyEvalObservable: => Flowable[T]): Flowable[T] = {
     Flowable.fromCallable(() => lazyEvalObservable)
-      .observeOn(Schedulers.computation())
+//      .observeOn(Schedulers.computation())
       .flatMap(stream => stream)
   }
 
