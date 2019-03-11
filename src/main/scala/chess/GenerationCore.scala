@@ -7,10 +7,13 @@ import scala.collection.AbstractIterable
 import scala.collection.immutable.Map
 
 object GenerationCore {
-  //  val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
+    val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
 
   def solutions(input: Input): Flowable[PotentialSolution] = {
-    _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))
+    println("Computing..")
+    val res = _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))
+    println("Computing..ended")
+    res
   }
 
   private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
@@ -57,11 +60,11 @@ object GenerationCore {
       .flatMap(stream => stream)
   }
 
-  def toIterable(set: Positions): Iterable[Position] = {
-    new AbstractIterable[Position] {
-      override def iterator: Iterator[Position] = {
-        set.iterator
-      }
-    }
+  class WrapperIterable[T](underlying: Iterable[T]) extends AbstractIterable[T] {
+    override def iterator: Iterator[T] = underlying.iterator
+  }
+
+  def toIterable[T](underlying: Iterable[T]): Iterable[T] = {
+    new WrapperIterable[T](underlying)
   }
 }
