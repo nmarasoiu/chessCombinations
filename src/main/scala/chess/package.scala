@@ -25,7 +25,7 @@ package object chess {
   case class Table(horizontal: Int, vertical: Int) {
   }
 
-  case class PiecePosition(piece: Piece, position: (Int,Int)) {
+  case class PiecePosition(piece: Piece, position: (Int, Int)) {
     override def toString: String = (piece, position).toString
   }
 

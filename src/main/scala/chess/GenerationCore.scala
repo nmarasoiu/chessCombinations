@@ -10,10 +10,10 @@ object GenerationCore {
   //  val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
 
   def solutions(input: Input): Flowable[PotentialSolution] = {
-    _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))(1)(input.pieces.values.sum-4)
+    _solutions(input)(List())(Map[Piece, Position]().withDefaultValue(0))(1)(input.pieces.values.sum - 5) //todo include table size / remaining positions in max level/ min remaining size
   }
 
-  private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position])(level: Int)(maxLevel:Int): Flowable[PotentialSolution] = {
+  private def _solutions(input: Input)(picksSoFar: List[PiecePosition])(minPositionByPiece: Map[Piece, Position])(level: Int)(maxLevel: Int): Flowable[PotentialSolution] = {
     val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
 
     def __solutions(piece: Piece, minPositionForPiece: Position, remainingPieces: OrderedPiecesWithCount): Flowable[PotentialSolution] = {
@@ -26,15 +26,20 @@ object GenerationCore {
             val remainingInput = Input(table, remainingPieces, remainingPositions)
             val remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, positionInt + 1)
             val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
-            _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)(level+1)(maxLevel)
+            _solutions(remainingInput)(newPicks)(remainingMinPosByPiece)(level + 1)(maxLevel)
           }
-      import scala.collection.JavaConverters._
-      Flowable.fromIterable(iterable.asJava)
-        .flatMap(solutionObservable =>
-          if (level<=maxLevel)
-            solutionObservable.subscribeOn(Schedulers.computation())
-          else
-            solutionObservable)
+
+      val flowable: Flowable[PotentialSolution] = Flowable.fromIterable({
+        import scala.collection.JavaConverters._
+        iterable.asJava
+      })
+        .flatMap(stream => stream)
+      if (level <= maxLevel)
+        flowable
+          .subscribeOn(Schedulers.computation())
+          .observeOn(Schedulers.computation())
+      else
+        flowable
     }
 
     if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
@@ -47,7 +52,7 @@ object GenerationCore {
   }
 
   def toIterable(set: Positions): Iterable[Position] = {
-    new AbstractIterable[Position]{
+    new AbstractIterable[Position] {
       override def iterator: Iterator[Position] = {
         set.iterator
       }

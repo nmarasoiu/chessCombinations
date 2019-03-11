@@ -24,13 +24,14 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example 4 should return the solutions, and that there are no duplicates in the returned solutions") {
-    val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
-    val solutions: Iterable[PotentialSolution] = block(GenerationCore.solutions(input))
+    val input = Input(Table(9, 9), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
+    for (_ <- 1 to 1234)
+      block(GenerationCore.solutions(input))
   }
 
   test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    for (_ <- 1 to 1234) block(GenerationCore.solutions(input))
+    block(GenerationCore.solutions(input))
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
