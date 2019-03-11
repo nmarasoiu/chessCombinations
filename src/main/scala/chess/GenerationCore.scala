@@ -8,18 +8,14 @@ import scala.collection.immutable.Map
 
 object GenerationCore {
   def solutions(input: Input): Flowable[PotentialSolution] = {
-    printBeforeAndAfter({
-      _solutions(input, picksSoFar = List(), minPositionByPiece = Map[Piece, Position]().withDefaultValue(0))
-//        .subscribeOn(Schedulers.computation())
-    })
+    _solutions(input, picksSoFar = List(), minPositionByPiece = Map[Piece, Position]().withDefaultValue(0))
   }
 
   private def _solutions(input: Input, picksSoFar: List[PiecePosition], minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
     flowableFrom({
       val Input(table, pieces: OrderedPiecesWithCount, positions: Positions) = input
       if (pieces.isEmpty || table.vertical <= 0 || table.horizontal <= 0) {
-        Flowable
-          .fromArray(PotentialSolution(picksSoFar))
+        Flowable.fromArray(PotentialSolution(picksSoFar))
       } else {
         val (piece, pieceCount) = pieces.min
         val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
@@ -45,23 +41,18 @@ object GenerationCore {
             val remainingMinPosByPiece: Map[Piece, Position] = minPositionByPiece.updated(piece, positionInt + 1)
             val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
             val stream = _solutions(remainingInput, newPicks, remainingMinPosByPiece)
-            /*if(remainingPositions.size * remainingPieces.values.sum > 99)
-              stream.subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation())
-            else*/
+            if (remainingPositions.size * remainingPieces.values.sum > 99)
+              stream.observeOn(Schedulers.computation())
+            else
               stream
           }
-      Flowable.fromIterable({
-        import scala.collection.JavaConverters._
-        iterable.asJava
-      })
-        .flatMap(stream => stream)
+      import scala.collection.JavaConverters._
+      Flowable.fromIterable(iterable.asJava).flatMap(stream => stream)
     })
   }
 
   private def flowableFrom[T](lazyEvalObservable: => Flowable[T]): Flowable[T] = {
-    Flowable.fromCallable(() => lazyEvalObservable)
-//      .observeOn(Schedulers.computation())
-      .flatMap(stream => stream)
+    Flowable.fromCallable(() => lazyEvalObservable).flatMap(stream => stream)
   }
 
   class WrapperIterable[T](underlying: Iterable[T]) extends AbstractIterable[T] {
@@ -72,15 +63,4 @@ object GenerationCore {
     new WrapperIterable[T](underlying)
   }
 
-  private def printlnAndFlush(any: => Any): Unit = {
-    println(any)
-    Console.flush()
-  }
-
-  private def printBeforeAndAfter[T](code: => T): T = {
-    printlnAndFlush("Computing..")
-    val result = code
-    printlnAndFlush("Computing..ended")
-    result
-  }
 }

@@ -32,7 +32,6 @@ class ChessSuite extends FunSuite {
     val input = Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
     while(true)
       block(GenerationCore.solutions(input), checkDuplication = false)
-    Thread.sleep(230)
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
