@@ -35,7 +35,7 @@ object GenerationCore {
       .flatMapIterable(_ => asJava(underlyingSolutions(table, picksSoFar, positions, pieces, minPositionByPiece)))
       .flatMap {
         case (taskSize: Long, childFlowable: Flowable[PotentialSolution]) =>
-          if (taskSize >= 54) childFlowable.subscribeOn(Schedulers.computation()) else childFlowable
+          if (taskSize >= 90) childFlowable.subscribeOn(Schedulers.computation()) else childFlowable
       }
   }
 
