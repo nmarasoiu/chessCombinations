@@ -32,7 +32,6 @@ object GenerationCore {
                           pieces: OrderedPiecesWithCount,
                           minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
     Flowable.just(())
-      .subscribeOn(Schedulers.computation())
       .flatMapIterable(_ => asJava(underlyingSolutions(table, picksSoFar, positions, pieces, minPositionByPiece)))
       .flatMap {
         case (taskSize: Long, childFlowable: Flowable[PotentialSolution]) =>
