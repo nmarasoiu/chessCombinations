@@ -34,7 +34,7 @@ package object chess {
 
     def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
 
-    final def horizontal(table: Table): Int = {
+    def horizontal(table: Table): Int = {
       table.horizontal + 1
     }
 

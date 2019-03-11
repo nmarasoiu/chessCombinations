@@ -15,7 +15,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
   def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean
 
   type KIntIntTable = (Int, Int, Table)
-  final val incompatiblePositions: KIntIntTable => Positions =
+  val incompatiblePositions: KIntIntTable => Positions =
     Memo.immutableHashMapMemo[KIntIntTable, Positions] {
       case (x: Int, y: Int, table: Table) =>
         val ints = for ((x, y) <- incompatiblePositions(x, y, table)) yield Position.fromPairToInt(x, y, table)
@@ -30,7 +30,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
     */
   protected def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)]
 
-  final def compare(that: Piece): Int = this.order - that.order
+  def compare(that: Piece): Int = this.order - that.order
 }
 
 object Piece extends Enum[Piece] {
@@ -111,7 +111,7 @@ object Piece extends Enum[Piece] {
       }
   }
 
-  final def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
+  def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
 
     def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
 

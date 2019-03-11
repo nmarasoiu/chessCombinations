@@ -7,7 +7,7 @@ import scala.collection.AbstractIterable
 import scala.collection.immutable.Map
 
 object GenerationCore {
-    val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
+  val devMode: Boolean = sys.env.get("DEV_MODE").exists(txt => txt.trim.equalsIgnoreCase("true"))
 
   def solutions(input: Input): Flowable[PotentialSolution] = {
     println("Computing..")
@@ -28,12 +28,12 @@ object GenerationCore {
     }
   }
 
-  def __solutions(table: Table,
-                  picksSoFar: List[PiecePosition],
-                  piece: Piece,
-                  positions: Positions,
-                  remainingPieces: OrderedPiecesWithCount,
-                  minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
+  private def __solutions(table: Table,
+                          picksSoFar: List[PiecePosition],
+                          piece: Piece,
+                          positions: Positions,
+                          remainingPieces: OrderedPiecesWithCount,
+                          minPositionByPiece: Map[Piece, Position]): Flowable[PotentialSolution] = {
     val iterable: Iterable[Flowable[PotentialSolution]] =
       for (positionInt: Position <- toIterable(positions.from(minPositionByPiece(piece)));
            positionPair = Position.fromIntToPair(positionInt, table)
