@@ -8,7 +8,7 @@ import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 class ChessSuite extends FunSuite {
 
-  type Board = Set[(Piece, (Int, Int))]
+  type Board = Set[(Piece,(Int,Int))]
 
   test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
@@ -36,7 +36,7 @@ class ChessSuite extends FunSuite {
       for (solution <- executeAndBlock(input, checkDuplication = true))
         yield {
           for (piecePosition <- solution;
-               (piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table))
+               PieceAndCoordinates(piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table))
             yield (piece, (x, y))
         }
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(input.table, board))

@@ -32,8 +32,8 @@ package object chess {
     private val pieceEncodingBits = 3
     private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
 
-    def fromIntToPieceAndCoordinates(piecePositionInt: PiecePositionInt, table: Table): (Piece, (Int, Int)) =
-      (piece(piecePositionInt), Position.fromIntToPair(position(piecePositionInt), table))
+    def fromIntToPieceAndCoordinates(piecePositionInt: PiecePositionInt, table: Table): PieceAndCoordinates =
+      PieceAndCoordinates(piece(piecePositionInt), Position.fromIntToPair(position(piecePositionInt), table))
 
     def toInt(piece: Piece, position: Position): Position = (position << PiecePosition.pieceEncodingBits) + piece.order
 
@@ -52,11 +52,11 @@ package object chess {
       table.horizontal + 1
     }
   }
-
+case class PieceAndCoordinates(piece:Piece, coordinates: (Int,Int))
   object Solution {
-    def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Array[(Piece, (Int, Int))] = {
+    def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Seq[PieceAndCoordinates] = {
       (for (piecePosition <- piecePositions) yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table))
-        .toArray.sortBy(_._1)
+        .toSeq.sortBy(_.piece)
     }
   }
 
