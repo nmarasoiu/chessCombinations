@@ -23,14 +23,18 @@ package object chess {
     }
   }
 
-  case class Table(horizontal: Int, vertical: Int) {
-  }
+  case class Table(horizontal: Int, vertical: Int)
 
-  case class PiecePosition(pieceInt: PieceInt, position: Position){
+  case class PiecePosition(pieceInt: PieceInt, position: Position) {
     def piece: Piece = Piece.of(pieceInt)
   }
 
+  final object PiecePosition {
+    def apply(piece: Piece, position: Position): PiecePosition = PiecePosition(piece.order, position)
+  }
+
   final object Position {
+
     def fromPairToInt(x: Int, y: Int, table: Table): Int = x + y * horizontal(table)
 
     def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
