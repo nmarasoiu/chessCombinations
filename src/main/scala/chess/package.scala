@@ -6,7 +6,7 @@ package object chess {
   type Position = Int
   type PiecePositionInt = Int
   type Positions = BitSet
-  type PiecePositions = BitSet
+  type Solution = BitSet
   type OrderedPiecesWithCount = Map[Piece, Int]
 
   case class Input(table: Table,
@@ -32,7 +32,8 @@ package object chess {
     private val pieceEncodingBits = 3
     private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
 
-    def fromInt(piecePositionInt: PiecePositionInt): (Piece, Position) = (piece(piecePositionInt), position(piecePositionInt))
+    def fromIntToPieceAndCoordinates(piecePositionInt: PiecePositionInt, table: Table): (Piece, (Int, Int)) =
+      (piece(piecePositionInt), Position.fromIntToPair(position(piecePositionInt), table))
 
     def toInt(piece: Piece, position: Position): Position = (position << PiecePosition.pieceEncodingBits) + piece.order
 
@@ -52,6 +53,11 @@ package object chess {
     }
   }
 
-  case class PotentialSolution(solution: PiecePositions)
+  object Solution {
+    def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Array[(Piece, (Int, Int))] = {
+      (for (piecePosition <- piecePositions) yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table))
+        .toArray.sortBy(_._1)
+    }
+  }
 
 }
