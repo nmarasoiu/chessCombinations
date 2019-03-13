@@ -34,6 +34,7 @@ object BlockingUtil {
       val solutions: Solutions = solutionsStream.reduceWith(seedFactory, folder).blockingGet() // blocks
       assert(solutions.duplicatedSolutionsSoFar.isEmpty)
     }
+    println(Solution.fromIntToPieceAndCoordinates(solutions.last, input.table))
     val solutionsCount = solutions.size // blocks
     val t1 = clock.instant()
     val t1nano = System.nanoTime

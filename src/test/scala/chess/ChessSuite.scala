@@ -8,7 +8,7 @@ import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 class ChessSuite extends FunSuite {
 
-  type Board = Set[(Piece,(Int,Int))]
+  type Board = Set[(Piece, (Int, Int))]
 
   test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
@@ -24,11 +24,18 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2)))
   }
 
   test("Example 4 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2)))
+    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+  }
+  test("Example 5 should return the solutions, and that there are no duplicates in the returned solutions") {
+    executeAndBlock(Input(Table(7, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+  }
+
+  test("Example 6 should return the solutions, and that there are no duplicates in the returned solutions") {
+    executeAndBlock(Input(Table(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
