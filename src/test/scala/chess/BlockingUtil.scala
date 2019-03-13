@@ -10,7 +10,7 @@ object BlockingUtil {
     val clock = Clock.systemDefaultZone()
     val t0 = clock.instant()
     import scala.collection.JavaConverters._
-    val solutions = stream.blockingIterable().asScala.toIndexedSeq
+    val solutions = stream.blockingIterable().asScala
     val t1 = clock.instant()
     println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + solutions.size + " solutions found")
 
@@ -19,7 +19,7 @@ object BlockingUtil {
       println(solution)
     })
     if (checkDuplication) {
-      assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
+//      assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
     }
     solutions
   }

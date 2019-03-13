@@ -24,18 +24,17 @@ object GenerationCore {
       case Some((piece, pieceCount)) =>
         Flowable
           .fromIterable(asJava(positions.from(minPositionByPiece(piece))))
-          .flatMap(positionInt => {
-            val positionPair@(x: Int, y: Int) = Position.fromIntToPair(positionInt, table)
+          .flatMap(position => {
             if (picksSoFar.exists {
-              case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition, table)
+              case PiecePosition(_, otherPosition) => piece.takes(position, otherPosition, table)
             }) {
               empty[PotentialSolution]()
             } else {
-              val remainingMinPosByPiece = minPositionByPiece.updated(piece, positionInt + 1)
-              val remainingPositions = positions &~ piece.incompatiblePositions(positionPair, table)
+              val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
+              val remainingPositions = positions &~ piece.incompatiblePositions(position, table)
               val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
               val remainingInput = Input(table, remainingPieces, remainingPositions)
-              val newPicks = PiecePosition(piece, positionPair) :: picksSoFar
+              val newPicks = PiecePosition(piece, position) :: picksSoFar
               val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
               val subSolutions = _solutions(remainingInput, newPicks, remainingMinPosByPiece)
               if (taskSize > 150)
