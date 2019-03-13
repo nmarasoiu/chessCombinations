@@ -2,6 +2,7 @@ import scala.collection.immutable.{BitSet, Map}
 
 package object chess {
   type Position = Int
+  type PieceInt = Int
   type Positions = BitSet
   type OrderedPiecesWithCount = Map[Piece, Int]
 
@@ -25,7 +26,8 @@ package object chess {
   case class Table(horizontal: Int, vertical: Int) {
   }
 
-  case class PiecePosition(piece: Piece, position: Position) {
+  case class PiecePosition(pieceInt: PieceInt, position: Position){
+    def piece: Piece = Piece.of(pieceInt)
   }
 
   final object Position {

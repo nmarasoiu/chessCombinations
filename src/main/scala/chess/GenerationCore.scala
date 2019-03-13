@@ -33,7 +33,7 @@ object GenerationCore {
               val remainingPositions = positions &~ incompatiblePositions
               val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
               val remainingInput = Input(table, remainingPieces, remainingPositions)
-              val newPicks = PiecePosition(piece, position) :: picksSoFar
+              val newPicks = PiecePosition(piece.order, position) :: picksSoFar
               val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
               val subSolutions = _solutions(remainingInput, newPicks, remainingMinPosByPiece)
               if (taskSize > 150)

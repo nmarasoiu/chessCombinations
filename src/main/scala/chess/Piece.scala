@@ -33,6 +33,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
 
 object Piece extends Enum[Piece] {
   val values: immutable.IndexedSeq[Piece] = findValues
+  def of(ordinal:Int):Piece = values(ordinal)
 
   case object Queen extends Piece(0) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] =
