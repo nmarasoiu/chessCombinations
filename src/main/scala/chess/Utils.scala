@@ -19,8 +19,8 @@ object Utils {
 
 object FlowableUtils {
 
-  def fromIterable(positions: Positions): Flowable[Position] = {
-    Flowable.fromIterable(asJava(positions))
+  def fromIterable[T](iterable: Iterable[T]): Flowable[T] = {
+    Flowable.fromIterable(asJava(iterable))
   }
 
   import scala.collection.JavaConverters._

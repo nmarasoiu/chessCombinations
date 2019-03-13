@@ -14,15 +14,14 @@ case class SolutionPath(input: Input,
   def solutions(): Flowable[Solution] = {
     val Input(table, pieces, positions) = input
     val maybeTuple = Utils.minOptional(pieces)
+
     maybeTuple match {
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, pieceCount)) =>
-        val positionsToConsider: Positions =
-          positions.from(minPositionByPiece(piece))
+        val positionsToConsider: Positions = positions.from(minPositionByPiece(piece))
 
-        val positionFlowable: Flowable[Position] =
-          FlowableUtils.fromIterable(positionsToConsider)
+        val positionFlowable: Flowable[Position] = FlowableUtils.fromIterable(positionsToConsider)
 
         val positionAndIncompatibilitiesFlowable: Flowable[(Position, Positions)] =
           positionFlowable.map(position => {
@@ -34,8 +33,7 @@ case class SolutionPath(input: Input,
           positionAndIncompatibilitiesFlowable
             .filter {
               case (_: Position, incompatiblePositions: Positions) =>
-                val positionsTakenSoFarWhichAreNotCompatibleWithNewPositionChoice = takenPositionsSoFar & incompatiblePositions
-                positionsTakenSoFarWhichAreNotCompatibleWithNewPositionChoice.isEmpty
+                (takenPositionsSoFar & incompatiblePositions).isEmpty
             }
             .map {
               case (position: PiecePositionInt, incompatiblePositions: Positions) =>
@@ -46,7 +44,8 @@ case class SolutionPath(input: Input,
                 val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
                 val newTakenPositions = takenPositionsSoFar + position
                 val taskSize: Long = remainingPositions.size.toLong * (1 + remainingPieces.size)
-                val subSolutionFlowable = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece).solutions()
+                val deeperSolutionPath = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
+                val subSolutionFlowable = deeperSolutionPath.solutions()
                 (taskSize, subSolutionFlowable)
             }
 
