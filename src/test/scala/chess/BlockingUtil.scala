@@ -18,7 +18,8 @@ object BlockingUtil {
       println(solution)
     })
     if (checkDuplication) {
-      //      assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
+      //todo only extract some duplicates if any with bloom filter or other LogLog like probabilistic dup detector
+      assert(stream.distinct.blockingIterable().asScala.size == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
     }
     val t1 = clock.instant()
     val t1nano = System.nanoTime
