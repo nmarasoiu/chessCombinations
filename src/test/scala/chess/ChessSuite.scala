@@ -4,7 +4,7 @@ import chess.BlockingUtil.block
 import chess.Piece._
 import org.scalatest.FunSuite
 
-import scala.collection.immutable.Map
+import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 class ChessSuite extends FunSuite {
 
@@ -41,22 +41,29 @@ class ChessSuite extends FunSuite {
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
-    val obtainedBoards: Iterable[Board] = block(GenerationCore.solutions(input), checkDuplication = true)
-      .map((potentialSolution: PotentialSolution) =>
-        potentialSolution.solution
-          .map(piecePosition => (piecePosition.piece, Position.fromIntToPair(piecePosition.position, input.table)))
-          .toSet)
+    val obtainedBoards: Iterable[Board] =
+      for (PotentialSolution(solution) <- block(GenerationCore.solutions(input), checkDuplication = true))
+        yield {
+          for (piecePosition <- Set() ++ solution;
+               (piece, position) = PiecePosition.fromInt(piecePosition);
+               (x, y) = Position.fromIntToPair(position, input.table))
+            yield (piece, (x, y))
+        }
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(input.table, board))
 
-    //    def evalAndStringify(boards: Iterable[Iterable[(Piece, (Int, Int))]]) = boards.mkString("\n")
-    //    println("expectedBoards intersection with obtainedBoards=\n" + evalAndStringify(allExpectedBoards.intersect(obtainedBoards)))
-    //    println("expectedBoards - obtainedBoards=\n" + evalAndStringify(allExpectedBoards -- obtainedBoards))
-    //    println("obtainedBoards - expectedBoards=\n" + evalAndStringify(obtainedBoards -- allExpectedBoards))
     assert(obtainedBoards.size == allExpectedBoards.size)
     val obtainedSet = obtainedBoards.toSet
-    assert(Set.empty == obtainedSet -- allExpectedBoards)
-    assert(Set.empty == allExpectedBoards -- obtainedSet)
-    assert(obtainedSet == allExpectedBoards)
+
+    def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
+      def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
+        TreeSet[U]() ++ set
+      }
+
+      implicit val setOrdering: Ordering[SortedSet[T]] = (x, y) => x.toString.compare(y.toString)
+      _sorted(obtainedSet.map(s => _sorted(s)))
+    }
+
+    assert(sorted(obtainedSet) == sorted(allExpectedBoards))
   }
 
   def rotations(table: Table, solution: Board): Set[Board] =
