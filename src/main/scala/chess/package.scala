@@ -1,9 +1,12 @@
 import scala.collection.immutable.{BitSet, Map}
 
 package object chess {
+  val minTaskSize = 145
+
   type Position = Int
-  type PieceInt = Int
+  type PiecePositionInt = Int
   type Positions = BitSet
+  type PiecePositions = BitSet
   type OrderedPiecesWithCount = Map[Piece, Int]
 
   case class Input(table: Table,
@@ -25,12 +28,17 @@ package object chess {
 
   case class Table(horizontal: Int, vertical: Int)
 
-  case class PiecePosition(pieceInt: PieceInt, position: Position) {
-    def piece: Piece = Piece.of(pieceInt)
-  }
-
   final object PiecePosition {
-    def apply(piece: Piece, position: Position): PiecePosition = PiecePosition(piece.order, position)
+    private val pieceEncodingBits = 3
+    private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
+
+    def fromInt(piecePositionInt: PiecePositionInt): (Piece, Position) = (piece(piecePositionInt), position(piecePositionInt))
+
+    def toInt(piece: Piece, position: Position): Position = (position << PiecePosition.pieceEncodingBits) + piece.order
+
+    def piece(piecePositionInt: PiecePositionInt): Piece = Piece.of(piecePositionInt & pieceEncodingOnes)
+
+    def position(piecePositionInt: PiecePositionInt): Int = piecePositionInt >>> pieceEncodingBits
   }
 
   final object Position {
@@ -42,10 +50,8 @@ package object chess {
     def horizontal(table: Table): Int = {
       table.horizontal + 1
     }
-
   }
 
-  case class PotentialSolution(solution: List[PiecePosition])
-
+  case class PotentialSolution(solution: PiecePositions)
 
 }
