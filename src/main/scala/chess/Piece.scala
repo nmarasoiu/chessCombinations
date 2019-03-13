@@ -28,12 +28,6 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
     */
   protected def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)]
 
-  /**
-    * Returns true if this Piece, situated at piecePosition, can take out another piece situated at otherPosition
-    */
-  final def takes(piecePosition: Position, otherPosition: Position, table: Table): Boolean =
-    incompatiblePositions(piecePosition, table)(otherPosition)
-
   def compare(that: Piece): Int = this.order - that.order
 }
 

@@ -17,6 +17,7 @@ object BlockingUtil {
     Seq(solutions.head, solutions.last).distinct.foreach(solution => {
       println(solution)
     })
+    println("Checking duplication..")
     if (checkDuplication) {
       //todo only extract some duplicates if any with bloom filter or other LogLog like probabilistic dup detector
       assert(stream.distinct.blockingIterable().asScala.size == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
