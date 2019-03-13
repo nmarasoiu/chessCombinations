@@ -24,9 +24,8 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example should return the solutions, and that there are no duplicates in the returned solutions") {
-    val input = Input(Table(8, 8), Map(Rook -> 2, King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-    while (true)
-      block(GenerationCore.solutions(input), checkDuplication = false)
+    val input = Input(Table(7, 7), Map(Rook -> 2, King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
+    block(GenerationCore.solutions(input), checkDuplication = false)
   }
 
   test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {

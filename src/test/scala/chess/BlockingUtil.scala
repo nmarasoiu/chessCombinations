@@ -19,7 +19,7 @@ object BlockingUtil {
       println(solution)
     })
     if (checkDuplication) {
-//      assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
+      //      assert(solutions.distinct.length == solutions.size) //todo: should we try some .par ? a single core is used quite a lot of time for distinct which creates a set
     }
     solutions
   }

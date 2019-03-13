@@ -16,8 +16,8 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
             yield Position.fromPairToInt(x, y, table)
         BitSet(positions: _*)
     }
-  val incompatiblePositions: (Position, Table) => Positions ={
-    case pair@(p,t) => _incompatiblePositions(pair)
+  val incompatiblePositions: (Position, Table) => Positions = {
+    case pair@(p, t) => _incompatiblePositions(pair)
   }
 
   /**
@@ -42,8 +42,7 @@ object Piece extends Enum[Piece] {
 
   case object Queen extends Piece(0) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] =
-      Rook.incompatiblePositions(x, y, table) ++ Bishop.incompatiblePositions(x, y, table) //todo bitSet |
-
+      Rook.incompatiblePositions(x, y, table) ++ Bishop.incompatiblePositions(x, y, table)
   }
 
   case object Bishop extends Piece(1) {
@@ -52,7 +51,6 @@ object Piece extends Enum[Piece] {
       for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset))
         yield (x + hOffset, y + hOffset)
     }
-
   }
 
   case object Rook extends Piece(2) {
@@ -65,11 +63,10 @@ object Piece extends Enum[Piece] {
           yield (x, vOffset)
       xs ++ ys
     }
-
   }
 
   case object Knight extends Piece(3) {
-    val horizontalVerticalOffsets: Array[(Int, Int)] =
+    private val horizontalVerticalOffsets: Array[(Int, Int)] =
       for ((absHorizontalOffset, absVerticalOffset) <- Array((0, 0), (1, 2), (2, 1));
            (hOffset, vOffset) <- Set(
              (absHorizontalOffset, absVerticalOffset), (-absHorizontalOffset, absVerticalOffset),
@@ -80,17 +77,14 @@ object Piece extends Enum[Piece] {
       for ((hOffset, vOffset) <- horizontalVerticalOffsets if fittingXY(table)(x + hOffset, y + vOffset))
         yield (x + hOffset, y + vOffset)
     }
-
   }
 
   case object King extends Piece(4) {
-
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
       val xs = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
       val ys = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
       for (x <- xs; y <- ys) yield (x, y)
     }
-
   }
 
   def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
