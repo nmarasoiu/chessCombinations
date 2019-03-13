@@ -29,7 +29,7 @@ package object chess {
     }
   }
 
-  final object PiecePosition {
+  object PiecePosition {
     private val pieceEncodingBits = 3
     private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
 
@@ -43,15 +43,15 @@ package object chess {
     def toInt(piece: Piece, position: Position): Position = (position << PiecePosition.pieceEncodingBits) + piece.order
   }
 
-  final object Position {
+  object Position {
 
     def fromPairToInt(x: Int, y: Int, table: Table): Int = x + y * horizontal(table)
+
+    def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
 
     def horizontal(table: Table): Int = {
       table.horizontal + 1
     }
-
-    def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
   }
 
   object Solution {
