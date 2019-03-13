@@ -27,12 +27,12 @@ object GenerationCore {
           .flatMap(positionInt => {
             val positionPair@(x: Int, y: Int) = Position.fromIntToPair(positionInt, table)
             if (picksSoFar.exists {
-              case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition)
+              case PiecePosition(_, otherPosition) => piece.takes(positionPair, otherPosition, table)
             }) {
               empty[PotentialSolution]()
             } else {
               val remainingMinPosByPiece = minPositionByPiece.updated(piece, positionInt + 1)
-              val remainingPositions = positions &~ piece.incompatiblePositions(x, y, table)
+              val remainingPositions = positions &~ piece.incompatiblePositions(positionPair, table)
               val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
               val remainingInput = Input(table, remainingPieces, remainingPositions)
               val newPicks = PiecePosition(piece, positionPair) :: picksSoFar

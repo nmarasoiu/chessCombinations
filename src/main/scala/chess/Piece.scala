@@ -12,14 +12,15 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
   /**
     * Returns true if this Piece, situated at piecePosition, can take out another piece situated at otherPosition
     */
-  def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean
+  def takes(piecePosition: (Position, Position), otherPosition: (Position, Position), table: Table): Boolean
+//    incompatiblePositions(piecePosition,table)(Position.fromPairToInt(otherPosition))
 
-  type KIntIntTable = (Int, Int, Table)
+  type KIntIntTable = ((Int, Int), Table)
   val incompatiblePositions: KIntIntTable => Positions =
     Memo.immutableHashMapMemo[KIntIntTable, Positions] {
-      case (x: Int, y: Int, table: Table) =>
-        val ints = for ((x, y) <- incompatiblePositions(x, y, table)) yield Position.fromPairToInt(x, y, table)
-        BitSet(ints: _*)
+      case ((x: Int, y: Int), table: Table) =>
+        val positions = for ((x, y) <- incompatiblePositions(x, y, table)) yield Position.fromPairToInt(x, y, table)
+        BitSet(positions: _*)
     }
 
   /**
@@ -40,8 +41,8 @@ object Piece extends Enum[Piece] {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] =
       Rook.incompatiblePositions(x, y, table) ++ Bishop.incompatiblePositions(x, y, table) //todo bitSet |
 
-    override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
-      Rook.takes(piecePosition, otherPosition) || Bishop.takes(piecePosition, otherPosition)
+    override def takes(piecePosition: (Position, Position), otherPosition: (Position, Position), table: Table): Boolean =
+      Rook.takes(piecePosition, otherPosition, table) || Bishop.takes(piecePosition, otherPosition, table)
   }
 
   case object Bishop extends Piece(1) {
@@ -51,7 +52,7 @@ object Piece extends Enum[Piece] {
         yield (x + hOffset, y + hOffset)
     }
 
-    override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
+    override def takes(piecePosition: (Position, Position), otherPosition: (Position, Position), table: Table): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) =>
           abs(x - x2) == abs(y - y2)
@@ -69,7 +70,7 @@ object Piece extends Enum[Piece] {
       xs ++ ys
     }
 
-    override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
+    override def takes(piecePosition: (Position, Position), otherPosition: (Position, Position), table: Table): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) => x == x2 || y == y2
       }
@@ -88,7 +89,7 @@ object Piece extends Enum[Piece] {
         yield (x + hOffset, y + vOffset)
     }
 
-    override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
+    override def takes(piecePosition: (Position, Position), otherPosition: (Position, Position), table: Table): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) =>
           def betweenOneAndTwo(x: Int): Boolean = 1 <= x && x <= 2
@@ -107,7 +108,7 @@ object Piece extends Enum[Piece] {
       for (x <- xs; y <- ys) yield (x, y)
     }
 
-    override def takes(piecePosition: (Int, Int), otherPosition: (Int, Int)): Boolean =
+    override def takes(piecePosition: (Position, Position), otherPosition: (Position, Position), table: Table): Boolean =
       (piecePosition, otherPosition) match {
         case ((x, y), (x2, y2)) =>
           abs(x - x2) <= 1 && abs(y - y2) <= 1
