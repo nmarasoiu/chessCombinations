@@ -13,29 +13,34 @@ object GenerationCore {
     if (input.table.vertical <= 0 || input.table.horizontal <= 0)
       empty()
     else
-      _solutions(input, picksSoFar = BitSet(), minPositionByPiece = Map().withDefaultValue(0))
+      _solutions(input,
+        piecesInPositionsSoFar = BitSet(),
+        takenPositionsSoFar = BitSet(),
+        minPositionByPiece = Map().withDefaultValue(0))
   }
-
-  private def _solutions(input: Input, picksSoFar: Solution, minPositionByPiece: Map[Piece, Position]): Flowable[Solution] = {
+//todo method object
+  private def _solutions(input: Input, piecesInPositionsSoFar: Solution, takenPositionsSoFar: Solution, minPositionByPiece: Map[Piece, Position]): Flowable[Solution] = {
     val Input(table, pieces, positions) = input
     minOptional(pieces) match {
       case None =>
-        just(picksSoFar)
+        just(piecesInPositionsSoFar)
       case Some((piece, pieceCount)) =>
         Flowable
           .fromIterable(asJava(positions.from(minPositionByPiece(piece))))
+          //todo try rx scala for comprehension
           .flatMap(position => {
             val incompatiblePositions: Positions = piece.incompatiblePositions(position, table)
-            if (picksSoFar.exists(pickedPosition => incompatiblePositions.contains(PiecePosition.position(pickedPosition)))) {
+            if ((takenPositionsSoFar & incompatiblePositions).nonEmpty) {
               empty[Solution]()
             } else {
               val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
               val remainingPositions = positions &~ incompatiblePositions
               val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
               val remainingInput = Input(table, remainingPieces, remainingPositions)
-              val newPicks = picksSoFar + PiecePosition.toInt(piece, position)
+              val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
+              val newTakenPositions = takenPositionsSoFar + position
               val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
-              val subSolutions = _solutions(remainingInput, newPicks, remainingMinPosByPiece)
+              val subSolutions = _solutions(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
               if (taskSize > minTaskSize)
                 subSolutions.subscribeOn(Schedulers.computation())
               else
