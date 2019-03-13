@@ -17,31 +17,31 @@ object BlockingUtil {
 
     val solutionsFlowable = GenerationCore.solutions(input)
 
-    //    println(Solution.fromIntToPieceAndCoordinates(solutionFlowable.head, input.table)) //solutionFlowable.head triggers an independent computation
-    val solutionCount: Long =
-      if (checkDuplication) {
-        case class Solutions(solutionsSoFar: Set[Solution], duplicatedSolutionsSoFar: Set[Solution])
-        val seedFactory: Callable[Solutions] = () => Solutions(Set(), Set())
-        val folder: BiFunction[Solutions, Solution, Solutions] = {
-          case (solutions: Solutions, sol: Solution) =>
-            if (solutions.solutionsSoFar(sol))
-              Solutions(solutions.solutionsSoFar - sol, solutions.duplicatedSolutionsSoFar + sol)
-            else
-              Solutions(solutions.solutionsSoFar + sol, solutions.duplicatedSolutionsSoFar)
-        }
-        val solutions: Solutions = solutionsFlowable.reduceWith(seedFactory, folder).blockingGet() // blocks
-        assert(solutions.duplicatedSolutionsSoFar.isEmpty)
-        solutions.solutionsSoFar.size
-      } else {
-        solutionsFlowable.count().blockingGet()
-      }
+
+    case class Solutions(solutionsSoFar: Set[Solution], duplicatedSolutionsSoFar: Set[Solution])
+    val seedFactory: Callable[Solutions] = () => Solutions(Set(), Set())
+    val folder: BiFunction[Solutions, Solution, Solutions] = {
+      case (solutions: Solutions, solution: Solution) =>
+        if (solutions.solutionsSoFar.size % 1000 == 1)
+          print(input, solution)
+        if (solutions.solutionsSoFar(solution))
+          Solutions(solutions.solutionsSoFar, solutions.duplicatedSolutionsSoFar + solution)
+        else
+          Solutions(solutions.solutionsSoFar + solution, solutions.duplicatedSolutionsSoFar)
+    }
+    val solutions: Solutions = solutionsFlowable.reduceWith(seedFactory, folder).blockingGet() // blocks
+    assert(solutions.duplicatedSolutionsSoFar.isEmpty)
+    val solutionCount: Long = solutions.solutionsSoFar.size
+
     val t1 = clock.instant()
     val t1nano = System.nanoTime
     println(" computed in " + java.time.Duration.between(t0, t1) + " / " +
-      ((t1nano.toDouble - t0nano) / 1000D / 1000 / 1000) +
-      " -> " + solutionCount + " solutionFlowable found")
+      ((t1nano.toDouble - t0nano) / 1000D / 1000 / 1000) + " -> " + solutionCount + " solutionFlowable found")
 
     solutionCount
   }
 
+  private def print(input: Input, solution: Solution): Unit = {
+    println(Solution.fromIntToPieceAndCoordinates(solution, input.table))
+  }
 }
