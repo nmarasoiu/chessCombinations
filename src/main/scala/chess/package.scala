@@ -5,8 +5,8 @@ package object chess {
 
   type Position = Int
   type PiecePositionInt = Int
-  type Positions = BitSet
-  type Solution = BitSet
+  type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
+  type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type OrderedPiecesWithCount = Map[Piece, Int]
 
   case class Input(table: Table,
