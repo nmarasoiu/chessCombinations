@@ -40,7 +40,7 @@ object BlockingUtil {
     val t1nano = System.nanoTime
     println(" computed in " + java.time.Duration.between(t0, t1) + " / " +
       ((t1nano.toDouble - t0nano) / 1000D / 1000 / 1000) +
-    " -> " + solutionsCount + " solutions found")
+      " -> " + solutionsCount + " solutions found")
 
     solutions
   }

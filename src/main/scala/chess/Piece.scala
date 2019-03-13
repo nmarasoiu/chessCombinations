@@ -7,6 +7,9 @@ import scala.collection.immutable
 import scala.collection.immutable.BitSet
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
+  val incompatiblePositions: (Position, Table) => Positions = {
+    case pair@(p, t) => _incompatiblePositions(pair)
+  }
   private val _incompatiblePositions: ((Position, Table)) => Positions =
     Memo.immutableHashMapMemo[(Position, Table), Positions] {
       case (position: Position, table: Table) =>
@@ -16,9 +19,8 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
             yield Position.fromPairToInt(x, y, table)
         BitSet(positions: _*)
     }
-  val incompatiblePositions: (Position, Table) => Positions = {
-    case pair@(p, t) => _incompatiblePositions(pair)
-  }
+
+  def compare(that: Piece): Int = this.order - that.order
 
   /**
     * @return the BitSet of positions that cannot be filled by other pieces:
@@ -27,14 +29,21 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
     *         and therefore cannot be occupied by other pieces part of this solution
     */
   protected def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)]
-
-  def compare(that: Piece): Int = this.order - that.order
 }
 
 object Piece extends Enum[Piece] {
   val values: immutable.IndexedSeq[Piece] = findValues
 
   def of(ordinal: Int): Piece = values(ordinal)
+
+  def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
+
+    def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
+
+    def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
+
+    fittingX(table)(position._1) && fittingY(table)(position._2)
+  }
 
   case object Queen extends Piece(0) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] =
@@ -81,14 +90,5 @@ object Piece extends Enum[Piece] {
       val ys = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
       for (x <- xs; y <- ys) yield (x, y)
     }
-  }
-
-  def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
-
-    def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
-
-    def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
-
-    fittingX(table)(position._1) && fittingY(table)(position._2)
   }
 }

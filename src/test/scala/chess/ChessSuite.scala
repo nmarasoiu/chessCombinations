@@ -24,7 +24,8 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2)))
+//    while (true)
+      executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2)))
   }
 
   test("Example 4 should return the solutions, and that there are no duplicates in the returned solutions") {
