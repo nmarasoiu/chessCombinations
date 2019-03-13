@@ -19,11 +19,15 @@ object Utils {
 
 object FlowableUtils {
 
-  def fromIterable[T](iterable: Iterable[T]): Flowable[T] = {
+  def fromIterable[T](iterable: Iterable[T]): Flowable[T] =
     Flowable.fromIterable(asJava(iterable))
-  }
+
+  def toIterable[T](flowable: Flowable[T]): Iterable[T] =
+    asScala(flowable.blockingIterable())
 
   import scala.collection.JavaConverters._
+
   private def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
 
+  private def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala
 }

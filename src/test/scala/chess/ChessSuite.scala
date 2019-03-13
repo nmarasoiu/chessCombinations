@@ -1,6 +1,6 @@
 package chess
 
-import chess.BlockingUtil.executeAndBlock
+import chess.BlockingUtil._
 import chess.Piece._
 import org.scalatest.FunSuite
 
@@ -23,25 +23,30 @@ class ChessSuite extends FunSuite {
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
 
-  test("Example 3 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2)))
+  test("Example '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
+    assert(3063828 == blockingTest(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1))))
   }
 
-  test("Example 4 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+  test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
+    assert(2895708 == blockingTest(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))))
   }
 
-  test("Example 5 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(7, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+  test("Example '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Input(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2)))
   }
 
-  test("Example 6 should return the solutions, and that there are no duplicates in the returned solutions") {
-    executeAndBlock(Input(Table(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+  test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Input(Table(7, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
+  }
+
+  test("Example 8x8 should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Input(Table(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)))
   }
 
   def areResultingBoardsTheExpectedOnes(input: Input, expectedBoards: Set[Board]) {
+    blockingTest(input, checkDuplication = true)
     val obtainedBoards: Iterable[Board] =
-      for (solution <- executeAndBlock(input, checkDuplication = true))
+      for (solution <- blockingIterable(input))
         yield {
           for (piecePosition <- solution;
                PieceAndCoordinates(piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table))
