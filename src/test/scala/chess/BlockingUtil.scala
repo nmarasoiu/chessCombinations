@@ -22,7 +22,7 @@ object BlockingUtil {
     val seedFactory: Callable[Solutions] = () => Solutions(Set(), Set())
     val folder: BiFunction[Solutions, Solution, Solutions] = {
       case (solutions: Solutions, solution: Solution) =>
-        if (solutions.solutionsSoFar.size % 1000 == 1)
+        if (solutions.solutionsSoFar.size % 10000 == 1)
           print(input, solution)
         if (solutions.solutionsSoFar(solution))
           Solutions(solutions.solutionsSoFar, solutions.duplicatedSolutionsSoFar + solution)
