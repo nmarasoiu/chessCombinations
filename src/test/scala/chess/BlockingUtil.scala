@@ -24,6 +24,7 @@ object BlockingUtil {
       case (solutions: Solutions, solution: Solution) =>
         if (solutions.solutionsSoFar.size % 10000 == 1)
           print(input, solution)
+        //todo test on pen paper & here that no piece can take another piece, and that exactly necessary pieces are placed on table; isolate tests without generating/computing the flowable twice , potentially caching
         if (solutions.solutionsSoFar(solution))
           Solutions(solutions.solutionsSoFar, solutions.duplicatedSolutionsSoFar + solution)
         else
