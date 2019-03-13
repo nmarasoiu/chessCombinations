@@ -25,8 +25,8 @@ object GenerationCore {
         Flowable
           .fromIterable(asJava(positions.from(minPositionByPiece(piece))))
           .flatMap(position => {
-            val incompatiblePositions = piece.incompatiblePositions(position, table)
-            if (picksSoFar.exists(otherPiecePosition => incompatiblePositions(PiecePosition.position(otherPiecePosition)))) {
+            val incompatiblePositions: Positions = piece.incompatiblePositions(position, table)
+            if (picksSoFar.exists(pickedPosition => incompatiblePositions.contains(PiecePosition.position(pickedPosition)))) {
               empty[Solution]()
             } else {
               val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
