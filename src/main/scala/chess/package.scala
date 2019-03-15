@@ -6,13 +6,21 @@ package object chess {
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
   type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type OrderedPiecesWithCount = Map[Piece, Int]
-  val minTaskSize = 145
+  val minTaskSize = 150
 
   case class Input(table: Table,
                    pieces: OrderedPiecesWithCount,
                    positions: Positions)
 
-  case class Table(horizontal: Int, vertical: Int)
+  final case class Table(horizontal: Int, vertical: Int) {
+    val moduloFactor: Int = horizontal + 1
+
+    def fromPairToInt(x: Int, y: Int): Int = x + y * moduloFactor
+
+    def fromIntToPair(xy: Int): (Int, Int) = {
+      (xy % moduloFactor, xy / moduloFactor)
+    }
+  }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
 
@@ -24,7 +32,7 @@ package object chess {
     def positionsFor(table: Table): Positions = {
       val positions = for (x <- 0 until table.horizontal;
                            y <- 0 until table.vertical;
-                           aggNum = Position.fromPairToInt(x, y, table)) yield aggNum
+                           aggNum = table.fromPairToInt(x, y)) yield aggNum
       BitSet(positions: _*)
     }
   }
@@ -34,24 +42,13 @@ package object chess {
     private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
 
     def fromIntToPieceAndCoordinates(piecePositionInt: PiecePositionInt, table: Table): PieceAndCoordinates =
-      PieceAndCoordinates(piece(piecePositionInt), Position.fromIntToPair(position(piecePositionInt), table))
+      PieceAndCoordinates(piece(piecePositionInt), table.fromIntToPair(position(piecePositionInt)))
 
     def piece(piecePositionInt: PiecePositionInt): Piece = Piece.of(piecePositionInt & pieceEncodingOnes)
 
     def position(piecePositionInt: PiecePositionInt): Int = piecePositionInt >>> pieceEncodingBits
 
     def toInt(piece: Piece, position: Position): Position = (position << PiecePosition.pieceEncodingBits) + piece.order
-  }
-
-  object Position {
-
-    def fromPairToInt(x: Int, y: Int, table: Table): Int = x + y * horizontal(table)
-
-    def fromIntToPair(xy: Int, table: Table): (Int, Int) = (xy % horizontal(table), xy / horizontal(table))
-
-    def horizontal(table: Table): Int = {
-      table.horizontal + 1
-    }
   }
 
   object Solution {

@@ -51,7 +51,7 @@ case class SolutionPath(input: Input,
 
         solutionWithSizeFlowable.flatMap {
           case (taskSize: Long, subSolutions: Flowable[Solution]) =>
-            if (taskSize > minTaskSize)
+            if (taskSize >= minTaskSize)
               subSolutions.subscribeOn(Schedulers.computation())
             else
               subSolutions
