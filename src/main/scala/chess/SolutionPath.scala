@@ -30,24 +30,24 @@ case class SolutionPath(input: Input,
       val solutionWithSizeFlowable: Flowable[(Long, Flowable[Solution])] =
         positionAndIncompatibilitiesFlowable
           .filter {
-            case (_: Position, incompatiblePositions: Positions) =>
+            case (_, incompatiblePositions) =>
               (takenPositionsSoFar & incompatiblePositions).isEmpty
           }
           .map {
-            case (position: PiecePositionInt, incompatiblePositions: Positions) =>
-              val remainingMinPosByPiece: Map[Piece, PiecePositionInt] = minPositionByPiece.updated(piece, position + 1)
+            case (position, incompatiblePositions) =>
+              val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
               val remainingPositions = positions &~ incompatiblePositions
               val remainingInput = Input(table, remainingPieces, remainingPositions)
               val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
               val newTakenPositions = takenPositionsSoFar + position
-              val taskSize: Long = remainingPositions.size.toLong * (1 + remainingPieces.size)
+              val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
               val deeperSolutionPath = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
               val subSolutionFlowable = deeperSolutionPath.solutions()
               (taskSize, subSolutionFlowable)
           }
 
       solutionWithSizeFlowable.flatMap {
-        case (taskSize: Long, subSolutions: Flowable[Solution]) =>
+        case (taskSize, subSolutions) =>
           if (taskSize >= minTaskSize)
             subSolutions.subscribeOn(Schedulers.computation())
           else
