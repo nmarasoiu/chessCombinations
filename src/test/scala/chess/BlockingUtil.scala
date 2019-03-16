@@ -20,24 +20,27 @@ object BlockingUtil {
 
     val input = Input.from(table, piecesToPositions)
     val solutionsFlowable = GenerationCore.solutions(input).subscribeOn(Schedulers.computation())
-
-    final case class SolT(mask: mutable.IndexedSeq[Long]) {
-      override lazy val hashCode: Int = super.hashCode()
-    }
-    object SolT {
-      def apply(solution: Solution): SolT = SolT(solution.toBitMask.to[mutable.WrappedArray])
-    }
-    type Solutions = mutable.Set[SolT]
-    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
-    val folder: BiFunction[Solutions, Solution, Solutions] = {
-      case (solutions: Solutions, solution: Solution) =>
-        assert(solutions.add(SolT(solution)))
-        if (solutions.size % 10000 == 1) print(input, solution)
-        solutions
-    }
-    // blocks
-    val solutionCount: Long = solutionsFlowable.reduceWith(seedFactory, folder).blockingGet().size
-
+    val solutionCount: Long =
+      if (checkDuplication) {
+        final case class SolT(mask: mutable.IndexedSeq[Long]) {
+          override lazy val hashCode: Int = super.hashCode()
+        }
+        object SolT {
+          def apply(solution: Solution): SolT = SolT(solution.toBitMask.to[mutable.WrappedArray])
+        }
+        type Solutions = mutable.Set[SolT]
+        val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
+        val folder: BiFunction[Solutions, Solution, Solutions] = {
+          case (solutions: Solutions, solution: Solution) =>
+            assert(solutions.add(SolT(solution)))
+            if (solutions.size % 10000 == 1) print(input, solution)
+            solutions
+        }
+        // blocks
+        solutionsFlowable.reduceWith(seedFactory, folder).blockingGet().size
+      } else {
+        solutionsFlowable.count.blockingGet()
+      }
     val t1 = clock.instant()
     val t1nano = System.nanoTime
     println(" computed in " + java.time.Duration.between(t0, t1) + " / " +
