@@ -17,7 +17,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
         BitSet(positions: _*)
     }
   val incompatiblePositions: (Position, Table) => Positions = {
-    case pair@(p, t) => _incompatiblePositions(pair)
+    case pair => _incompatiblePositions(pair)
   }
 
   def compare(that: Piece): Int = this.order - that.order

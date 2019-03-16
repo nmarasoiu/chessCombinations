@@ -17,15 +17,17 @@ object BlockingUtil {
     val t0nano = System.nanoTime
     val t0 = clock.instant()
 
-    val input = Input(table, piecesToPositions.map { case (k, v) => (k.order, v) })
+    val input = Input.from(table, piecesToPositions)
     val solutionsFlowable = GenerationCore.solutions(input)
 
-    type SolT = Array[Long]
+    final case class SolT(solution: Solution) {
+      override lazy val hashCode: Int = mutable.WrappedArray.make(solution.toBitMask).hashCode()
+    }
     type Solutions = mutable.Set[SolT]
     val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
     val folder: BiFunction[Solutions, Solution, Solutions] = {
       case (solutions: Solutions, solution: Solution) =>
-        assert(solutions.add(solution.toBitMask))
+        assert(solutions.add(SolT(solution)))
         if (solutions.size % 10000 == 1) print(input, solution)
         solutions
     }

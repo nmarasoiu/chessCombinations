@@ -24,6 +24,7 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
+    while(true)
     assert(blockingTest(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1)) >= 3063828)
   }
 
@@ -45,7 +46,7 @@ class ChessSuite extends FunSuite {
 
   def areResultingBoardsTheExpectedOnes(table: Table, piecesToPositions: Map[Piece, Position], expectedBoards: Set[Board]) {
     blockingTest(table, piecesToPositions, checkDuplication = true)
-    val input = Input(table, piecesToPositions.map { case (k, v) => (k.order, v) })
+    val input = Input.from(table, piecesToPositions)
     val obtainedBoards: Iterable[Board] =
       for (solution <- blockingIterable(input))
         yield {

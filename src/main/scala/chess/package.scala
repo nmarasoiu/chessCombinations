@@ -26,6 +26,9 @@ package object chess {
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
 
   object Input {
+    def from(table: Table, piecesToPositions: Map[Piece, Position]) =
+      Input(table,piecesToPositions.map { case (k, v) => (k.order, v) })
+
 
     def apply(table: Table, piecesCount: OrderedPiecesWithCount): Input =
       Input(table, toSortedPiecesStream(piecesCount), positionsFor(table))
