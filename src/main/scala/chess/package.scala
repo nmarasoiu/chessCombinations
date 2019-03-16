@@ -9,7 +9,7 @@ package object chess {
   val minTaskSize = 150
 
   case class Input(table: Table,
-                   pieces: OrderedPiecesWithCount,
+                   pieces: Iterable[Piece],
                    positions: Positions)
 
   final case class Table(horizontal: Int, vertical: Int) {
@@ -27,9 +27,14 @@ package object chess {
   object Input {
 
     def apply(table: Table, piecesCount: OrderedPiecesWithCount): Input =
-      Input(table, piecesCount, positionsFor(table))
+      Input(table, toSortedPiecesStream(piecesCount), positionsFor(table))
 
-    def positionsFor(table: Table): Positions = {
+    private def toSortedPiecesStream(piecesCount: OrderedPiecesWithCount): Iterable[Piece] =
+      for ((piece, count) <- piecesCount.toSeq.sorted.toStream;
+           _ <- 1 to count
+      ) yield piece
+
+    private def positionsFor(table: Table): Positions = {
       val positions = for (x <- 0 until table.horizontal;
                            y <- 0 until table.vertical;
                            aggNum = table.fromPairToInt(x, y)) yield aggNum
