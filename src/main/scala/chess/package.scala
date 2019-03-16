@@ -6,11 +6,10 @@ package object chess {
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
   type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
-  type OrderedPiecesWithCount = Map[PieceInt, Int]
   val minTaskSize = 150
 
   case class Input(table: Table,
-                   pieces: Iterable[PieceInt],
+                   pieces: IndexedSeq[PieceInt],
                    positions: Positions)
 
   final case class Table(horizontal: Int, vertical: Int) {
@@ -30,11 +29,11 @@ package object chess {
       Input(table,piecesToPositions.map { case (k, v) => (k.order, v) })
 
 
-    def apply(table: Table, piecesCount: OrderedPiecesWithCount): Input =
-      Input(table, toSortedPiecesStream(piecesCount), positionsFor(table))
+    def apply(table: Table, piecesCount: Map[PieceInt, Int]): Input =
+      Input(table, toSortedPieces(piecesCount), positionsFor(table))
 
-    private def toSortedPiecesStream(piecesCount: OrderedPiecesWithCount): Iterable[PieceInt] =
-      for ((piece, count) <- piecesCount.toSeq.sorted.toStream;
+    private def toSortedPieces(piecesCount: Map[PieceInt, Int]): IndexedSeq[PieceInt] =
+      for ((piece, count) <- piecesCount.toIndexedSeq.sorted;
            _ <- 1 to count
       ) yield piece
 

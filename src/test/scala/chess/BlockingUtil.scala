@@ -4,6 +4,7 @@ import java.time.Clock
 import java.util.concurrent.Callable
 
 import io.reactivex.functions.BiFunction
+import io.reactivex.schedulers.Schedulers
 
 import scala.collection.mutable
 
@@ -18,10 +19,13 @@ object BlockingUtil {
     val t0 = clock.instant()
 
     val input = Input.from(table, piecesToPositions)
-    val solutionsFlowable = GenerationCore.solutions(input)
+    val solutionsFlowable = GenerationCore.solutions(input).subscribeOn(Schedulers.computation())
 
-    final case class SolT(solution: Solution) {
-      override lazy val hashCode: Int = mutable.WrappedArray.make(solution.toBitMask).hashCode()
+    final case class SolT(mask: mutable.IndexedSeq[Long]) {
+      override lazy val hashCode: Int = super.hashCode()
+    }
+    object SolT {
+      def apply(solution: Solution): SolT = SolT(solution.toBitMask.to[mutable.WrappedArray])
     }
     type Solutions = mutable.Set[SolT]
     val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
