@@ -5,39 +5,37 @@ import java.util.concurrent.Callable
 
 import io.reactivex.functions.BiFunction
 
+import scala.collection.mutable
+
 
 object BlockingUtil {
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.toIterable(GenerationCore.solutions(input))
 
-  def blockingTest(input: Input, checkDuplication: Boolean = false): Long = {
+  def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDuplication: Boolean = false): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0nano = System.nanoTime
     val t0 = clock.instant()
 
+    val input = Input(table, piecesToPositions.map { case (k, v) => (k.order, v) })
     val solutionsFlowable = GenerationCore.solutions(input)
 
-
-    case class Solutions(solutionsSoFar: Set[Solution], duplicatedSolutionsSoFar: Set[Solution])
-    val seedFactory: Callable[Solutions] = () => Solutions(Set(), Set())
+    type SolT = Array[Long]
+    type Solutions = mutable.Set[SolT]
+    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
     val folder: BiFunction[Solutions, Solution, Solutions] = {
       case (solutions: Solutions, solution: Solution) =>
-        if (solutions.solutionsSoFar.size % 10000 == 1)
-          print(input, solution)
-        //todo test on pen paper & here that no piece can take another piece, and that exactly necessary pieces are placed on table; isolate tests without generating/computing the flowable twice , potentially caching
-        if (solutions.solutionsSoFar(solution))
-          Solutions(solutions.solutionsSoFar, solutions.duplicatedSolutionsSoFar + solution)
-        else
-          Solutions(solutions.solutionsSoFar + solution, solutions.duplicatedSolutionsSoFar)
+        assert(solutions.add(solution.toBitMask))
+        if (solutions.size % 10000 == 1) print(input, solution)
+        solutions
     }
-    val solutions: Solutions = solutionsFlowable.reduceWith(seedFactory, folder).blockingGet() // blocks
-    assert(solutions.duplicatedSolutionsSoFar.isEmpty)
-    val solutionCount: Long = solutions.solutionsSoFar.size
+    // blocks
+    val solutionCount: Long = solutionsFlowable.reduceWith(seedFactory, folder).blockingGet().size
 
     val t1 = clock.instant()
     val t1nano = System.nanoTime
     println(" computed in " + java.time.Duration.between(t0, t1) + " / " +
-      ((t1nano.toDouble - t0nano) / 1000D / 1000 / 1000) + " -> " + solutionCount + " solutionFlowable found")
+      ((t1nano.toDouble - t0nano) / 1e9) + " -> " + solutionCount + " solutionFlowable found")
 
     solutionCount
   }

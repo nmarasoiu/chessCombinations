@@ -9,15 +9,15 @@ import scala.collection.immutable.Map
 case class SolutionPath(input: Input,
                         piecesInPositionsSoFar: Solution,
                         takenPositionsSoFar: Positions,
-                        minPositionByPiece: Map[Piece, Position]) {
+                        minPositionByPiece: Map[PieceInt, Position]) {
 
   def solutions(): Flowable[Solution] = {
     val Input(table, pieces, positions) = input
     if (pieces.isEmpty) {
       just(piecesInPositionsSoFar)
     } else {
-      val (piece, remainingPieces) = (pieces.head, pieces.tail)
-      val positionsToConsider: Positions = positions.from(minPositionByPiece(piece))
+      val (piece: Piece, remainingPieces: Iterable[PieceInt]) = (Piece.values(pieces.head), pieces.tail)
+      val positionsToConsider: Positions = positions.from(minPositionByPiece(piece.order))
 
       val positionFlowable: Flowable[Position] = FlowableUtils.fromIterable(positionsToConsider)
 
@@ -27,33 +27,27 @@ case class SolutionPath(input: Input,
           (position, incompatiblePositions)
         })
 
-      val solutionWithSizeFlowable: Flowable[(Long, Flowable[Solution])] =
-        positionAndIncompatibilitiesFlowable
-          .filter {
-            case (_, incompatiblePositions) =>
-              (takenPositionsSoFar & incompatiblePositions).isEmpty
-          }
-          .map {
-            case (position, incompatiblePositions) =>
-              val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
-              val remainingPositions = positions &~ incompatiblePositions
-              val remainingInput = Input(table, remainingPieces, remainingPositions)
-              val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
-              val newTakenPositions = takenPositionsSoFar + position
-              val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
-              val deeperSolutionPath = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
-              val subSolutionFlowable = deeperSolutionPath.solutions()
-              (taskSize, subSolutionFlowable)
-          }
-
-      solutionWithSizeFlowable.flatMap {
-        case (taskSize, subSolutions) =>
-          if (taskSize >= minTaskSize)
-            subSolutions.subscribeOn(Schedulers.computation())
-          else
-            subSolutions
-      }
+      positionAndIncompatibilitiesFlowable
+        .filter {
+          case (_, incompatiblePositions) =>
+            (takenPositionsSoFar & incompatiblePositions).isEmpty
+        }
+        .flatMap {
+          case (position: Position, incompatiblePositions) =>
+            val remainingMinPosByPiece = minPositionByPiece.updated(piece.order, position + 1)
+            val remainingPositions = positions &~ incompatiblePositions
+            val remainingInput = Input(table, remainingPieces, remainingPositions)
+            val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
+            val newTakenPositions = takenPositionsSoFar + position
+            val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
+            val deeperSolutionPath = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
+            val subSolutions = deeperSolutionPath.solutions()
+            if (taskSize >= minTaskSize)
+              subSolutions.subscribeOn(Schedulers.computation())
+            else
+              subSolutions
+        }
     }
   }
-
 }
+
