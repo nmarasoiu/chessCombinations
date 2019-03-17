@@ -29,10 +29,6 @@ package object chess {
     def from(table: Table, piecesToPositions: Map[Piece, Position]) =
       Input(table, toSortedPieceCount(piecesToPositions), positionsFor(table))
 
-
-    //    def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
-    //      Input(table, toSortedPieceCount(piecesCount), positionsFor(table))
-
     private def toSortedPieceCount(piecesCount: Map[Piece, PieceCount]): SortedMap[Piece, PieceCount] =
       TreeMap[Piece, PieceCount]() ++ piecesCount.map { case (piece, count) => (piece, count) }
 
