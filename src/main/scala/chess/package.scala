@@ -1,4 +1,4 @@
-import scala.collection.immutable.{BitSet, Map}
+import scala.collection.immutable.{BitSet, Map, SortedMap, TreeMap}
 
 package object chess {
   type Position = Int
@@ -6,10 +6,11 @@ package object chess {
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
   type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
-  val minTaskSize = 150
+  type PieceCount = Int
+  val minTaskSize = 432150
 
   case class Input(table: Table,
-                   pieces: IndexedSeq[PieceInt],
+                   pieces: SortedMap[Piece, PieceCount],
                    positions: Positions)
 
   final case class Table(horizontal: Int, vertical: Int) {
@@ -26,16 +27,14 @@ package object chess {
 
   object Input {
     def from(table: Table, piecesToPositions: Map[Piece, Position]) =
-      Input(table,piecesToPositions.map { case (k, v) => (k.order, v) })
+      Input(table, toSortedPieceCount(piecesToPositions), positionsFor(table))
 
 
-    def apply(table: Table, piecesCount: Map[PieceInt, Int]): Input =
-      Input(table, toSortedPieces(piecesCount), positionsFor(table))
+    //    def apply(table: Table, piecesCount: Map[Piece, Int]): Input =
+    //      Input(table, toSortedPieceCount(piecesCount), positionsFor(table))
 
-    private def toSortedPieces(piecesCount: Map[PieceInt, Int]): IndexedSeq[PieceInt] =
-      for ((piece, count) <- piecesCount.toIndexedSeq.sorted;
-           _ <- 1 to count
-      ) yield piece
+    private def toSortedPieceCount(piecesCount: Map[Piece, PieceCount]): SortedMap[Piece, PieceCount] =
+      TreeMap[Piece, PieceCount]() ++ piecesCount.map { case (piece, count) => (piece, count) }
 
     private def positionsFor(table: Table): Positions = {
       val positions = for (x <- 0 until table.horizontal;
@@ -62,7 +61,7 @@ package object chess {
   object Solution {
     def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Seq[PieceAndCoordinates] = {
       (for (piecePosition <- piecePositions) yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table))
-        .toSeq.sortBy(_.piece)
+        .toIndexedSeq.sortBy(_.piece)
     }
   }
 

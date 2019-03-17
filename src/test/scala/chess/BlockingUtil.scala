@@ -19,7 +19,7 @@ object BlockingUtil {
     val t0 = clock.instant()
 
     val input = Input.from(table, piecesToPositions)
-    val solutionsFlowable = GenerationCore.solutions(input).subscribeOn(Schedulers.computation())
+    val solutionsFlowable = GenerationCore.solutions(input)//.subscribeOn(Schedulers.computation())
     val solutionCount: Long =
       if (checkDuplication) {
         final case class SolT(mask: mutable.IndexedSeq[Long]) {

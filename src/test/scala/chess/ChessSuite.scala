@@ -59,16 +59,7 @@ class ChessSuite extends FunSuite {
     assert(obtainedBoards.size == allExpectedBoards.size)
     val obtainedSet = obtainedBoards.toSet
 
-    def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
-      def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
-        TreeSet[U]() ++ set
-      }
-
-      implicit val setOrdering: Ordering[SortedSet[T]] = (x, y) => x.toString.compare(y.toString)
-      _sorted(obtainedSet.map(s => _sorted(s)))
-    }
-
-    assert(sorted(obtainedSet) == sorted(allExpectedBoards))
+    assert(Utils.sorted(obtainedSet) == Utils.sorted(allExpectedBoards))
   }
 
   def rotations(table: Table, solution: Board): Set[Board] =

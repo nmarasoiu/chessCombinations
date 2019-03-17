@@ -9,7 +9,7 @@ import scala.collection.immutable.Map
 case class SolutionPath(input: Input,
                         piecesInPositionsSoFar: Solution,
                         takenPositionsSoFar: Positions,
-                        minPositionByPiece: Map[PieceInt, Position]) {
+                        minPositionByPiece: Map[Piece, Position]) {
 
   def solutions(): Flowable[Solution] = {
 
@@ -31,14 +31,16 @@ case class SolutionPath(input: Input,
       * - hot-spotting on test activity
       * - efficient structure for both tail and size
       */
-    maybeSubscribeAsync(input,
-      Flowable.fromCallable(() => {
-        val Input(table, pieces, positions) = input
-        if (pieces.isEmpty) {
+    //    maybeSubscribeAsync(input,
+    Flowable.fromCallable(() => {
+      val Input(table, pieces, positions) = input
+      pieces.headOption match {
+        //      Utils.minOptional(pieces) match {
+        case None =>
           just(piecesInPositionsSoFar)
-        } else {
-          val (piece: Piece, remainingPieces) = (Piece.values(pieces.head), pieces.tail)
-          val positionsToConsider: Positions = positions.from(minPositionByPiece(piece.order))
+        case Some((piece, pieceCount)) =>
+          val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
+          val positionsToConsider: Positions = positions.from(minPositionByPiece(piece))
 
           val positionFlowable: Flowable[Position] = FlowableUtils.fromIterable(positionsToConsider)
 
@@ -55,7 +57,7 @@ case class SolutionPath(input: Input,
             }
             .flatMap {
               case (position: Position, incompatiblePositions) =>
-                val remainingMinPosByPiece = minPositionByPiece.updated(piece.order, position + 1)
+                val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
                 val remainingPositions = positions &~ incompatiblePositions
                 val remainingInput = Input(table, remainingPieces, remainingPositions)
                 val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
@@ -63,9 +65,9 @@ case class SolutionPath(input: Input,
                 val deeperSolutionPath = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
                 maybeSubscribeAsync(input, deeperSolutionPath.solutions())
             }
-        }
-      }).flatMap(flow => maybeSubscribeAsync(input, flow))
-    )
+      }
+    }).flatMap(flow => /*maybeSubscribeAsync(input, */ flow) //)
+    //    )
   }
 }
 

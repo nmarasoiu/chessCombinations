@@ -4,9 +4,19 @@ import java.lang
 
 import io.reactivex.Flowable
 
-import scala.collection.immutable.Map
+import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 object Utils {
+
+  def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
+    def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
+      TreeSet[U]() ++ set
+    }
+
+    implicit val setOrdering: Ordering[SortedSet[T]] = (x, y) => x.toString.compare(y.toString)
+    _sorted(obtainedSet.map(s => _sorted(s)))
+  }
+
   def minOptional[K, V](map: Map[K, V])(implicit cmp: Ordering[K]): Option[(K, V)] = {
     val none: Option[(K, V)] = None
     map.foldLeft(none) {
