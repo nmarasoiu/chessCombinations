@@ -7,7 +7,7 @@ package object chess {
   type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
-  val minTaskSize = 432150
+  val minTaskSize = 150
 
   case class Input(table: Table,
                    pieces: SortedMap[Piece, PieceCount],
