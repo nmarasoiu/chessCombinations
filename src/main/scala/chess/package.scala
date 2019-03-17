@@ -14,6 +14,7 @@ package object chess {
                    positions: Positions)
 
   final case class Table(horizontal: Int, vertical: Int) {
+    override val hashCode: Int = super.hashCode()
     val moduloFactor: Int = horizontal + 1
 
     def fromPairToInt(x: Int, y: Int): Int = x + y * moduloFactor
