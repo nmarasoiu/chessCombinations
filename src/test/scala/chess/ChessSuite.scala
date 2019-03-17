@@ -4,7 +4,7 @@ import chess.BlockingUtil._
 import chess.Piece._
 import org.scalatest.FunSuite
 
-import scala.collection.immutable.{Map, SortedSet, TreeSet}
+import scala.collection.immutable.Map
 
 class ChessSuite extends FunSuite {
 
@@ -24,8 +24,8 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
-    while(true)
-    assert(blockingTest(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1)) >= 3063828)
+    while (true)
+      assert(blockingTest(Table(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1)) >= 3063828)
   }
 
   test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {

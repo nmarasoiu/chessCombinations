@@ -3,6 +3,7 @@ package chess
 import java.time.Clock
 import java.util.concurrent.Callable
 
+import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 
@@ -18,28 +19,41 @@ object BlockingUtil {
     val t0nano = System.nanoTime
     val t0 = clock.instant()
 
+    final case class SolT(mask: mutable.IndexedSeq[Long]) {
+      override val hashCode: Int = super.hashCode()
+    }
+    object SolT {
+      def apply(solution: Solution): SolT = SolT(solution.toBitMask.to[mutable.WrappedArray])
+    }
+
     val input = Input.from(table, piecesToPositions)
-    val solutionsFlowable = GenerationCore.solutions(input)//.subscribeOn(Schedulers.computation())
+    val solutionsFlowable = GenerationCore.solutions(input)
+
     val solutionCount: Long =
       if (checkDuplication) {
-        final case class SolT(mask: mutable.IndexedSeq[Long]) {
-          override lazy val hashCode: Int = super.hashCode()
-        }
-        object SolT {
-          def apply(solution: Solution): SolT = SolT(solution.toBitMask.to[mutable.WrappedArray])
-        }
         type Solutions = mutable.Set[SolT]
         val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
-        val folder: BiFunction[Solutions, Solution, Solutions] = {
-          case (solutions: Solutions, solution: Solution) =>
-            assert(solutions.add(SolT(solution)))
-            if (solutions.size % 10000 == 1) print(input, solution)
+        val folder: BiFunction[Solutions, SolT, Solutions] = {
+          case (solutions: Solutions, solution: SolT) =>
+            assert(solutions.add(solution))
+            //            if (solutions.size % 5000000 == 1) print(input, solution)
             solutions
         }
         // blocks
-        solutionsFlowable.reduceWith(seedFactory, folder).blockingGet().size
+        val solTFlowable: Flowable[SolT] =
+          solutionsFlowable
+            .subscribeOn(Schedulers.computation())
+            .map(solution => SolT(solution))
+
+        solTFlowable
+          .subscribeOn(Schedulers.newThread())
+          .reduceWith(seedFactory, folder)
+          .blockingGet()
+          .size
       } else {
-        solutionsFlowable.count.blockingGet()
+        solutionsFlowable
+          .count
+          .blockingGet()
       }
     val t1 = clock.instant()
     val t1nano = System.nanoTime

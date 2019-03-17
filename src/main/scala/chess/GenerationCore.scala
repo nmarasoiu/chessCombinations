@@ -19,6 +19,6 @@ object GenerationCore {
   }
 
   def pack(pieces: SortedMap[Piece, PieceCount]): SortedMap[Piece, (PieceCount, Position)] =
-    pieces.mapValues(count => (count,0))
+    pieces.mapValues(count => (count, 0))
 
 }

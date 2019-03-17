@@ -7,6 +7,9 @@ import scala.collection.immutable
 import scala.collection.immutable.BitSet
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
+  val incompatiblePositions: (Position, Table) => Positions = {
+    case pair => _incompatiblePositions(pair)
+  }
   private val _incompatiblePositions: ((Position, Table)) => Positions =
     Memo.immutableHashMapMemo[(Position, Table), Positions] {
       case (position: Position, table: Table) =>
@@ -16,9 +19,6 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
             yield table.fromPairToInt(x, y)
         BitSet(positions: _*)
     }
-  val incompatiblePositions: (Position, Table) => Positions = {
-    case pair => _incompatiblePositions(pair)
-  }
 
   def compare(that: Piece): Int = this.order - that.order
 
