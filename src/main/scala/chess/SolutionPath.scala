@@ -4,26 +4,15 @@ import io.reactivex.Flowable
 import io.reactivex.Flowable.just
 import io.reactivex.schedulers.Schedulers
 
-import scala.collection.immutable.Map
+import scala.collection.immutable.SortedMap
 
-case class SolutionPath(input: Input,
+case class SolutionPath(table: Table,
+                        piecesCountAndMinPosition: SortedMap[Piece, (PieceCount, Position)],
+                        positions: Positions,
                         piecesInPositionsSoFar: Solution,
-                        takenPositionsSoFar: Positions,
-                        minPositionByPiece: Map[Piece, Position]) {
+                        takenPositionsSoFar: Positions) {
 
   def solutions(): Flowable[Solution] = {
-
-    def maybeSubscribeAsync[T](remainingInput: Input, flowable: Flowable[T]): Flowable[T] = {
-      def taskSize(remainingInput: Input): Long = {
-        remainingInput.positions.size.toLong * (1 + remainingInput.pieces.size)
-      }
-
-      if (taskSize(remainingInput) >= minTaskSize)
-        flowable.subscribeOn(Schedulers.computation())
-      else
-        flowable
-    }
-
     /**
       * todos
       * - huge GC overhead - perhaps due to testing
@@ -33,14 +22,12 @@ case class SolutionPath(input: Input,
       */
     //    maybeSubscribeAsync(input,
     Flowable.fromCallable(() => {
-      val Input(table, pieces, positions) = input
+      val pieces = piecesCountAndMinPosition
       pieces.headOption match {
-        //      Utils.minOptional(pieces) match {
         case None =>
           just(piecesInPositionsSoFar)
-        case Some((piece, pieceCount)) =>
-          val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1))
-          val positionsToConsider: Positions = positions.from(minPositionByPiece(piece))
+        case Some((piece, (pieceCount, minPosition))) =>
+          val positionsToConsider: Positions = positions.from(minPosition)
 
           val positionFlowable: Flowable[Position] = FlowableUtils.fromIterable(positionsToConsider)
 
@@ -57,13 +44,22 @@ case class SolutionPath(input: Input,
             }
             .flatMap {
               case (position: Position, incompatiblePositions) =>
-                val remainingMinPosByPiece = minPositionByPiece.updated(piece, position + 1)
+                val remainingPieces = if (pieceCount == 1)
+                  pieces - piece
+                else
+                  pieces + (piece -> (pieceCount - 1, position + 1))
                 val remainingPositions = positions &~ incompatiblePositions
-                val remainingInput = Input(table, remainingPieces, remainingPositions)
                 val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
                 val newTakenPositions = takenPositionsSoFar + position
-                val deeperSolutionPath = SolutionPath(remainingInput, newPiecesInPositions, newTakenPositions, remainingMinPosByPiece)
-                maybeSubscribeAsync(input, deeperSolutionPath.solutions())
+                val deeperSolutionPath =
+                  SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
+                val flowable = deeperSolutionPath.solutions()
+                val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
+
+                if (taskSize >= minTaskSize)
+                  flowable.subscribeOn(Schedulers.computation())
+                else
+                  flowable
             }
       }
     }).flatMap(flow => /*maybeSubscribeAsync(input, */ flow) //)
