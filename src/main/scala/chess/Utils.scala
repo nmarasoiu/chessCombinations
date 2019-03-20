@@ -36,7 +36,7 @@ object FlowableUtils {
 
   private def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
 
-  def toIterable[T](flowable: Flowable[T]): Iterable[T] =
+  def blockToIterable[T](flowable: Flowable[T]): Iterable[T] = //todo move in test
     asScala(flowable.blockingIterable())
 
   private def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala

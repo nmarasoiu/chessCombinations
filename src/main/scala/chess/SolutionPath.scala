@@ -6,6 +6,7 @@ import io.reactivex.schedulers.Schedulers
 import org.roaringbitmap.RoaringBitmap
 import org.roaringbitmap.RoaringBitmap._
 
+import scala.collection.JavaConverters._
 import scala.collection.immutable.SortedMap
 
 case class SolutionPath(table: Table,
@@ -27,19 +28,14 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (pieceCount, minPosition))) =>
-        val minPositionBitmap = new RoaringBitmap()
-        minPositionBitmap.add(minPosition,Int.MaxValue)
-        val positionsToConsider: Positions = and(positions,minPositionBitmap)
-
-        val positionFlowable: Flowable[Int] =
-          Flowable.fromArray(positionsToConsider.toArray:_*)
-//        Flowable.fromIterable(positionsToConsider.iterator())
-
+        val positionFlowable: Flowable[Int] = FlowableUtils.fromIterable(positions.asScala.map(_.toInt))
         val positionAndIncompatibilitiesFlowable: Flowable[(Position, Positions)] =
-          positionFlowable.map(position => {
-            val incompatiblePositions = piece.incompatiblePositions(position, table)
-            (position, incompatiblePositions)
-          })
+          positionFlowable
+            .filter(pos => pos >= minPosition)
+            .map(position => {
+              val incompatiblePositions = piece.incompatiblePositions(position, table)
+              (position, incompatiblePositions)
+            })
 
         positionAndIncompatibilitiesFlowable
           .filter {
@@ -52,11 +48,10 @@ case class SolutionPath(table: Table,
                 pieces - piece
               else
                 pieces + (piece -> (pieceCount - 1, position + 1))
-              val remainingPositions = andNot(positions,incompatiblePositions)
-              val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
+              val remainingPositions = andNot(positions, incompatiblePositions)
+              val newPiecesInPositions = PiecePosition.toInt(piece, position)::piecesInPositionsSoFar
               val newTakenPositions = or(takenPositionsSoFar, bitmapOf(position))
-              val deeperSolutionPath =
-                SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
+              val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
               val flowable = deeperSolutionPath.solutions()
               maybeAsync(remainingPieces, remainingPositions, flowable)
           }

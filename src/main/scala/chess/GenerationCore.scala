@@ -4,7 +4,7 @@ import io.reactivex.Flowable
 import io.reactivex.Flowable.empty
 import org.roaringbitmap.RoaringBitmap
 
-import scala.collection.immutable.{BitSet, SortedMap}
+import scala.collection.immutable.SortedMap
 
 object GenerationCore {
 
@@ -13,7 +13,7 @@ object GenerationCore {
       empty()
     else
       SolutionPath(input.table, pack(input.pieces), input.positions,
-        piecesInPositionsSoFar = BitSet(),
+        piecesInPositionsSoFar = Nil,
         takenPositionsSoFar = new RoaringBitmap()
       )
         .solutions()

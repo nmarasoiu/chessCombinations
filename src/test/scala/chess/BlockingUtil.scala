@@ -11,7 +11,7 @@ import scala.collection.mutable
 
 
 object BlockingUtil {
-  def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.toIterable(GenerationCore.solutions(input))
+  def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
 
   def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDuplication: Boolean = false): Long = {
     println("Computing..")
@@ -19,11 +19,11 @@ object BlockingUtil {
     val t0nano = System.nanoTime
     val t0 = clock.instant()
 
-    final case class SolT(mask: mutable.IndexedSeq[Long]) {
+    final case class SolT(mask: mutable.IndexedSeq[Int]) {
       override val hashCode: Int = super.hashCode()
     }
     object SolT {
-      def apply(solution: Solution): SolT = SolT(solution.toBitMask.to[mutable.WrappedArray])
+      def apply(solution: Solution): SolT = SolT(solution.toArray.to[mutable.WrappedArray])
     }
 
     val input = Input.from(table, piecesToPositions)

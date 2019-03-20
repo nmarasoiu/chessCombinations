@@ -6,7 +6,7 @@ package object chess {
   type Position = Int
   type PiecePositionInt = Int
   type Positions = RoaringBitmap //encoding (x,y) as x*horiz+y as Int
-  type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  type Solution = List[Int] // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
   val minTaskSize = 150
@@ -37,7 +37,7 @@ package object chess {
       val positions = for (x <- 0 until table.horizontal;
                            y <- 0 until table.vertical;
                            aggNum = table.fromPairToInt(x, y)) yield aggNum
-      RoaringBitmap.bitmapOf(positions: _*)
+      RoaringBitmap.bitmapOfUnordered(positions: _*)
     }
   }
 
@@ -57,6 +57,7 @@ package object chess {
 
   object Solution {
     def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Seq[PieceAndCoordinates] = {
+      import scala.collection.JavaConverters._
       (for (piecePosition <- piecePositions)
         yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table)
         ).toIndexedSeq.sortBy(_.piece)
