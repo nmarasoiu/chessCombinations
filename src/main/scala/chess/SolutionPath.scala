@@ -1,5 +1,5 @@
 package chess
-
+import io.reactivex.functions.Function
 import java.util.concurrent.atomic.AtomicInteger
 
 import io.reactivex.Flowable
@@ -17,42 +17,41 @@ case class SolutionPath(table: Table,
                         level: Int) {
 
   def solutions(): Flowable[Solution] = {
-    /**
-      * todos
-      * - huge GC overhead - perhaps due to testing
-      * - lack of sustainable parallelism
-      * - hot-spotting on test activity
-      * - efficient structure for both tail and size
-      */
-    val pieces = piecesCountAndMinPosition
-    pieces.headOption match {
+    piecesCountAndMinPosition.headOption match {
       case None =>
         just(piecesInPositionsSoFar)
-      case Some((piece, (pieceCount, minPosition))) =>
+      case Some((piece, (count, minPosition))) =>
+        lazy val flatMapper = asRxFunction(flatMapperFunction(piecesCountAndMinPosition, piece, count))
         Flowable.fromIterable(positions)
           .filter(pos => pos >= minPosition)
-          .flatMap {
-            position =>
-              val (incompatiblePositions, remainingPieces, newTakenPositions) =
-                computingForFilterAndFlatMap(pieces, piece, pieceCount, position)
-              if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
-                Flowable.empty[Solution]
-              } else {
-                val flowable = computingFlowable(piece, position, incompatiblePositions, remainingPieces, newTakenPositions)
-                SolutionPath.maybeAsyncSubscribeToSomeInnerFlowables(this, flowable)
-              }
-          }
+          .flatMap(flatMapper,flatMapConcurrency)
+    }
+  }
+  private def asRxFunction(func:Position=>Flowable[Solution]): Function[Integer, Flowable[Solution]] = {
+    position: Integer => func(position)
+  }
+  private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
+                                (position: Position): Flowable[Solution] = {
+    val (incompatiblePositions, remainingPieces, newTakenPositions) =
+      computingForFilterAndFlatMap(pieces, piece, pieceCount, position)
+    if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
+      Flowable.empty[Solution]
+    } else {
+      val flowable = computingFlowable(piece, position, incompatiblePositions, remainingPieces, newTakenPositions)
+      SolutionPath.maybeAsyncSubscribeToSomeInnerFlowables(this, flowable)
     }
   }
 
-  private def computingForFilterAndFlatMap(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount, position: Integer) = {
+  private def computingForFilterAndFlatMap(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece,
+                                           pieceCount: PieceCount, position: Int)
+  : (Positions, SortedMap[Piece, (PieceCount, Position)], Positions) = {
     val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
     val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
     val newTakenPositions = andNot1(incompatiblePositions)
     (incompatiblePositions, remainingPieces, newTakenPositions)
   }
 
-  private def computingFlowable(piece: Piece, position: Integer, incompatiblePositions: Positions, remainingPieces: SortedMap[Piece, (PieceCount, Position)], newTakenPositions: Positions) = {
+  private def computingFlowable(piece: Piece, position: Int, incompatiblePositions: Positions, remainingPieces: SortedMap[Piece, (PieceCount, Position)], newTakenPositions: Positions) = {
     newTakenPositions.add(position)
     val remainingPositions = andNot2(incompatiblePositions)
     val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
@@ -62,12 +61,12 @@ case class SolutionPath(table: Table,
     flowable
   }
 
-  private def andNot2(incompatiblePositions: Positions) = {
-    andNot(positions, incompatiblePositions)
+  private def andNot1(incompatiblePositions: Positions): Positions = {
+    andNot(takenPositionsSoFar, incompatiblePositions)
   }
 
-  private def andNot1(incompatiblePositions: Positions) = {
-    andNot(takenPositionsSoFar, incompatiblePositions)
+  private def andNot2(incompatiblePositions: Positions): Positions = {
+    andNot(positions, incompatiblePositions)
   }
 }
 
