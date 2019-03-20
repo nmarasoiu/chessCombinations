@@ -19,18 +19,17 @@ object BlockingUtil {
     val t0nano = System.nanoTime
     val t0 = clock.instant()
 
-    final case class SolT(mask: mutable.IndexedSeq[Int]) {
-      override val hashCode: Int = super.hashCode()
-    }
-    object SolT {
-      def apply(solution: Solution): SolT = SolT(solution.toList.toArray.to[mutable.WrappedArray])
-    }
-
     val input = Input.from(table, piecesToPositions)
     val solutionsFlowable = GenerationCore.solutions(input)
 
     val solutionCount: Long =
       if (checkDuplication) {
+        final case class SolT(mask: mutable.IndexedSeq[Int]) {
+          override val hashCode: Int = super.hashCode()
+        }
+        object SolT {
+          def apply(solution: Solution): SolT = SolT(solution.toList.toArray.to[mutable.WrappedArray])
+        }
         type Solutions = mutable.Set[SolT]
         val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
         val folder: BiFunction[Solutions, SolT, Solutions] = {
