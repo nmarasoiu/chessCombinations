@@ -2,7 +2,7 @@ package chess
 
 import java.time.Clock
 import java.util
-import java.util.concurrent.Callable
+import java.util.concurrent.{Callable, Executors}
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
@@ -12,12 +12,12 @@ import scala.collection.mutable
 
 
 object BlockingUtil {
+  private val mappingExecutor = Executors.newFixedThreadPool(2)
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
 
   def blockingTest(table: Table, piecesToPositions: Map[Piece, Position]): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
-    val t0nano = System.nanoTime
     val t0 = clock.instant()
 
     val input = Input.from(table, piecesToPositions)
@@ -44,7 +44,7 @@ object BlockingUtil {
 
     val solTFlowable: Flowable[SolT] =
       solutionsFlowable
-        .observeOn(Schedulers.computation())
+        .observeOn(Schedulers.from(mappingExecutor))
         .map(solution => SolT(solution))
 
     val solutionCount: Long =
@@ -55,9 +55,7 @@ object BlockingUtil {
         .size
 
     val t1 = clock.instant()
-    val t1nano = System.nanoTime
-    println(" computed in " + java.time.Duration.between(t0, t1) + " / " +
-      ((t1nano.toDouble - t0nano) / 1e9) + " -> " + solutionCount + " solutionFlowable found")
+    println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + solutionCount + " solutionFlowable found")
 
     solutionCount
   }
