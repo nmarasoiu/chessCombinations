@@ -1,6 +1,6 @@
 import org.roaringbitmap.RoaringBitmap
 
-import scala.collection.immutable.{BitSet, Map, SortedMap, TreeMap}
+import scala.collection.immutable.{Map, SortedMap, TreeMap}
 
 package object chess {
   type Position = Int
@@ -34,10 +34,7 @@ package object chess {
       TreeMap[Piece, PieceCount]() ++ piecesCount.map { case (piece, count) => (piece, count) }
 
     private def positionsFor(table: Table): Positions = {
-      val positions = for (x <- 0 until table.horizontal;
-                           y <- 0 until table.vertical;
-                           aggNum = table.fromPairToInt(x, y)) yield aggNum
-      RoaringBitmap.bitmapOfUnordered(positions: _*)
+      RoaringBitmap.add(new RoaringBitmap(), 0L, table.vertical*table.horizontal)
     }
   }
 

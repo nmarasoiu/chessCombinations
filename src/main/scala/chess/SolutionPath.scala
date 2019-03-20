@@ -3,7 +3,6 @@ package chess
 import io.reactivex.Flowable
 import io.reactivex.Flowable.just
 import io.reactivex.schedulers.Schedulers
-import org.roaringbitmap.RoaringBitmap
 import org.roaringbitmap.RoaringBitmap._
 
 import scala.collection.JavaConverters._
@@ -50,7 +49,7 @@ case class SolutionPath(table: Table,
                 pieces + (piece -> (pieceCount - 1, position + 1))
               val remainingPositions = andNot(positions, incompatiblePositions)
               val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
-              val newTakenPositions = or(takenPositionsSoFar, bitmapOf(position))
+              val newTakenPositions = add(takenPositionsSoFar, position.toLong, position+1)
               val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
               val flowable = deeperSolutionPath.solutions()
               maybeAsync(remainingPieces, remainingPositions, flowable)
