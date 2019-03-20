@@ -1,9 +1,10 @@
 package chess
-import io.reactivex.functions.Function
+
 import java.util.concurrent.atomic.AtomicInteger
 
 import io.reactivex.Flowable
 import io.reactivex.Flowable.just
+import io.reactivex.functions.Function
 import io.reactivex.schedulers.Schedulers
 import org.roaringbitmap.RoaringBitmap._
 
@@ -24,12 +25,14 @@ case class SolutionPath(table: Table,
         lazy val flatMapper = asRxFunction(flatMapperFunction(piecesCountAndMinPosition, piece, count))
         Flowable.fromIterable(positions)
           .filter(pos => pos >= minPosition)
-          .flatMap(flatMapper,flatMapConcurrency)
+          .flatMap(flatMapper, flatMapConcurrency)
     }
   }
-  private def asRxFunction(func:Position=>Flowable[Solution]): Function[Integer, Flowable[Solution]] = {
+
+  private def asRxFunction(func: Position => Flowable[Solution]): Function[Integer, Flowable[Solution]] = {
     position: Integer => func(position)
   }
+
   private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
                                 (position: Position): Flowable[Solution] = {
     val (incompatiblePositions, remainingPieces, newTakenPositions) =
@@ -75,12 +78,12 @@ object SolutionPath {
 
   private def maybeAsyncSubscribeToSomeInnerFlowables[T](solutionPath: SolutionPath, flowable: Flowable[T]): Flowable[T] = {
     if (solutionPath.level == 1
-//      && solutionPath.positions.getCardinality * (solutionPath.piecesCountAndMinPosition.size + 1) >= minTaskSize
+    //      && solutionPath.positions.getCardinality * (solutionPath.piecesCountAndMinPosition.size + 1) >= minTaskSize
     ) {
       flowable
-//        .doOnSubscribe(_ => println(counter.incrementAndGet() + "\tsubscribing"))
+        //        .doOnSubscribe(_ => println(counter.incrementAndGet() + "\tsubscribing"))
         .subscribeOn(Schedulers.computation())
-//        .doOnComplete(() => println(counter.decrementAndGet() + "\tcompleted"))
+      //        .doOnComplete(() => println(counter.decrementAndGet() + "\tcompleted"))
     } else
       flowable
   }

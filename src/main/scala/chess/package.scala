@@ -9,7 +9,7 @@ package object chess {
   type Solution = IntList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
-  val flatMapConcurrency:Int = 1024
+  val flatMapConcurrency: Int = 1024
 
   //  val minTaskSize = 128
 
@@ -24,7 +24,8 @@ package object chess {
       (xy % horizontal, xy / horizontal)
     }
   }
-  case class PositionInTable(position:Position,table:Table){
+
+  case class PositionInTable(position: Position, table: Table) {
     override lazy val hashCode: Int = position
   }
 
@@ -38,7 +39,7 @@ package object chess {
       TreeMap[Piece, PieceCount]() ++ piecesCount.map { case (piece, count) => (piece, count) }
 
     private def positionsFor(table: Table): Positions = {
-      RoaringBitmap.add(new RoaringBitmap(), 0L, table.vertical*table.horizontal)
+      RoaringBitmap.add(new RoaringBitmap(), 0L, table.vertical * table.horizontal)
     }
   }
 
@@ -57,6 +58,7 @@ package object chess {
   }
 
 }
+
 /*
 23% BitSet (RoaringBitMap)
 3% Solutions
