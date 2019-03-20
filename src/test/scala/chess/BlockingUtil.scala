@@ -2,7 +2,7 @@ package chess
 
 import java.time.Clock
 import java.util
-import java.util.concurrent.{Callable, Executors}
+import java.util.concurrent._
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
@@ -10,9 +10,11 @@ import io.reactivex.schedulers.Schedulers
 
 import scala.collection.mutable
 
-
 object BlockingUtil {
-  private val mappingExecutor = Executors.newFixedThreadPool(2)
+
+  private val mappingExecutor = new ThreadPoolExecutor(1, 4, 1L, TimeUnit.SECONDS,
+    new LinkedBlockingQueue[Runnable], priorityDecreasingThreadFactory(Executors.defaultThreadFactory()))
+
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
 
   def blockingTest(table: Table, piecesToPositions: Map[Piece, Position]): Long = {
@@ -65,5 +67,13 @@ object BlockingUtil {
       (for (piecePosition <- solution)
         yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table)
         ).toIndexedSeq.sortBy(_.piece))
+  }
+
+  def priorityDecreasingThreadFactory(factory: ThreadFactory): ThreadFactory = {
+    runnable: Runnable => {
+      val thread = factory.newThread(runnable)
+      thread.setPriority(Thread.MIN_PRIORITY)
+      thread
+    }
   }
 }
