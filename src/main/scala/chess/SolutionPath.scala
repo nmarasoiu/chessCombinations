@@ -27,32 +27,34 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (pieceCount, minPosition))) =>
-        val positionFlowable: Flowable[Position] =
-          FlowableUtils.fromIterable(
-            positions.asScala
-              .filter(pos => pos >= minPosition)
-              .map(_.toInt))
-        val positionAndIncompatibilitiesFlowable: Flowable[(Position, Positions)] =
-          positionFlowable.map(position => (position, piece.incompatiblePositions(position, table)))
+        Flowable.fromCallable(() => {
+          val positionFlowable: Flowable[Position] =
+            FlowableUtils.fromIterable(
+              positions.asScala
+                .filter(pos => pos >= minPosition)
+                .map(_.toInt))
+          val positionAndIncompatibilitiesFlowable: Flowable[(Position, Positions)] =
+            positionFlowable.map(position => (position, piece.incompatiblePositions(position, table)))
 
-        positionAndIncompatibilitiesFlowable
-          .filter {
-            case (_, incompatiblePositions) =>
-              and(takenPositionsSoFar, incompatiblePositions).isEmpty
-          }
-          .flatMap {
-            case (position: Position, incompatiblePositions) =>
-              val remainingPieces = if (pieceCount == 1)
-                pieces - piece
-              else
-                pieces + (piece -> (pieceCount - 1, position + 1))
-              val remainingPositions = andNot(positions, incompatiblePositions)
-              val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
-              val newTakenPositions = add(takenPositionsSoFar, position.toLong, position + 1)
-              val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
-              val flowable = deeperSolutionPath.solutions()
-              maybeAsync(remainingPieces, remainingPositions, flowable)
-          }
+          positionAndIncompatibilitiesFlowable
+            .filter {
+              case (_, incompatiblePositions) =>
+                and(takenPositionsSoFar, incompatiblePositions).isEmpty
+            }
+            .flatMap {
+              case (position: Position, incompatiblePositions) =>
+                val remainingPieces = if (pieceCount == 1)
+                  pieces - piece
+                else
+                  pieces + (piece -> (pieceCount - 1, position + 1))
+                val remainingPositions = andNot(positions, incompatiblePositions)
+                val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
+                val newTakenPositions = add(takenPositionsSoFar, position.toLong, position + 1)
+                val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
+                val flowable = deeperSolutionPath.solutions()
+                maybeAsync(remainingPieces, remainingPositions, flowable)
+            }
+        }).flatMap(flow => maybeAsync(pieces, positions, flow))
     }
   }
 
