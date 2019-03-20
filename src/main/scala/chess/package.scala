@@ -3,8 +3,11 @@ import scala.collection.immutable.{BitSet, Map, SortedMap, TreeMap}
 package object chess {
   type Position = Int
   type PiecePositionInt = Int
-  type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
-  type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  type Positions = BitSet
+  // ImmutableRoaringBitmap //encoding (x,y) as x*horiz+y as Int
+  type Solution = BitSet
+  //ImmutableRoaringBitmap
+  // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
   val minTaskSize = 150
@@ -15,12 +18,10 @@ package object chess {
 
   final case class Table(horizontal: Int, vertical: Int) {
     override val hashCode: Int = super.hashCode()
-    val moduloFactor: Int = horizontal + 1
-
-    def fromPairToInt(x: Int, y: Int): Int = x + y * moduloFactor
+    def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
     def fromIntToPair(xy: Int): (Int, Int) = {
-      (xy % moduloFactor, xy / moduloFactor)
+      (xy % horizontal, xy / horizontal)
     }
   }
 
@@ -57,8 +58,9 @@ package object chess {
 
   object Solution {
     def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Seq[PieceAndCoordinates] = {
-      (for (piecePosition <- piecePositions) yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table))
-        .toIndexedSeq.sortBy(_.piece)
+      (for (piecePosition <- piecePositions)
+        yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table)
+        ).toIndexedSeq.sortBy(_.piece)
     }
   }
 
