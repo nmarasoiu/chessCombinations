@@ -37,22 +37,20 @@ case class SolutionPath(table: Table,
             positionFlowable.map(position => (position, piece.incompatiblePositions(position, table)))
 
           positionAndIncompatibilitiesFlowable
-            .filter {
-              case (_, incompatiblePositions) =>
-                and(takenPositionsSoFar, incompatiblePositions).isEmpty
-            }
             .flatMap {
               case (position: Position, incompatiblePositions) =>
-                val remainingPieces = if (pieceCount == 1)
-                  pieces - piece
-                else
-                  pieces + (piece -> (pieceCount - 1, position + 1))
-                val remainingPositions = andNot(positions, incompatiblePositions)
-                val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
-                val newTakenPositions = add(takenPositionsSoFar, position.toLong, position + 1)
-                val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
-                val flowable = deeperSolutionPath.solutions()
-                maybeAsync(remainingPieces, remainingPositions, flowable)
+                val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
+                val newTakenPositions = andNot(takenPositionsSoFar, incompatiblePositions)
+                if(newTakenPositions.getCardinality<takenPositionsSoFar.getCardinality){
+                  Flowable.empty[Solution]
+                }else {
+                  val remainingPositions = andNot(positions, incompatiblePositions)
+                  val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
+                  newTakenPositions.add(position)
+                  val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
+                  val flowable = deeperSolutionPath.solutions()
+                  maybeAsync(remainingPieces, remainingPositions, flowable)
+                }
             }
         }).flatMap(flow => maybeAsync(pieces, positions, flow))
     }
@@ -61,8 +59,7 @@ case class SolutionPath(table: Table,
   private def maybeAsync(remainingPieces: SortedMap[Piece, (PieceCount, Position)],
                          remainingPositions: Positions,
                          flowable: Flowable[Solution]): Flowable[Solution] = {
-    val taskSize = remainingPositions.getLongCardinality * (1 + remainingPieces.size)
-
+    lazy val taskSize = remainingPositions.getCardinality * (1 + remainingPieces.size)
     if (taskSize >= minTaskSize)
       flowable.subscribeOn(Schedulers.computation())
     else
