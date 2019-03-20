@@ -41,9 +41,9 @@ case class SolutionPath(table: Table,
               case (position: Position, incompatiblePositions) =>
                 val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
                 val newTakenPositions = andNot(takenPositionsSoFar, incompatiblePositions)
-                if(newTakenPositions.getCardinality<takenPositionsSoFar.getCardinality){
+                if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
                   Flowable.empty[Solution]
-                }else {
+                } else {
                   val remainingPositions = andNot(positions, incompatiblePositions)
                   val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
                   newTakenPositions.add(position)

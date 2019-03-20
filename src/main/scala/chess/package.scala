@@ -9,13 +9,13 @@ package object chess {
   type Solution = IntList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
-  val minTaskSize = 64
+  val minTaskSize = 32
 
   case class Input(table: Table,
                    pieces: SortedMap[Piece, PieceCount],
                    positions: Positions)
 
-  final case class Table(horizontal: Int, vertical: Int) {
+  case class Table(horizontal: Int, vertical: Int) {
     override val hashCode: Int = super.hashCode()
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
@@ -50,14 +50,6 @@ package object chess {
     def position(piecePositionInt: PiecePositionInt): Int = piecePositionInt >>> pieceEncodingBits
 
     def toInt(piece: Piece, position: Position): Position = (position << PiecePosition.pieceEncodingBits) + piece.order
-  }
-
-  object Solution {
-    def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Seq[PieceAndCoordinates] = {
-      (for (piecePosition <- piecePositions.toList)
-        yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table)
-        ).toIndexedSeq.sortBy(_.piece)
-    }
   }
 
 }

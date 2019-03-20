@@ -45,7 +45,7 @@ class ChessSuite extends FunSuite {
   }
 
   def areResultingBoardsTheExpectedOnes(table: Table, piecesToPositions: Map[Piece, Position], expectedBoards: Set[Board]) {
-    blockingTest(table, piecesToPositions, checkDuplication = true)
+    blockingTest(table, piecesToPositions)
     val input = Input.from(table, piecesToPositions)
     val obtainedBoards: Iterable[Board] =
       for (solution <- blockingIterable(input))
