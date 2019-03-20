@@ -49,7 +49,7 @@ case class SolutionPath(table: Table,
               else
                 pieces + (piece -> (pieceCount - 1, position + 1))
               val remainingPositions = andNot(positions, incompatiblePositions)
-              val newPiecesInPositions = PiecePosition.toInt(piece, position)::piecesInPositionsSoFar
+              val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
               val newTakenPositions = or(takenPositionsSoFar, bitmapOf(position))
               val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
               val flowable = deeperSolutionPath.solutions()

@@ -13,7 +13,7 @@ object GenerationCore {
       empty()
     else
       SolutionPath(input.table, pack(input.pieces), input.positions,
-        piecesInPositionsSoFar = Nil,
+        piecesInPositionsSoFar = EmptyList,
         takenPositionsSoFar = new RoaringBitmap()
       )
         .solutions()

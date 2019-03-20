@@ -23,7 +23,7 @@ object BlockingUtil {
       override val hashCode: Int = super.hashCode()
     }
     object SolT {
-      def apply(solution: Solution): SolT = SolT(solution.toArray.to[mutable.WrappedArray])
+      def apply(solution: Solution): SolT = SolT(solution.toList.toArray.to[mutable.WrappedArray])
     }
 
     val input = Input.from(table, piecesToPositions)

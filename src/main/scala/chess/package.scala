@@ -6,7 +6,7 @@ package object chess {
   type Position = Int
   type PiecePositionInt = Int
   type Positions = RoaringBitmap //encoding (x,y) as x*horiz+y as Int
-  type Solution = List[Int] // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  type Solution = IntList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
   val minTaskSize = 150
@@ -57,8 +57,7 @@ package object chess {
 
   object Solution {
     def fromIntToPieceAndCoordinates(piecePositions: Solution, table: Table): Seq[PieceAndCoordinates] = {
-      import scala.collection.JavaConverters._
-      (for (piecePosition <- piecePositions)
+      (for (piecePosition <- piecePositions.toList)
         yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table)
         ).toIndexedSeq.sortBy(_.piece)
     }

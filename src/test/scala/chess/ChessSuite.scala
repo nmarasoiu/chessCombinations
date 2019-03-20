@@ -50,8 +50,7 @@ class ChessSuite extends FunSuite {
     val obtainedBoards: Iterable[Board] =
       for (solution <- blockingIterable(input))
         yield {
-          import scala.collection.JavaConverters._
-          for (piecePosition: Int <- solution.toSet;
+          for (piecePosition: Int <- solution.toList.toSet;
                PieceAndCoordinates(piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table))
             yield (piece, (x, y))
         }
