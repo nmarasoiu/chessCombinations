@@ -7,12 +7,9 @@ import scalaz.Memo
 import scala.collection.immutable
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
-  val incompatiblePositions: (Position, Table) => Positions = {
-    case pair => _incompatiblePositions(pair)
-  }
-  private val _incompatiblePositions: ((Position, Table)) => Positions =
-    Memo.immutableHashMapMemo[(Position, Table), Positions] {
-      case (position: Position, table: Table) =>
+  val incompatiblePositions: PositionInTable => Positions =
+    Memo.immutableHashMapMemo[PositionInTable, Positions] {
+      case PositionInTable(position: Position, table: Table) =>
         val (x, y) = table.fromIntToPair(position)
         val positions: Seq[Position] =
           for ((x, y) <- incompatiblePositions(x, y, table))

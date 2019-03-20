@@ -9,19 +9,21 @@ package object chess {
   type Solution = IntList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
-  val minTaskSize = 64
+//  val minTaskSize = 128
 
   case class Input(table: Table,
                    pieces: SortedMap[Piece, PieceCount],
                    positions: Positions)
 
   case class Table(horizontal: Int, vertical: Int) {
-    override val hashCode: Int = super.hashCode()
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
     def fromIntToPair(xy: Int): (Int, Int) = {
       (xy % horizontal, xy / horizontal)
     }
+  }
+  case class PositionInTable(position:Position,table:Table){
+    override lazy val hashCode: Int = position
   }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
@@ -53,3 +55,16 @@ package object chess {
   }
 
 }
+/*
+23% BitSet (RoaringBitMap)
+3% Solutions
+7% Thread.run
+5% pool executor submit task
+20% Rx
+2% hashCode
+3% sort
+5% TreeMap
+6% hashing for memo
+3% equals for memo
+5% equals2 for set gathering testing
+ */

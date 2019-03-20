@@ -24,7 +24,7 @@ object BlockingUtil {
     val solutionsFlowable = GenerationCore.solutions(input)
 
     final case class SolT(piecePositions: Array[Int]) {
-      override lazy val hashCode: Int = util.Arrays.hashCode(piecePositions) // piecePositions.headOption.getOrElse(-9)
+      override val hashCode: Int = util.Arrays.hashCode(piecePositions) // piecePositions.headOption.getOrElse(-9)
 
       override def equals(obj: Any): Boolean = obj.isInstanceOf[Array[Int]] &&
         util.Arrays.equals(piecePositions, obj.asInstanceOf[Array[Int]])
@@ -37,19 +37,19 @@ object BlockingUtil {
     val folder: BiFunction[Solutions, SolT, Solutions] = {
       case (solutions: Solutions, solution: SolT) =>
         assert(solutions.add(solution))
-        if (solutions.size % 50000 == 1)
+        if (solutions.size % 5000000 == 1)
           print(input, solution.piecePositions)
         solutions
     }
 
     val solTFlowable: Flowable[SolT] =
       solutionsFlowable
-        .subscribeOn(Schedulers.computation())
+        .observeOn(Schedulers.computation())
         .map(solution => SolT(solution))
 
     val solutionCount: Long =
       solTFlowable
-        .subscribeOn(Schedulers.newThread())
+        .observeOn(Schedulers.single())
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
@@ -64,8 +64,8 @@ object BlockingUtil {
 
   private def print(input: Input, solution: IndexedSeq[Int]): Unit = {
     println(
-    (for (piecePosition <- solution)
-      yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table)
-      ).toIndexedSeq.sortBy(_.piece))
+      (for (piecePosition <- solution)
+        yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table)
+        ).toIndexedSeq.sortBy(_.piece))
   }
 }

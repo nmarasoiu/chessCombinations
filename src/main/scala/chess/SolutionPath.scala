@@ -1,18 +1,20 @@
 package chess
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import io.reactivex.Flowable
 import io.reactivex.Flowable.just
 import io.reactivex.schedulers.Schedulers
 import org.roaringbitmap.RoaringBitmap._
 
-import scala.collection.JavaConverters._
 import scala.collection.immutable.SortedMap
 
 case class SolutionPath(table: Table,
                         piecesCountAndMinPosition: SortedMap[Piece, (PieceCount, Position)],
                         positions: Positions,
                         piecesInPositionsSoFar: Solution,
-                        takenPositionsSoFar: Positions) {
+                        takenPositionsSoFar: Positions,
+                        level: Int) {
 
   def solutions(): Flowable[Solution] = {
     /**
@@ -27,43 +29,62 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (pieceCount, minPosition))) =>
-        Flowable.fromCallable(() => {
-          val positionFlowable: Flowable[Position] =
-            FlowableUtils.fromIterable(
-              positions.asScala
-                .filter(pos => pos >= minPosition)
-                .map(_.toInt))
-          val positionAndIncompatibilitiesFlowable: Flowable[(Position, Positions)] =
-            positionFlowable.map(position => (position, piece.incompatiblePositions(position, table)))
-
-          positionAndIncompatibilitiesFlowable
-            .flatMap {
-              case (position: Position, incompatiblePositions) =>
-                val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
-                val newTakenPositions = andNot(takenPositionsSoFar, incompatiblePositions)
-                if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
-                  Flowable.empty[Solution]
-                } else {
-                  val remainingPositions = andNot(positions, incompatiblePositions)
-                  val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
-                  newTakenPositions.add(position)
-                  val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
-                  val flowable = deeperSolutionPath.solutions()
-                  maybeAsync(remainingPieces, remainingPositions, flowable)
-                }
-            }
-        }).flatMap(flow => maybeAsync(pieces, positions, flow))
+        Flowable.fromIterable(positions)
+          .filter(pos => pos >= minPosition)
+          .flatMap {
+            position =>
+              val (incompatiblePositions, remainingPieces, newTakenPositions) =
+                computingForFilterAndFlatMap(pieces, piece, pieceCount, position)
+              if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
+                Flowable.empty[Solution]
+              } else {
+                val flowable = computingFlowable(piece, position, incompatiblePositions, remainingPieces, newTakenPositions)
+                SolutionPath.maybeAsyncSubscribeToSomeInnerFlowables(this, flowable)
+              }
+          }
     }
   }
 
-  private def maybeAsync(remainingPieces: SortedMap[Piece, (PieceCount, Position)],
-                         remainingPositions: Positions,
-                         flowable: Flowable[Solution]): Flowable[Solution] = {
-    lazy val taskSize = remainingPositions.getCardinality * (1 + remainingPieces.size)
-    if (taskSize >= minTaskSize)
-      flowable.subscribeOn(Schedulers.computation())
-    else
+  private def computingForFilterAndFlatMap(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount, position: Integer) = {
+    val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
+    val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
+    val newTakenPositions = andNot1(incompatiblePositions)
+    (incompatiblePositions, remainingPieces, newTakenPositions)
+  }
+
+  private def computingFlowable(piece: Piece, position: Integer, incompatiblePositions: Positions, remainingPieces: SortedMap[Piece, (PieceCount, Position)], newTakenPositions: Positions) = {
+    newTakenPositions.add(position)
+    val remainingPositions = andNot2(incompatiblePositions)
+    val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
+    val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions,
+      newPiecesInPositions, newTakenPositions, level + 1)
+    val flowable = deeperSolutionPath.solutions()
+    flowable
+  }
+
+  private def andNot2(incompatiblePositions: Positions) = {
+    andNot(positions, incompatiblePositions)
+  }
+
+  private def andNot1(incompatiblePositions: Positions) = {
+    andNot(takenPositionsSoFar, incompatiblePositions)
+  }
+}
+
+object SolutionPath {
+  private val counter = new AtomicInteger()
+
+  private def maybeAsyncSubscribeToSomeInnerFlowables[T](solutionPath: SolutionPath, flowable: Flowable[T]): Flowable[T] = {
+    if (solutionPath.level == 1
+//      && solutionPath.positions.getCardinality * (solutionPath.piecesCountAndMinPosition.size + 1) >= minTaskSize
+    ) {
+      flowable
+//        .doOnSubscribe(_ => println(counter.incrementAndGet() + "\tsubscribing"))
+        .subscribeOn(Schedulers.computation())
+//        .doOnComplete(() => println(counter.decrementAndGet() + "\tcompleted"))
+    } else
       flowable
   }
+
 }
 

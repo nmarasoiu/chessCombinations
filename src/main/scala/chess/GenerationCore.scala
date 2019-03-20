@@ -14,8 +14,8 @@ object GenerationCore {
     else
       SolutionPath(input.table, pack(input.pieces), input.positions,
         piecesInPositionsSoFar = EmptyList,
-        takenPositionsSoFar = new RoaringBitmap()
-      )
+        takenPositionsSoFar = new RoaringBitmap(),
+        level = 1)
         .solutions()
   }
 
