@@ -1,13 +1,12 @@
+import org.roaringbitmap.RoaringBitmap
+
 import scala.collection.immutable.{BitSet, Map, SortedMap, TreeMap}
 
 package object chess {
   type Position = Int
   type PiecePositionInt = Int
-  type Positions = BitSet
-  // ImmutableRoaringBitmap //encoding (x,y) as x*horiz+y as Int
-  type Solution = BitSet
-  //ImmutableRoaringBitmap
-  // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  type Positions = RoaringBitmap //encoding (x,y) as x*horiz+y as Int
+  type Solution = BitSet // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
   val minTaskSize = 150
@@ -38,7 +37,7 @@ package object chess {
       val positions = for (x <- 0 until table.horizontal;
                            y <- 0 until table.vertical;
                            aggNum = table.fromPairToInt(x, y)) yield aggNum
-      BitSet(positions: _*)
+      RoaringBitmap.bitmapOf(positions: _*)
     }
   }
 

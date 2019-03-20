@@ -2,6 +2,7 @@ package chess
 
 import io.reactivex.Flowable
 import io.reactivex.Flowable.empty
+import org.roaringbitmap.RoaringBitmap
 
 import scala.collection.immutable.{BitSet, SortedMap}
 
@@ -13,7 +14,7 @@ object GenerationCore {
     else
       SolutionPath(input.table, pack(input.pieces), input.positions,
         piecesInPositionsSoFar = BitSet(),
-        takenPositionsSoFar = BitSet()
+        takenPositionsSoFar = new RoaringBitmap()
       )
         .solutions()
   }

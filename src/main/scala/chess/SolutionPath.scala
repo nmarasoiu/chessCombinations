@@ -3,6 +3,8 @@ package chess
 import io.reactivex.Flowable
 import io.reactivex.Flowable.just
 import io.reactivex.schedulers.Schedulers
+import org.roaringbitmap.RoaringBitmap
+import org.roaringbitmap.RoaringBitmap._
 
 import scala.collection.immutable.SortedMap
 
@@ -25,9 +27,13 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (pieceCount, minPosition))) =>
-        val positionsToConsider: Positions = positions.from(minPosition)
+        val minPositionBitmap = new RoaringBitmap()
+        minPositionBitmap.add(minPosition,Int.MaxValue)
+        val positionsToConsider: Positions = and(positions,minPositionBitmap)
 
-        val positionFlowable: Flowable[Position] = FlowableUtils.fromIterable(positionsToConsider)
+        val positionFlowable: Flowable[Int] =
+          Flowable.fromArray(positionsToConsider.toArray:_*)
+//        Flowable.fromIterable(positionsToConsider.iterator())
 
         val positionAndIncompatibilitiesFlowable: Flowable[(Position, Positions)] =
           positionFlowable.map(position => {
@@ -38,7 +44,7 @@ case class SolutionPath(table: Table,
         positionAndIncompatibilitiesFlowable
           .filter {
             case (_, incompatiblePositions) =>
-              (takenPositionsSoFar & incompatiblePositions).isEmpty
+              and(takenPositionsSoFar, incompatiblePositions).isEmpty
           }
           .flatMap {
             case (position: Position, incompatiblePositions) =>
@@ -46,9 +52,9 @@ case class SolutionPath(table: Table,
                 pieces - piece
               else
                 pieces + (piece -> (pieceCount - 1, position + 1))
-              val remainingPositions = positions &~ incompatiblePositions
+              val remainingPositions = andNot(positions,incompatiblePositions)
               val newPiecesInPositions = piecesInPositionsSoFar + PiecePosition.toInt(piece, position)
-              val newTakenPositions = takenPositionsSoFar + position
+              val newTakenPositions = or(takenPositionsSoFar, bitmapOf(position))
               val deeperSolutionPath =
                 SolutionPath(table, remainingPieces, remainingPositions, newPiecesInPositions, newTakenPositions)
               val flowable = deeperSolutionPath.solutions()
@@ -60,7 +66,7 @@ case class SolutionPath(table: Table,
   private def maybeAsync(remainingPieces: SortedMap[Piece, (PieceCount, Position)],
                          remainingPositions: Positions,
                          flowable: Flowable[Solution]): Flowable[Solution] = {
-    val taskSize = remainingPositions.size.toLong * (1 + remainingPieces.size)
+    val taskSize = remainingPositions.getLongCardinality * (1 + remainingPieces.size)
 
     if (taskSize >= minTaskSize)
       flowable.subscribeOn(Schedulers.computation())
