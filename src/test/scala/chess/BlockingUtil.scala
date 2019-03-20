@@ -3,6 +3,7 @@ package chess
 import java.time.Clock
 import java.util
 import java.util.concurrent._
+import java.util.stream
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
@@ -12,7 +13,7 @@ import scala.collection.mutable
 
 object BlockingUtil {
 
-  private val mappingExecutor = new ThreadPoolExecutor(1, 4, 1L, TimeUnit.SECONDS,
+  private val mappingExecutor = new ThreadPoolExecutor(1, 8, 1L, TimeUnit.SECONDS,
     new LinkedBlockingQueue[Runnable], priorityDecreasingThreadFactory(Executors.defaultThreadFactory()))
 
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
@@ -23,7 +24,7 @@ object BlockingUtil {
     val t0 = clock.instant()
 
     val input = Input.from(table, piecesToPositions)
-    val solutionsFlowable = GenerationCore.solutions(input)
+    val solutionsFlowable: Flowable[Solution] = GenerationCore.solutions(input)
 
     final case class SolT(piecePositions: Array[Int]) {
       override val hashCode: Int = util.Arrays.hashCode(piecePositions) // piecePositions.headOption.getOrElse(-9)
@@ -46,8 +47,12 @@ object BlockingUtil {
 
     val solTFlowable: Flowable[SolT] =
       solutionsFlowable
+        .buffer(90)
         .observeOn(Schedulers.from(mappingExecutor))
-        .map(solution => SolT(solution))
+        .flatMap(solutionList => {
+          val mappedStream: util.stream.Stream[SolT] = solutionList.stream.map(solution => SolT(solution))
+          FlowableUtils.fromJavaIterator(mappedStream.iterator())
+        })
 
     val solutionCount: Long =
       solTFlowable

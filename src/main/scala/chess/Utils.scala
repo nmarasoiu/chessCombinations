@@ -1,6 +1,6 @@
 package chess
 
-import java.lang
+import java.{lang, util}
 
 import io.reactivex.Flowable
 
@@ -30,6 +30,10 @@ object Utils {
 object FlowableUtils {
 
   import scala.collection.JavaConverters._
+
+  def fromJavaIterator[T](iterator: util.Iterator[T]): Flowable[T] = {
+    fromIterable(iterator.asScala.toIterable)
+  }
 
   def fromIterable[T](iterable: Iterable[T]): Flowable[T] =
     Flowable.fromIterable(asJava(iterable))
