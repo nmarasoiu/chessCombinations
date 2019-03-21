@@ -6,6 +6,7 @@ import java.util.concurrent._
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
+import io.reactivex.parallel.ParallelFlowable
 
 import scala.collection.mutable
 
@@ -27,6 +28,9 @@ object BlockingUtil {
     object SolT {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
     }
+
+    val solTFlowable: ParallelFlowable[SolT] = solutionsFlowable.parallel().map(solution => SolT(solution))
+
     type Solutions = mutable.Set[SolT]
     val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT] // ConcurrentSet.createSet[SolT]
     val folder: BiFunction[Solutions, SolT, Solutions] = {
@@ -37,11 +41,9 @@ object BlockingUtil {
         solutions
     }
 
-    val solTFlowable: Flowable[SolT] =
-      solutionsFlowable.map(solution => SolT(solution))
     val solutionCount: Long =
       solTFlowable
-//        .seq
+        .sequential()
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
