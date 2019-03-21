@@ -6,9 +6,9 @@ import java.util.concurrent._
 import java.util.stream
 import java.util.stream.Collectors
 
+import chess.FlowableUtils._
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
-import io.reactivex.parallel.ParallelFlowable
 
 import scala.collection.mutable
 
@@ -37,13 +37,14 @@ object BlockingUtil {
           def apply(solution: Solution): Sol = Sol(solution.toList.toArray.sorted)
         }
 
-        val solTFlowable: ParallelFlowable[util.List[Sol]] =
-          FlowableUtils
-            .parallel(solutionsFlowable.buffer(Config.bufferSize))
-            .map((solutions: util.List[Solution]) => {
-              val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
-              solTs.collect(Collectors.toList[Sol])
-            })
+        val solFlowable: Flowable[Sol] =
+          solutionsFlowable
+            .buffer(Config.bufferSize)
+            .flatMap2(inParallel = true) {
+              solutions: util.List[Solution] =>
+                val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
+                Flowable.fromIterable(solTs.collect(Collectors.toList[Sol]))
+            }
 
         type Solutions = mutable.Set[Sol]
         val seedFactory: Callable[Solutions] = () => new mutable.HashSet[Sol]
@@ -55,9 +56,7 @@ object BlockingUtil {
             solutions
         }
 
-        solTFlowable
-          .sequential()
-          .flatMap(solTList => Flowable.fromIterable(solTList))
+        solFlowable
           .reduceWith(seedFactory, folder)
           .blockingGet()
           .size

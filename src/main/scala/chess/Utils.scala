@@ -36,7 +36,7 @@ object Utils {
 object FlowableUtils {
 
   implicit class RichFlowable[A](inFlow: Flowable[A]) {
-    def flatMapInParallel[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
+    def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
       val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
       if (inParallel)
         parallel(inFlow)
