@@ -36,26 +36,20 @@ object Utils {
 object FlowableUtils {
 
   implicit class RichFlowable[A](inFlow: Flowable[A]) {
-    def parallel(): ParallelFlowable[A] = inFlow.parallel().runOn(Schedulers.computation())
-
-    def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
-      val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
-      if (inParallel)
-        parallel()
-          .flatMap(rxFlatMapper)
-          .sequential()
-      else
-        inFlow.flatMap(rxFlatMapper)
-    }
+    def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] =
+      map2(inParallel)(flatMapper).flatMap(a => a)
 
     def map2[B](inParallel: Boolean)(mapper: A => B): Flowable[B] = {
       val rxMapper: RxFunction[A, B] = asRxFunction(mapper)
       if (inParallel)
-        parallel()
+        inFlow
+          .parallel()
+          .runOn(Schedulers.computation())
           .map[B](rxMapper)
           .sequential()
       else
-        inFlow.map(rxMapper)
+        inFlow
+          .map(rxMapper)
     }
   }
 
