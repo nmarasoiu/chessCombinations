@@ -10,6 +10,7 @@ import io.reactivex.schedulers.Schedulers
 import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 object Utils {
+  def equals[T](obj: Any, eqTest: T => Boolean): Boolean = obj.isInstanceOf[T] && eqTest(obj.asInstanceOf[T])
 
   def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
     def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
@@ -20,7 +21,7 @@ object Utils {
     _sorted(obtainedSet.map(s => _sorted(s)))
   }
 
-  implicit class RichMap[K,V](map: Map[K, V])(implicit cmp: Ordering[K]) {
+  implicit class RichMap[K, V](map: Map[K, V])(implicit cmp: Ordering[K]) {
     def minOption(): Option[(K, V)] = {
       val none: Option[(K, V)] = None
       map.foldLeft(none) {
@@ -29,6 +30,7 @@ object Utils {
       }
     }
   }
+
 }
 
 object FlowableUtils {

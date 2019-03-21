@@ -10,24 +10,29 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.parallel.ParallelFlowable
 
+import scala.collection.immutable.BitSet
 import scala.collection.mutable
 
 object BlockingUtil {
-  def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDup: Boolean = false): Long = {
+  def blockingTest(table: Table, pieces: Map[Piece, Position], duplicationAssertion: Boolean = true): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val input = Input.from(table, piecesToPositions)
+    val input = Input.from(table, pieces)
     val solutionsFlowable: Flowable[Solution] = solutions(input)
 
     val solutionCount: Long =
-      if (checkDup) {
-        final case class SolT(piecePositions: Array[Int]) {
-          override val hashCode: Int = util.Arrays.hashCode(piecePositions)
-        }
-        object SolT {
-          def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
+      if (duplicationAssertion) {
+        final case class SolT(solution: Solution) extends Iterable[Pick]{
+          private lazy val bitSet: Positions = BitSet(solution.toList: _*)
+          private lazy val picks: Array[Long] = bitSet.toBitMask
+
+          override lazy val hashCode: Int = util.Arrays.hashCode(picks)
+
+          override def equals(obj: Any): Boolean = Utils.equals(obj, (other: SolT) => util.Arrays.equals(other.picks, picks))
+
+          override def iterator: Iterator[Pick] = bitSet.iterator
         }
 
         val solTFlowable: ParallelFlowable[util.List[SolT]] =
@@ -41,10 +46,10 @@ object BlockingUtil {
         type Solutions = mutable.Set[SolT]
         val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
         val folder: BiFunction[Solutions, SolT, Solutions] = {
-          case (solutions: Solutions, solution: SolT) =>
-            assert(solutions.add(solution))
+          case (solutions: Solutions, solT: SolT) =>
+            assert(solutions.add(solT))
             if (solutions.size % Config.printEvery == 1)
-              print(input, solution.piecePositions)
+              print(input.table, solT)
             solutions
         }
         solTFlowable
@@ -68,10 +73,10 @@ object BlockingUtil {
       positions = input.positions, pieces = input.pieces)
   }
 
-  private def print(input: Input, solution: IndexedSeq[Int]): Unit = {
+  private def print[T](table: Table, solution: Iterable[Pick]): Unit = {
     println(
-      (for (piecePosition <- solution)
-        yield PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table)
+      (for (pick <- solution)
+        yield PiecePosition.fromIntToPieceAndCoordinates(pick, table)
         ).toIndexedSeq.sortBy(_.piece))
   }
 
