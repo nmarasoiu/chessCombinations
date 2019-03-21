@@ -19,19 +19,9 @@ package object chess {
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
     def fromIntToPair(xy: Int): (Int, Int) = (xy % horizontal, xy / horizontal)
-
-//    override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Table) => isEqualTo(other), classOf[Table])
-//
-//    private def isEqualTo(other: Table): Boolean = eq(other) || (horizontal == other.horizontal && vertical == other.vertical)
   }
 
-  final case class PositionInTable(position: Position, table: Table) {
-    override lazy val hashCode: Int = (position, table).hashCode()
-
-//    override def equals(obj: Any): Boolean = Utils.equals(obj, (other: PositionInTable) => isEqualTo(other), classOf[PositionInTable])
-//
-//    private def isEqualTo(other: PositionInTable): Boolean = position == other.position && table == other.table
-  }
+  final case class PositionInTable(position: Position, table: Table)
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
 
