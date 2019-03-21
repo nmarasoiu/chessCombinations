@@ -3,6 +3,7 @@ package chess
 import java.{lang, util}
 
 import io.reactivex.Flowable
+import io.reactivex.functions.Function
 
 import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
@@ -28,6 +29,10 @@ object Utils {
 }
 
 object FlowableUtils {
+
+  def asRxFunction[T](func: Position => Flowable[T]): Function[Integer, Flowable[T]] = {
+    position: Integer => func(position)
+  }
 
   import scala.collection.JavaConverters._
 

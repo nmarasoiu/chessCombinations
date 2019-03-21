@@ -13,8 +13,8 @@ import scala.collection.mutable
 object BlockingUtil {
 
   private val mappingScheduler = Schedulers.computation()
-//    Schedulers.from(new ThreadPoolExecutor(1, 8, 1L, TimeUnit.DAYS,
-//    new LinkedBlockingQueue[Runnable], priorityDecreasingThreadFactory(Executors.defaultThreadFactory())))
+  //    Schedulers.from(new ThreadPoolExecutor(1, 8, 1L, TimeUnit.DAYS,
+  //    new LinkedBlockingQueue[Runnable], priorityDecreasingThreadFactory(Executors.defaultThreadFactory())))
 
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
 
@@ -33,7 +33,7 @@ object BlockingUtil {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
     }
     type Solutions = mutable.Set[SolT]
-    val seedFactory: Callable[Solutions] = () => ConcurrentSet.createSet[SolT]
+    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT] // ConcurrentSet.createSet[SolT]
     val folder: BiFunction[Solutions, SolT, Solutions] = {
       case (solutions: Solutions, solution: SolT) =>
         assert(solutions.add(solution))
@@ -44,16 +44,15 @@ object BlockingUtil {
 
     val solTFlowable: Flowable[SolT] =
       solutionsFlowable
-        .buffer(10)
-        .observeOn(mappingScheduler)
-        .flatMap(solutionList => {
-          val mappedStream: util.stream.Stream[SolT] = solutionList.stream.map(solution => SolT(solution))
-          FlowableUtils.fromJavaIterator(mappedStream.iterator())
-        })
-
+    .buffer(10)
+    .observeOn(mappingScheduler)
+    .flatMap(solutionList => {
+      val mappedStream: util.stream.Stream[SolT] = solutionList.stream.map(solution => SolT(solution))
+      FlowableUtils.fromJavaIterator(mappedStream.iterator())
+    })
     val solutionCount: Long =
       solTFlowable
-        //.observeOn(Schedulers.single())
+        .observeOn(Schedulers.single())
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
