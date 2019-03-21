@@ -10,12 +10,7 @@ object GenerationCore {
     if (input.table.vertical <= 0 || input.table.horizontal <= 0)
       empty()
     else {
-      val rootSolutionPath = SolutionPath(input.table,
-        piecesCountAndMinPosition = input.pieces.mapValues(count => (count, 0)),
-        positions = input.positions,
-        piecesInPositionsSoFar = EmptyList,
-        takenPositionsSoFar = new RoaringBitmap(),
-        firstLevel = true)
+      val rootSolutionPath = SolutionPath(input.table, remainingPositions = input.positions, builtSolutionSoFar = EmptyList$PiecePosition, positionsTakenSoFar = new RoaringBitmap(), piecesCountAndMinPosition = input.pieces.mapValues(count => (count, 0)), firstLevel = true)
       rootSolutionPath.solutions()
     }
   }

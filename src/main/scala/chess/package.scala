@@ -6,7 +6,7 @@ package object chess {
   type Position = Int
   type PiecePositionInt = Int
   type Positions = RoaringBitmap //encoding (x,y) as x*horiz+y as Int
-  type Solution = IntList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  type Solution = PiecePositionIntList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
   type PieceInt = Int
   type PieceCount = Int
 

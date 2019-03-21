@@ -9,44 +9,44 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.SortedMap
 
 case class SolutionPath(table: Table,
+                        remainingPositions: Positions,
+                        builtSolutionSoFar: Solution,
+                        positionsTakenSoFar: Positions,
                         piecesCountAndMinPosition: SortedMap[Piece, (PieceCount, Position)],
-                        positions: Positions,
-                        piecesInPositionsSoFar: Solution,
-                        takenPositionsSoFar: Positions,
                         firstLevel: Boolean) {
+
+  private val empty: Flowable[Solution] = Flowable.empty[Solution]
 
   def solutions(): Flowable[Solution] =
     piecesCountAndMinPosition.headOption match {
       case None =>
-        just(piecesInPositionsSoFar)
+        just(builtSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
-        fromIterable(iterable(positions, minPosition))
+        fromIterable(iterable(remainingPositions, minPosition))
           .flatMapInParallel(firstLevel)(flatMapperFunction(piecesCountAndMinPosition, piece, count))
     }
 
+
   def iterable(positions: Positions, minPosition: Position): Iterable[Position] =
     positions.asScala.filter(pos => pos >= minPosition).map(_.toInt)
-
 
   private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
                                 (position: Position): Flowable[Solution] = {
     val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
     val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
-    val newTakenPositions = andNot(takenPositionsSoFar, incompatiblePositions)
-    if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
+    val newTakenPositions = andNot(positionsTakenSoFar, incompatiblePositions)
+    if (newTakenPositions.getCardinality < positionsTakenSoFar.getCardinality) {
       empty
     } else {
       newTakenPositions.add(position)
-      val remainingPositions = andNot(positions, incompatiblePositions)
-      val newPiecesInPositions = IntListCons(PiecePosition.toInt(piece, position), piecesInPositionsSoFar)
-      val deeperSolutionPath = SolutionPath(table, remainingPieces, remainingPositions,
-        newPiecesInPositions, newTakenPositions, firstLevel = false)
-      deeperSolutionPath.solutions()
+      val nextStepSolutionPath = SolutionPath(table,
+        remainingPositions = andNot(remainingPositions, incompatiblePositions),
+        builtSolutionSoFar = PiecePositionIntListCons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
+        positionsTakenSoFar = newTakenPositions,
+        piecesCountAndMinPosition = remainingPieces,
+        firstLevel = false)
+      nextStepSolutionPath.solutions()
     }
-  }
-
-  private def empty: Flowable[Solution] = {
-    Flowable.empty[Solution]
   }
 }
 
