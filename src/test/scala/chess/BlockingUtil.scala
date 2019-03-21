@@ -38,16 +38,10 @@ object BlockingUtil {
     }
 
     val solTFlowable: Flowable[SolT] =
-      solutionsFlowable
-        .buffer(10)
-        .observeOn(mappingScheduler)
-        .flatMap(solutionList => {
-          val mappedStream: util.stream.Stream[SolT] = solutionList.stream.map(solution => SolT(solution))
-          FlowableUtils.fromJavaIterator(mappedStream.iterator())
-        })
+      solutionsFlowable.map(solution => SolT(solution))
     val solutionCount: Long =
       solTFlowable
-        .seq
+//        .seq
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
