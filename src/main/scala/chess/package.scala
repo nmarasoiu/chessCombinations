@@ -13,15 +13,17 @@ package object chess {
     val printEvery: Int = 5000000
   }
 
-  final case class Table(horizontal: Int, vertical: Int) {
-    override val hashCode: Int = (horizontal, vertical).hashCode
+  case class Table(horizontal: Int, vertical: Int) {
+    override lazy val hashCode: Int = (horizontal, vertical).hashCode * 31
 
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
     def fromIntToPair(xy: Int): (Int, Int) = (xy % horizontal, xy / horizontal)
   }
 
-  final case class PositionInTable(position: Position, table: Table)
+  case class PositionInTable(table: Table, position: Position) {
+    override lazy val hashCode: PieceCount = table.hashCode + position
+  }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
 

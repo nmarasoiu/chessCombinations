@@ -41,7 +41,7 @@ case class SolutionPath(table: Table) {
         val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
         positionFlow.flatMap1(inParallel = firstLevel) {
           position => {
-            val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
+            val incompatiblePositions = piece.incompatiblePositions(PositionInTable(table, position))
             if (positionsTakenSoFar.intersects(incompatiblePositions)) {
               empty
             } else {
