@@ -20,14 +20,15 @@ object Utils {
     _sorted(obtainedSet.map(s => _sorted(s)))
   }
 
-  def minOptional[K, V](map: Map[K, V])(implicit cmp: Ordering[K]): Option[(K, V)] = {
-    val none: Option[(K, V)] = None
-    map.foldLeft(none) {
-      case (None, kv) => Some(kv)
-      case (Some((k1, v1)), (k2, v2)) => if (cmp.compare(k1, k2) <= 0) Some(k1, v1) else Some(k2, v2)
+  implicit class RichMap[K,V](map: Map[K, V])(implicit cmp: Ordering[K]) {
+    def minOption(): Option[(K, V)] = {
+      val none: Option[(K, V)] = None
+      map.foldLeft(none) {
+        case (None, kv) => Some(kv)
+        case (Some((k1, v1)), (k2, v2)) => if (cmp.compare(k1, k2) <= 0) Some(k1, v1) else Some(k2, v2)
+      }
     }
   }
-
 }
 
 object FlowableUtils {

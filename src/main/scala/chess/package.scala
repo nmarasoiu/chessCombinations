@@ -1,4 +1,4 @@
-import scala.collection.immutable.{BitSet, Map, SortedMap, TreeMap}
+import scala.collection.immutable.{BitSet, Map, TreeMap}
 
 package object chess {
   type Position = Int
@@ -14,7 +14,7 @@ package object chess {
   }
 
   case class Input(table: Table,
-                   pieces: SortedMap[Piece, PieceCount],
+                   pieces: Map[Piece, PieceCount],
                    positions: Positions)
 
   case class Table(horizontal: Int, vertical: Int) {
@@ -37,7 +37,7 @@ package object chess {
     def from(table: Table, piecesToPositions: Map[Piece, Position]) =
       Input(table, toSortedPieceCount(piecesToPositions), positionsFor(table))
 
-    private def toSortedPieceCount(piecesCount: Map[Piece, PieceCount]): SortedMap[Piece, PieceCount] =
+    private def toSortedPieceCount(piecesCount: Map[Piece, PieceCount]): Map[Piece, PieceCount] =
       TreeMap[Piece, PieceCount]() ++ piecesCount.map { case (piece, count) => (piece, count) }
 
     private def positionsFor(table: Table): Positions =

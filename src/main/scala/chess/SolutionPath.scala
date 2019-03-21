@@ -1,10 +1,11 @@
 package chess
 
+import chess.Utils._
 import chess.FlowableUtils._
 import io.reactivex.Flowable
 import io.reactivex.Flowable.{empty, just}
 
-import scala.collection.immutable.{BitSet, SortedMap}
+import scala.collection.immutable.{BitSet, Map}
 
 object SolutionPath {
 
@@ -29,10 +30,10 @@ case class SolutionPath(table: Table) {
   def solutions(remainingPositions: Positions,
                 builtSolutionSoFar: Solution,
                 positionsTakenSoFar: Positions,
-                remainingPieces: SortedMap[Piece, (PieceCount, Position)],
+                remainingPieces: Map[Piece, (PieceCount, Position)],
                 firstLevel: Boolean): Flowable[Solution] = {
 
-    remainingPieces.headOption match {
+    remainingPieces.minOption() match {
       case None =>
         just(builtSolutionSoFar)
       case Some((piece, (pieceCount, minPosition))) =>
