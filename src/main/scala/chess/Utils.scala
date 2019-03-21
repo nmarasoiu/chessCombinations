@@ -10,7 +10,7 @@ import io.reactivex.schedulers.Schedulers
 import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 object Utils {
-  def equals[T](obj: Any, eqTest: T => Boolean, cls:Class[T]): Boolean = cls.isInstance(obj) && eqTest(obj.asInstanceOf[T])
+  def equals[T](obj: Any, eqTest: T => Boolean, cls: Class[T]): Boolean = cls.isInstance(obj) && eqTest(obj.asInstanceOf[T])
 
   def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
     def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
@@ -36,18 +36,28 @@ object Utils {
 object FlowableUtils {
 
   implicit class RichFlowable[A](inFlow: Flowable[A]) {
+    def parallel(): ParallelFlowable[A] = inFlow.parallel().runOn(Schedulers.computation())
+
     def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
       val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
       if (inParallel)
-        parallel(inFlow)
+        parallel()
           .flatMap(rxFlatMapper)
           .sequential()
       else
         inFlow.flatMap(rxFlatMapper)
     }
-  }
 
-  def parallel[T](flowable: Flowable[T]): ParallelFlowable[T] = flowable.parallel().runOn(Schedulers.computation())
+    def map2[B](inParallel: Boolean)(mapper: A => B): Flowable[B] = {
+      val rxMapper: RxFunction[A, B] = asRxFunction(mapper)
+      if (inParallel)
+        parallel()
+          .map[B](rxMapper)
+          .sequential()
+      else
+        inFlow.map(rxMapper)
+    }
+  }
 
   def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
 

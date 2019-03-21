@@ -40,11 +40,11 @@ object BlockingUtil {
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
             .buffer(Config.bufferSize)
-            .flatMap2(inParallel = true) {
+            .map2(inParallel = true) {
               solutions: util.List[Solution] =>
                 val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
-                Flowable.fromIterable(solTs.collect(Collectors.toList[Sol]))
-            }
+                solTs.collect(Collectors.toList[Sol])
+            }.flatMap(lst => Flowable.fromIterable(lst))
 
         type Solutions = mutable.Set[Sol]
         val seedFactory: Callable[Solutions] = () => new mutable.HashSet[Sol]
