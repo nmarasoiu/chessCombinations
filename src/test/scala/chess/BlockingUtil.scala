@@ -40,7 +40,7 @@ object BlockingUtil {
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
             .buffer(Config.bufferSize)
-            .map2(inParallel = true) {
+            .mapInParallel {
               solutions: util.List[Solution] =>
                 val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
                 solTs.collect(Collectors.toList[Sol])
