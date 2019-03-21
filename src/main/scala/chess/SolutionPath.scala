@@ -25,7 +25,7 @@ case class SolutionPath(table: Table,
     }
 
   def iterable(positions: Positions, minPosition: Position): Iterable[Position] =
-    positions.iterator.asScala.filter(pos => pos >= minPosition).map(_.toInt).toIterable
+    positions.asScala.filter(pos => pos >= minPosition).map(_.toInt)
 
 
   private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
