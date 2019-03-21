@@ -25,7 +25,7 @@ package object chess {
   }
 
   case class PositionInTable(position: Position, table: Table) {
-    override lazy val hashCode: Int = position * 31 + table.hashCode
+    override lazy val hashCode: Int = position.hashCode * 31 + table.hashCode
   }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
