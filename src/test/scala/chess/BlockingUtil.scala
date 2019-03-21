@@ -3,6 +3,8 @@ package chess
 import java.time.Clock
 import java.util
 import java.util.concurrent._
+import java.util.stream
+import java.util.stream.Collectors
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
@@ -24,21 +26,21 @@ object BlockingUtil {
 
     final case class SolT(piecePositions: Array[Int]) {
       override val hashCode: Int = util.Arrays.hashCode(piecePositions)
-
-      //note: we override equals and canEqual to speed up the checks to almost sure equality
-      override def equals(obj: Any): Boolean = {
-        obj.isInstanceOf[SolT] && util.Arrays.equals(obj.asInstanceOf[SolT].piecePositions, piecePositions)
-      }
-
     }
     object SolT {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
     }
 
-    val solTFlowable: ParallelFlowable[SolT] = FlowableUtils.parallel(solutionsFlowable).map(solution => SolT(solution))
+    val solTFlowable: ParallelFlowable[util.List[SolT]] =
+      FlowableUtils
+        .parallel(solutionsFlowable.buffer(32))
+        .map((solutions: util.List[Solution]) => {
+          val solTs: stream.Stream[SolT] = solutions.stream().map(solution => SolT(solution))
+          solTs.collect(Collectors.toList[SolT])
+        })
 
     type Solutions = mutable.Set[SolT]
-    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT] // ConcurrentSet.createSet[SolT]
+    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
     val folder: BiFunction[Solutions, SolT, Solutions] = {
       case (solutions: Solutions, solution: SolT) =>
         assert(solutions.add(solution))
@@ -47,9 +49,10 @@ object BlockingUtil {
         solutions
     }
 
-    val solutionCount: Long =
+    val solutionCount =
       solTFlowable
         .sequential()
+        .flatMap(solTList => Flowable.fromIterable(solTList))
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
