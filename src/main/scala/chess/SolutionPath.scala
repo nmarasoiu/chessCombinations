@@ -1,7 +1,8 @@
 package chess
 
-import io.reactivex.Flowable
 import io.reactivex.Flowable.just
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.{Flowable, functions}
 import org.roaringbitmap.RoaringBitmap._
 
 import scala.collection.immutable.SortedMap
@@ -18,9 +19,19 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (count, minPosition))) =>
-        Flowable.fromIterable(positions)
-          .filter(pos => pos >= minPosition)
-          .flatMap(FlowableUtils.asRxFunction(flatMapperFunction(piecesCountAndMinPosition, piece, count)))
+        val positionsFlowable: Flowable[Position] = Flowable.fromIterable(positions).map(_.toInt)
+        val filter: functions.Predicate[Position] = pos => pos >= minPosition
+        val flatMapper: functions.Function[Position, Flowable[Solution]] =
+          FlowableUtils.asRxFunction(flatMapperFunction(piecesCountAndMinPosition, piece, count))
+        if (firstLevel)
+          positionsFlowable
+            .parallel()
+            .runOn(Schedulers.computation())
+            .filter(filter)
+            .flatMap(flatMapper)
+            .sequential()
+        else
+          positionsFlowable.filter(filter).flatMap(flatMapper)
     }
   }
 

@@ -30,8 +30,8 @@ object Utils {
 
 object FlowableUtils {
 
-  def asRxFunction[T](func: Position => Flowable[T]): Function[Integer, Flowable[T]] = {
-    position: Integer => func(position)
+  def asRxFunction[A,B](func: A => B): Function[A, B] = {
+    func(_)
   }
 
   import scala.collection.JavaConverters._
