@@ -16,8 +16,8 @@ object SolutionPath {
     } else {
       SolutionPath(table).solutions(
         remainingPositions = positions,
-        builtSolutionSoFar = EmptyList$PiecePosition,
-        remainingPieces = pieces.mapValues(count => (count, 0)),
+        builtSolutionSoFar = Empty,
+        remainingPieces = pieces.filter(_._2 > 0).mapValues(count => (count, 0)),
         positionsTakenSoFar = BitSet(),
         firstLevel = true)
     }
@@ -41,12 +41,16 @@ case class SolutionPath(table: Table) {
       positionFlow.flatMap1(inParallel = firstLevel) {
         position => {
           val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
-          if ((positionsTakenSoFar & incompatiblePositions ).nonEmpty) {
+          if ((positionsTakenSoFar & incompatiblePositions).nonEmpty) {
             empty
           } else {
+            val newRemainingPieces = pieceCount match {
+              case 1 => remainingPieces - piece
+              case _ => remainingPieces + (piece -> (pieceCount - 1, position + 1))
+            }
             solutions(
-              remainingPieces = if (pieceCount == 1) remainingPieces - piece else remainingPieces + (piece -> (pieceCount - 1, position + 1)),
-              builtSolutionSoFar = PickListCons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
+              remainingPieces = newRemainingPieces,
+              builtSolutionSoFar = Cons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
               remainingPositions = remainingPositions &~ incompatiblePositions,
               positionsTakenSoFar = positionsTakenSoFar + position,
               firstLevel = false)

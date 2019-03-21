@@ -1,6 +1,4 @@
-import java.util
-
-import scala.collection.immutable.{BitSet, Map, TreeMap}
+import scala.collection.immutable.BitSet
 
 package object chess {
   type Position = Int
@@ -16,23 +14,23 @@ package object chess {
   }
 
   final case class Table(horizontal: Int, vertical: Int) {
-    override lazy val hashCode: Int = horizontal * 31 + vertical
+    override val hashCode: Int = (horizontal, vertical).hashCode
 
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
     def fromIntToPair(xy: Int): (Int, Int) = (xy % horizontal, xy / horizontal)
 
-    override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Table) => isEqualTo(other), classOf[Table])
-
-    private def isEqualTo(other: Table): Boolean = horizontal == other.horizontal && vertical == other.vertical
+//    override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Table) => isEqualTo(other), classOf[Table])
+//
+//    private def isEqualTo(other: Table): Boolean = eq(other) || (horizontal == other.horizontal && vertical == other.vertical)
   }
 
   final case class PositionInTable(position: Position, table: Table) {
-    override lazy val hashCode: Int = position.hashCode * 31 + table.hashCode
+    override lazy val hashCode: Int = (position, table).hashCode()
 
-    override def equals(obj: Any): Boolean = Utils.equals(obj, (other: PositionInTable) => isEqualTo(other), classOf[PositionInTable])
-
-    private def isEqualTo(other: PositionInTable): Boolean = position == other.position && table == other.table
+//    override def equals(obj: Any): Boolean = Utils.equals(obj, (other: PositionInTable) => isEqualTo(other), classOf[PositionInTable])
+//
+//    private def isEqualTo(other: PositionInTable): Boolean = position == other.position && table == other.table
   }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
