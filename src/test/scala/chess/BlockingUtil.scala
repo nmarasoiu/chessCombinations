@@ -33,7 +33,7 @@ object BlockingUtil {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
     }
     type Solutions = mutable.Set[SolT]
-    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
+    val seedFactory: Callable[Solutions] = () => ConcurrentSet.createSet[SolT]
     val folder: BiFunction[Solutions, SolT, Solutions] = {
       case (solutions: Solutions, solution: SolT) =>
         assert(solutions.add(solution))
@@ -53,7 +53,7 @@ object BlockingUtil {
 
     val solutionCount: Long =
       solTFlowable
-        .observeOn(Schedulers.single())
+//        .observeOn(Schedulers.single())
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
