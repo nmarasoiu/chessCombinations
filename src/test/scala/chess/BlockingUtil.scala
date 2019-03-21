@@ -27,9 +27,7 @@ object BlockingUtil {
 
       //note: we override equals and canEqual to speed up the checks to almost sure equality
       override def equals(obj: Any): Boolean = {
-        lazy val other = obj.asInstanceOf[SolT]
-        obj.isInstanceOf[SolT] && obj.hashCode == hashCode &&
-          util.Arrays.equals(other.piecePositions, piecePositions)
+        obj.isInstanceOf[SolT] && util.Arrays.equals(obj.asInstanceOf[SolT].piecePositions, piecePositions)
       }
 
     }
@@ -37,7 +35,7 @@ object BlockingUtil {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
     }
 
-    val solTFlowable: ParallelFlowable[SolT] = solutionsFlowable.parallel().map(solution => SolT(solution))
+    val solTFlowable: ParallelFlowable[SolT] = FlowableUtils.parallel(solutionsFlowable).map(solution => SolT(solution))
 
     type Solutions = mutable.Set[SolT]
     val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT] // ConcurrentSet.createSet[SolT]

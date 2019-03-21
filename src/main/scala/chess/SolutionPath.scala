@@ -1,7 +1,6 @@
 package chess
 
 import io.reactivex.Flowable.just
-import io.reactivex.schedulers.Schedulers
 import io.reactivex.{Flowable, functions}
 import org.roaringbitmap.RoaringBitmap._
 
@@ -14,7 +13,7 @@ case class SolutionPath(table: Table,
                         takenPositionsSoFar: Positions,
                         firstLevel: Boolean) {
 
-  def solutions(): Flowable[Solution] = {
+  def solutions(): Flowable[Solution] =
     piecesCountAndMinPosition.headOption match {
       case None =>
         just(piecesInPositionsSoFar)
@@ -24,16 +23,14 @@ case class SolutionPath(table: Table,
         val flatMapper: functions.Function[Position, Flowable[Solution]] =
           FlowableUtils.asRxFunction(flatMapperFunction(piecesCountAndMinPosition, piece, count))
         if (firstLevel)
-          positionsFlowable
-            .parallel()
-            .runOn(Schedulers.computation())
+          FlowableUtils.parallel(positionsFlowable)
             .filter(filter)
             .flatMap(flatMapper)
             .sequential()
         else
           positionsFlowable.filter(filter).flatMap(flatMapper)
     }
-  }
+
 
   private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
                                 (position: Position): Flowable[Solution] = {

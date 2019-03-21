@@ -4,6 +4,8 @@ import java.{lang, util}
 
 import io.reactivex.Flowable
 import io.reactivex.functions.Function
+import io.reactivex.parallel.ParallelFlowable
+import io.reactivex.schedulers.Schedulers
 
 import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
@@ -29,6 +31,7 @@ object Utils {
 }
 
 object FlowableUtils {
+  def parallel[T](flowable: Flowable[T]): ParallelFlowable[T] = flowable.parallel().runOn(Schedulers.computation())
 
   def asRxFunction[A,B](func: A => B): Function[A, B] = {
     func(_)
