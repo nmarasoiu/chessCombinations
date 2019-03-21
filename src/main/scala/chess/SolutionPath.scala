@@ -77,12 +77,13 @@ object SolutionPath {
   private val counter = new AtomicInteger()
 
   private def maybeAsyncSubscribeToSomeInnerFlowables[T](solutionPath: SolutionPath, flowable: Flowable[T]): Flowable[T] = {
-    if (solutionPath.level == 1
+    if (solutionPath.level <= 0
     //      && solutionPath.positions.getCardinality * (solutionPath.piecesCountAndMinPosition.size + 1) >= minTaskSize
     ) {
       flowable
         //        .doOnSubscribe(_ => println(counter.incrementAndGet() + "\tsubscribing"))
         .subscribeOn(Schedulers.computation())
+//        .observeOn(Schedulers.computation())//?
       //        .doOnComplete(() => println(counter.decrementAndGet() + "\tcompleted"))
     } else
       flowable
