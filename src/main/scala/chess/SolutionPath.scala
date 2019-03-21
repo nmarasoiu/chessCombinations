@@ -8,15 +8,16 @@ import scala.collection.immutable.{BitSet, Map}
 
 object SolutionPath {
 
-  def solutions(input: Input): Flowable[Solution] = {
-    val table = input.table
+  def solutions(table: Table,
+                pieces: Map[Piece, PieceCount],
+                positions: Positions): Flowable[Solution] = {
     if (table.vertical <= 0 || table.horizontal <= 0) {
       empty()
     } else {
       SolutionPath(table).solutions(
-        remainingPositions = input.positions,
+        remainingPositions = positions,
         builtSolutionSoFar = EmptyList$PiecePosition,
-        remainingPieces = input.pieces.mapValues(count => (count, 0)),
+        remainingPieces = pieces.mapValues(count => (count, 0)),
         positionsTakenSoFar = BitSet(),
         firstLevel = true)
     }

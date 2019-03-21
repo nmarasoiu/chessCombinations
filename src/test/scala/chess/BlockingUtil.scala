@@ -19,7 +19,7 @@ object BlockingUtil {
     val t0 = clock.instant()
 
     val input = Input.from(table, piecesToPositions)
-    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(input)
+    val solutionsFlowable: Flowable[Solution] = solutions(input)
 
     val solutionCount: Long =
       if (checkDup) {
@@ -63,6 +63,11 @@ object BlockingUtil {
     solutionCount
   }
 
+  private def solutions(input: Input): Flowable[Solution] = {
+    SolutionPath.solutions(table = input.table,
+      positions = input.positions, pieces = input.pieces)
+  }
+
   private def print(input: Input, solution: IndexedSeq[Int]): Unit = {
     println(
       (for (piecePosition <- solution)
@@ -70,7 +75,7 @@ object BlockingUtil {
         ).toIndexedSeq.sortBy(_.piece))
   }
 
-  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(SolutionPath.solutions(input))
+  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(solutions(input))
 
   import scala.collection.JavaConverters._
 

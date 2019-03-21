@@ -13,36 +13,27 @@ package object chess {
     val printEvery: Int = 5000000
   }
 
-  case class Input(table: Table,
-                   pieces: Map[Piece, PieceCount],
-                   positions: Positions)
-
-  case class Table(horizontal: Int, vertical: Int) {
-    override lazy val hashCode: Int = super.hashCode
+  final case class Table(horizontal: Int, vertical: Int) {
+    override lazy val hashCode: Int = horizontal * 31 + vertical
 
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
-    def fromIntToPair(xy: Int): (Int, Int) =
-      (xy % horizontal, xy / horizontal)
+    def fromIntToPair(xy: Int): (Int, Int) = (xy % horizontal, xy / horizontal)
 
+    override def equals(obj: Any): Boolean = obj.isInstanceOf[Table] && isEqualTo(obj.asInstanceOf[Table])
+
+    private def isEqualTo(other: Table): Boolean = horizontal == other.horizontal && vertical == other.vertical
   }
 
-  case class PositionInTable(position: Position, table: Table) {
+  final case class PositionInTable(position: Position, table: Table) {
     override lazy val hashCode: Int = position.hashCode * 31 + table.hashCode
+
+    override def equals(obj: Any): Boolean = obj.isInstanceOf[PositionInTable] && isEqualTo(obj.asInstanceOf[PositionInTable])
+
+    private def isEqualTo(other: PositionInTable): Boolean = position == other.position && table == other.table
   }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
-
-  object Input {
-    def from(table: Table, piecesToPositions: Map[Piece, Position]) =
-      Input(table, toSortedPieceCount(piecesToPositions), positionsFor(table))
-
-    private def toSortedPieceCount(piecesCount: Map[Piece, PieceCount]): Map[Piece, PieceCount] =
-      TreeMap[Piece, PieceCount]() ++ piecesCount.map { case (piece, count) => (piece, count) }
-
-    private def positionsFor(table: Table): Positions =
-      BitSet(0 until table.vertical * table.horizontal: _*)
-  }
 
   object PiecePosition {
     private val pieceEncodingBits = 3
