@@ -24,7 +24,7 @@ object BlockingUtil {
     val solutionCount: Long =
       if (duplicationAssertion) {
 
-        final case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
+        case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
 
           override lazy val hashCode: Int = util.Arrays.hashCode(picks)
 
