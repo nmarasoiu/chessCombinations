@@ -6,15 +6,10 @@ import java.util.concurrent._
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
-import io.reactivex.schedulers.Schedulers
 
 import scala.collection.mutable
 
 object BlockingUtil {
-
-  private val mappingScheduler = Schedulers.computation()
-  //    Schedulers.from(new ThreadPoolExecutor(1, 8, 1L, TimeUnit.DAYS,
-  //    new LinkedBlockingQueue[Runnable], priorityDecreasingThreadFactory(Executors.defaultThreadFactory())))
 
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
 
@@ -44,15 +39,15 @@ object BlockingUtil {
 
     val solTFlowable: Flowable[SolT] =
       solutionsFlowable
-    .buffer(10)
-    .observeOn(mappingScheduler)
-    .flatMap(solutionList => {
-      val mappedStream: util.stream.Stream[SolT] = solutionList.stream.map(solution => SolT(solution))
-      FlowableUtils.fromJavaIterator(mappedStream.iterator())
-    })
+        .buffer(10)
+        .observeOn(mappingScheduler)
+        .flatMap(solutionList => {
+          val mappedStream: util.stream.Stream[SolT] = solutionList.stream.map(solution => SolT(solution))
+          FlowableUtils.fromJavaIterator(mappedStream.iterator())
+        })
     val solutionCount: Long =
       solTFlowable
-        .observeOn(Schedulers.single())
+        .seq
         .reduceWith(seedFactory, folder)
         .blockingGet()
         .size
