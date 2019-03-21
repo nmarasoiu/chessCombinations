@@ -10,7 +10,6 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.parallel.ParallelFlowable
 
-import scala.collection.immutable.BitSet
 import scala.collection.mutable
 
 object BlockingUtil {
@@ -24,40 +23,45 @@ object BlockingUtil {
 
     val solutionCount: Long =
       if (duplicationAssertion) {
-        final case class SolT(solution: Solution) extends Iterable[Pick]{
-          private lazy val bitSet: Positions = BitSet(solution.toList: _*)
-          private lazy val picks: Array[Long] = bitSet.toBitMask
+
+        final case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
 
           override lazy val hashCode: Int = util.Arrays.hashCode(picks)
 
-          override def equals(obj: Any): Boolean = Utils.equals(obj, (other: SolT) => util.Arrays.equals(other.picks, picks))
+          override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Sol) => util.Arrays.equals(other.picks, picks))
 
-          override def iterator: Iterator[Pick] = bitSet.iterator
+          override def iterator: Iterator[Pick] = picks.iterator
         }
 
-        val solTFlowable: ParallelFlowable[util.List[SolT]] =
+        object Sol {
+          def apply(solution: Solution): Sol = Sol(solution.toList.toArray.sorted)
+        }
+
+        val solTFlowable: ParallelFlowable[util.List[Sol]] =
           FlowableUtils
             .parallel(solutionsFlowable.buffer(Config.bufferSize))
             .map((solutions: util.List[Solution]) => {
-              val solTs: stream.Stream[SolT] = solutions.stream().map(solution => SolT(solution))
-              solTs.collect(Collectors.toList[SolT])
+              val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
+              solTs.collect(Collectors.toList[Sol])
             })
 
-        type Solutions = mutable.Set[SolT]
-        val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
-        val folder: BiFunction[Solutions, SolT, Solutions] = {
-          case (solutions: Solutions, solT: SolT) =>
+        type Solutions = mutable.Set[Sol]
+        val seedFactory: Callable[Solutions] = () => new mutable.HashSet[Sol]
+        val folder: BiFunction[Solutions, Sol, Solutions] = {
+          case (solutions: Solutions, solT: Sol) =>
             assert(solutions.add(solT))
             if (solutions.size % Config.printEvery == 1)
               print(input.table, solT)
             solutions
         }
+
         solTFlowable
           .sequential()
           .flatMap(solTList => Flowable.fromIterable(solTList))
           .reduceWith(seedFactory, folder)
           .blockingGet()
           .size
+
       } else {
         solutionsFlowable.count().blockingGet()
       }
