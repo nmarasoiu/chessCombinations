@@ -24,6 +24,14 @@ object BlockingUtil {
 
     final case class SolT(piecePositions: Array[Int]) {
       override val hashCode: Int = util.Arrays.hashCode(piecePositions)
+
+      //note: we override equals and canEqual to speed up the checks to almost sure equality
+      override def equals(obj: Any): Boolean = {
+        lazy val other = obj.asInstanceOf[SolT]
+        obj.isInstanceOf[SolT] && obj.hashCode == hashCode &&
+          util.Arrays.equals(other.piecePositions, piecePositions)
+      }
+
     }
     object SolT {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
