@@ -3,7 +3,7 @@ package chess
 import java.{lang, util}
 
 import io.reactivex.Flowable
-import io.reactivex.functions.Function
+import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
 
@@ -31,11 +31,22 @@ object Utils {
 }
 
 object FlowableUtils {
+
+  implicit class RichFlowable[A](inFlow: Flowable[A]) {
+    def flatMapInParallel[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
+      val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
+      if (inParallel)
+        parallel(inFlow)
+          .flatMap(rxFlatMapper)
+          .sequential()
+      else
+        inFlow.flatMap(rxFlatMapper)
+    }
+  }
+
   def parallel[T](flowable: Flowable[T]): ParallelFlowable[T] = flowable.parallel().runOn(Schedulers.computation())
 
-  def asRxFunction[A, B](func: A => B): Function[A, B] = {
-    func(_)
-  }
+  def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
 
   import scala.collection.JavaConverters._
 
@@ -46,6 +57,6 @@ object FlowableUtils {
   def fromIterable[T](iterable: Iterable[T]): Flowable[T] =
     Flowable.fromIterable(asJava(iterable))
 
-  private def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
+  def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
 
 }

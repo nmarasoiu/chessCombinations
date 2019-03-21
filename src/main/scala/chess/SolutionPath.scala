@@ -1,7 +1,8 @@
 package chess
 
+import chess.FlowableUtils._
+import io.reactivex.Flowable
 import io.reactivex.Flowable.just
-import io.reactivex.{Flowable, functions}
 import org.roaringbitmap.RoaringBitmap._
 
 import scala.collection.immutable.SortedMap
@@ -18,17 +19,11 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (count, minPosition))) =>
-        val positionsFlowable: Flowable[Position] = Flowable.fromIterable(positions).map(_.toInt)
-        val filter: functions.Predicate[Position] = pos => pos >= minPosition
-        val flatMapper: functions.Function[Position, Flowable[Solution]] =
-          FlowableUtils.asRxFunction(flatMapperFunction(piecesCountAndMinPosition, piece, count))
-        if (firstLevel)
-          FlowableUtils.parallel(positionsFlowable)
-            .filter(filter)
-            .flatMap(flatMapper)
-            .sequential()
-        else
-          positionsFlowable.filter(filter).flatMap(flatMapper)
+        Flowable
+          .fromIterable(positions)
+          .map[Int](_.toInt)
+          .filter(pos => pos >= minPosition)
+          .flatMapInParallel(firstLevel)(flatMapperFunction(piecesCountAndMinPosition, piece, count))
     }
 
 
@@ -38,7 +33,7 @@ case class SolutionPath(table: Table,
     val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
     val newTakenPositions = andNot(takenPositionsSoFar, incompatiblePositions)
     if (newTakenPositions.getCardinality < takenPositionsSoFar.getCardinality) {
-      Flowable.empty[Solution]
+      empty
     } else {
       newTakenPositions.add(position)
       val remainingPositions = andNot(positions, incompatiblePositions)
@@ -47,6 +42,10 @@ case class SolutionPath(table: Table,
         newPiecesInPositions, newTakenPositions, firstLevel = false)
       deeperSolutionPath.solutions()
     }
+  }
+
+  private def empty: Flowable[Solution] = {
+    Flowable.empty[Solution]
   }
 }
 
