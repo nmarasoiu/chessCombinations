@@ -5,6 +5,7 @@ import io.reactivex.Flowable
 import io.reactivex.Flowable.just
 import org.roaringbitmap.RoaringBitmap._
 
+import scala.collection.JavaConverters._
 import scala.collection.immutable.SortedMap
 
 case class SolutionPath(table: Table,
@@ -19,12 +20,12 @@ case class SolutionPath(table: Table,
       case None =>
         just(piecesInPositionsSoFar)
       case Some((piece, (count, minPosition))) =>
-        Flowable
-          .fromIterable(positions)
-          .map[Int](_.toInt)
-          .filter(pos => pos >= minPosition)
+        fromIterable(iterable(positions, minPosition))
           .flatMapInParallel(firstLevel)(flatMapperFunction(piecesCountAndMinPosition, piece, count))
     }
+
+  def iterable(positions: Positions, minPosition: Position): Iterable[Position] =
+    positions.iterator.asScala.filter(pos => pos >= minPosition).map(_.toInt).toIterable
 
 
   private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
