@@ -14,6 +14,8 @@ package object chess {
   }
 
   case class Table(horizontal: Int, vertical: Int) {
+    def isEqualTo(other: Table): Boolean = this == other || (horizontal == other.horizontal && vertical == other.vertical)
+
     override lazy val hashCode: Int = (horizontal, vertical).hashCode * 31
 
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
@@ -23,6 +25,11 @@ package object chess {
 
   case class PositionInTable(table: Table, position: Position) {
     override lazy val hashCode: PieceCount = table.hashCode + position
+
+    override def equals(obj: Any): Boolean = {
+      lazy val other: PositionInTable = obj.asInstanceOf[PositionInTable]
+      obj.isInstanceOf[PositionInTable] && table.isEqualTo(other.table) && position == other.position
+    }
   }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
