@@ -4,7 +4,6 @@ import java.{lang, util}
 
 import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
-import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
 
 import scala.collection.immutable.{Map, SortedSet, TreeSet}
@@ -36,21 +35,21 @@ object Utils {
 object FlowableUtils {
 
   implicit class RichFlowable[A](inFlow: Flowable[A]) {
-    def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] =
-      map2(inParallel)(flatMapper).flatMap(a => a)
 
-    def map2[B](inParallel: Boolean)(mapper: A => B): Flowable[B] = {
-      val rxMapper: RxFunction[A, B] = asRxFunction(mapper)
+    def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
+      val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
       if (inParallel)
         inFlow
           .parallel()
           .runOn(Schedulers.computation())
-          .map[B](rxMapper)
+          .flatMap(rxFlatMapper)
           .sequential()
       else
-        inFlow
-          .map(rxMapper)
+        inFlow.flatMap(rxFlatMapper)
     }
+
+    def map2[B](inParallel: Boolean)(mapper: A => B): Flowable[B] =
+      flatMap2(inParallel)(a => Flowable.just(mapper(a)))
   }
 
   def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
