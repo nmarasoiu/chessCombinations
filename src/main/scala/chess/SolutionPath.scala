@@ -12,20 +12,19 @@ case class SolutionPath(table: Table,
                         remainingPositions: Positions,
                         builtSolutionSoFar: Solution,
                         positionsTakenSoFar: Positions,
-                        piecesCountAndMinPosition: SortedMap[Piece, (PieceCount, Position)],
+                        remainingPieces: SortedMap[Piece, (PieceCount, Position)],
                         firstLevel: Boolean) {
 
   private val empty: Flowable[Solution] = Flowable.empty[Solution]
 
   def solutions(): Flowable[Solution] =
-    piecesCountAndMinPosition.headOption match {
+    remainingPieces.headOption match {
       case None =>
         just(builtSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
         fromIterable(iterable(remainingPositions, minPosition))
-          .flatMapInParallel(firstLevel)(flatMapperFunction(piecesCountAndMinPosition, piece, count))
+          .flatMapInParallel(firstLevel)(flatMapperFunction(remainingPieces, piece, count))
     }
-
 
   def iterable(positions: Positions, minPosition: Position): Iterable[Position] =
     positions.asScala.filter(pos => pos >= minPosition).map(_.toInt)
@@ -33,18 +32,20 @@ case class SolutionPath(table: Table,
   private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
                                 (position: Position): Flowable[Solution] = {
     val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
-    val remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1))
-    val newTakenPositions = andNot(positionsTakenSoFar, incompatiblePositions)
-    if (newTakenPositions.getCardinality < positionsTakenSoFar.getCardinality) {
+    val positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice = andNot(positionsTakenSoFar, incompatiblePositions)
+    if (positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice.getCardinality < positionsTakenSoFar.getCardinality) {
       empty
     } else {
+      val newTakenPositions = positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice //a clone of positionsTakenSoFar
       newTakenPositions.add(position)
+
       val nextStepSolutionPath = SolutionPath(table,
+        positionsTakenSoFar = newTakenPositions,
         remainingPositions = andNot(remainingPositions, incompatiblePositions),
         builtSolutionSoFar = PiecePositionIntListCons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
-        positionsTakenSoFar = newTakenPositions,
-        piecesCountAndMinPosition = remainingPieces,
+        remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1)),
         firstLevel = false)
+
       nextStepSolutionPath.solutions()
     }
   }
