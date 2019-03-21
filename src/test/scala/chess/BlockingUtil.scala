@@ -13,7 +13,7 @@ import scala.collection.mutable
 
 object BlockingUtil {
 
-  private val mappingExecutor = new ThreadPoolExecutor(1, 8, 1L, TimeUnit.SECONDS,
+  private val mappingExecutor = new ThreadPoolExecutor(2, 8, 1L, TimeUnit.DAYS,
     new LinkedBlockingQueue[Runnable], priorityDecreasingThreadFactory(Executors.defaultThreadFactory()))
 
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
@@ -27,10 +27,7 @@ object BlockingUtil {
     val solutionsFlowable: Flowable[Solution] = GenerationCore.solutions(input)
 
     final case class SolT(piecePositions: Array[Int]) {
-      override val hashCode: Int = util.Arrays.hashCode(piecePositions) // piecePositions.headOption.getOrElse(-9)
-
-      override def equals(obj: Any): Boolean = obj.isInstanceOf[Array[Int]] &&
-        util.Arrays.equals(piecePositions, obj.asInstanceOf[Array[Int]])
+      override val hashCode: Int = util.Arrays.hashCode(piecePositions)
     }
     object SolT {
       def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
