@@ -26,7 +26,7 @@ package object chess {
 
     override def equals(obj: Any): Boolean = {
       lazy val other: PositionInTable = obj.asInstanceOf[PositionInTable]
-      obj.isInstanceOf[PositionInTable] && table.isEqualTo(other.table) && position == other.position
+      this == obj || (obj.isInstanceOf[PositionInTable] && table.isEqualTo(other.table) && position == other.position)
     }
   }
 
