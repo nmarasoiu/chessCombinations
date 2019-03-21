@@ -38,19 +38,17 @@ case class SolutionPath(table: Table) {
     } else {
       val (piece, (pieceCount, minPosition)) = remainingPieces.min
       val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
-      positionFlow.flatMap2(inParallel = firstLevel) {
+      positionFlow.flatMap1(inParallel = firstLevel) {
         position => {
           val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
-          //newTakenPositions is a clone of positionsTakenSoFar minus (andNot) incompatiblePositions, meaning positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice
-          val newTakenPositions = positionsTakenSoFar &~ incompatiblePositions //diff
-          if (newTakenPositions.size < positionsTakenSoFar.size) {
+          if ((positionsTakenSoFar & incompatiblePositions ).nonEmpty) {
             empty
           } else {
             solutions(
               remainingPieces = if (pieceCount == 1) remainingPieces - piece else remainingPieces + (piece -> (pieceCount - 1, position + 1)),
               builtSolutionSoFar = PickListCons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
-              remainingPositions = remainingPositions &~ incompatiblePositions, //diff
-              positionsTakenSoFar = newTakenPositions + position,
+              remainingPositions = remainingPositions &~ incompatiblePositions,
+              positionsTakenSoFar = positionsTakenSoFar + position,
               firstLevel = false)
           }
         }

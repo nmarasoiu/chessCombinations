@@ -36,11 +36,18 @@ object FlowableUtils {
 
   implicit class RichFlowable[A](inFlow: Flowable[A]) {
 
-    def flatMapInParallel[B]: (A => Flowable[B]) => Flowable[B] = flatMap2(inParallel = true)
+    def flatMapInParallel[B]: (A => Flowable[B]) => Flowable[B] = flatMap1(inParallel = true)
 
-    def mapInParallel[B]: (A => B) => Flowable[B] = map2(inParallel = true)
+    def mapInParallel[B]: (A => B) => Flowable[B] = map1(inParallel = true)
 
-    def flatMap2[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
+    def map1[B](inParallel: Boolean)(mapper: A => B): Flowable[B] =
+      flatMap1(inParallel)(a => Flowable.just(mapper(a)))
+
+    def flatMap2[B, C](inParallel: Boolean)(mapper1: A => Flowable[B])(mapper2: B => Flowable[C]): Flowable[C] = {
+      flatMap1(inParallel)(a => mapper1(a).flatMap(b => mapper2(b)))
+    }
+
+    def flatMap1[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
       val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
       if (inParallel)
         inFlow
@@ -51,9 +58,6 @@ object FlowableUtils {
       else
         inFlow.flatMap(rxFlatMapper)
     }
-
-    def map2[B](inParallel: Boolean)(mapper: A => B): Flowable[B] =
-      flatMap2(inParallel)(a => Flowable.just(mapper(a)))
   }
 
   def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
