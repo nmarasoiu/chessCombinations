@@ -10,7 +10,7 @@ import io.reactivex.schedulers.Schedulers
 import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 object Utils {
-  def equals[T](obj: Any, eqTest: T => Boolean): Boolean = obj.isInstanceOf[T] && eqTest(obj.asInstanceOf[T])
+  def equals[T](obj: Any, eqTest: T => Boolean, cls:Class[T]): Boolean = cls.isInstance(obj) && eqTest(obj.asInstanceOf[T])
 
   def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
     def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
