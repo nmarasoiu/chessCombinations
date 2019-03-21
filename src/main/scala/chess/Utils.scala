@@ -10,12 +10,14 @@ import scala.collection.immutable.{Map, SortedSet, TreeSet}
 
 object Utils {
   def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
-    def _sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = {
-      TreeSet[U]() ++ set
-    }
+    def sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = TreeSet[U]() ++ set
 
     implicit val setOrdering: Ordering[SortedSet[T]] = (x, y) => x.toString.compare(y.toString)
-    _sorted(obtainedSet.map(s => _sorted(s)))
+    sorted(obtainedSet.map(s => sorted(s)))
+  }
+
+  implicit class RichBitSet(bitSet: Positions) {
+    def intersects(other: Positions): Boolean = (bitSet & other).nonEmpty
   }
 
   implicit class RichMap[K, V](map: Map[K, V])(implicit cmp: Ordering[K]) {

@@ -1,6 +1,7 @@
 package chess
 
 import chess.FlowableUtils._
+import chess.Utils._
 import io.reactivex.Flowable
 import io.reactivex.Flowable.{empty, just}
 
@@ -33,30 +34,30 @@ case class SolutionPath(table: Table) {
                 positionsTakenSoFar: Positions,
                 remainingPieces: Map[Piece, (PieceCount, Position)],
                 firstLevel: Boolean): Flowable[Solution] = {
-    if (remainingPieces.isEmpty) {
-      just(builtSolutionSoFar)
-    } else {
-      val (piece, (pieceCount, minPosition)) = remainingPieces.min
-      val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
-      positionFlow.flatMap1(inParallel = firstLevel) {
-        position => {
-          val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
-          if ((positionsTakenSoFar & incompatiblePositions).nonEmpty) {
-            empty
-          } else {
-            val newRemainingPieces = pieceCount match {
-              case 1 => remainingPieces - piece
-              case _ => remainingPieces + (piece -> (pieceCount - 1, position + 1))
+    remainingPieces.minOption() match {
+      case None =>
+        just(builtSolutionSoFar)
+      case Some((piece, (count, minPosition))) =>
+        val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
+        positionFlow.flatMap1(inParallel = firstLevel) {
+          position => {
+            val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
+            if (positionsTakenSoFar.intersects(incompatiblePositions)) {
+              empty
+            } else {
+              val newRemainingPieces = count match {
+                case 1 => remainingPieces - piece
+                case _ => remainingPieces + (piece -> (count - 1, position + 1))
+              }
+              solutions(
+                remainingPieces = newRemainingPieces,
+                builtSolutionSoFar = Cons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
+                remainingPositions = remainingPositions &~ incompatiblePositions,
+                positionsTakenSoFar = positionsTakenSoFar + position,
+                firstLevel = false)
             }
-            solutions(
-              remainingPieces = newRemainingPieces,
-              builtSolutionSoFar = Cons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
-              remainingPositions = remainingPositions &~ incompatiblePositions,
-              positionsTakenSoFar = positionsTakenSoFar + position,
-              firstLevel = false)
           }
         }
-      }
     }
   }
 }
