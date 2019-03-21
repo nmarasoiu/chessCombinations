@@ -15,6 +15,8 @@ package object chess {
                    positions: Positions)
 
   case class Table(horizontal: Int, vertical: Int) {
+    override lazy val hashCode: Int = super.hashCode
+
     def fromPairToInt(x: Int, y: Int): Int = x + y * horizontal
 
     def fromIntToPair(xy: Int): (Int, Int) = {
@@ -23,7 +25,7 @@ package object chess {
   }
 
   case class PositionInTable(position: Position, table: Table) {
-    override lazy val hashCode: Int = position
+    override lazy val hashCode: Int = position * 31 + table.hashCode
   }
 
   case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))

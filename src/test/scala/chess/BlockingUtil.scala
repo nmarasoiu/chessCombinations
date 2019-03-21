@@ -16,7 +16,7 @@ object BlockingUtil {
 
   def blockingIterable(input: Input): Iterable[Solution] = FlowableUtils.blockToIterable(GenerationCore.solutions(input))
 
-  def blockingTest(table: Table, piecesToPositions: Map[Piece, Position]): Long = {
+  def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDup: Boolean = false): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
@@ -24,38 +24,41 @@ object BlockingUtil {
     val input = Input.from(table, piecesToPositions)
     val solutionsFlowable: Flowable[Solution] = GenerationCore.solutions(input)
 
-    final case class SolT(piecePositions: Array[Int]) {
-      override val hashCode: Int = util.Arrays.hashCode(piecePositions)
-    }
-    object SolT {
-      def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
-    }
+    val solutionCount: Long =
+      if (checkDup) {
+        final case class SolT(piecePositions: Array[Int]) {
+          override val hashCode: Int = util.Arrays.hashCode(piecePositions)
+        }
+        object SolT {
+          def apply(solution: Solution): SolT = SolT(solution.toList.toArray.sorted)
+        }
 
-    val solTFlowable: ParallelFlowable[util.List[SolT]] =
-      FlowableUtils
-        .parallel(solutionsFlowable.buffer(32))
-        .map((solutions: util.List[Solution]) => {
-          val solTs: stream.Stream[SolT] = solutions.stream().map(solution => SolT(solution))
-          solTs.collect(Collectors.toList[SolT])
-        })
+        val solTFlowable: ParallelFlowable[util.List[SolT]] =
+          FlowableUtils
+            .parallel(solutionsFlowable.buffer(32))
+            .map((solutions: util.List[Solution]) => {
+              val solTs: stream.Stream[SolT] = solutions.stream().map(solution => SolT(solution))
+              solTs.collect(Collectors.toList[SolT])
+            })
 
-    type Solutions = mutable.Set[SolT]
-    val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
-    val folder: BiFunction[Solutions, SolT, Solutions] = {
-      case (solutions: Solutions, solution: SolT) =>
-        assert(solutions.add(solution))
-        if (solutions.size % 5000000 == 1)
-          print(input, solution.piecePositions)
-        solutions
-    }
-
-    val solutionCount =
-      solTFlowable
-        .sequential()
-        .flatMap(solTList => Flowable.fromIterable(solTList))
-        .reduceWith(seedFactory, folder)
-        .blockingGet()
-        .size
+        type Solutions = mutable.Set[SolT]
+        val seedFactory: Callable[Solutions] = () => new mutable.HashSet[SolT]
+        val folder: BiFunction[Solutions, SolT, Solutions] = {
+          case (solutions: Solutions, solution: SolT) =>
+            assert(solutions.add(solution))
+            if (solutions.size % 5000000 == 1)
+              print(input, solution.piecePositions)
+            solutions
+        }
+        solTFlowable
+          .sequential()
+          .flatMap(solTList => Flowable.fromIterable(solTList))
+          .reduceWith(seedFactory, folder)
+          .blockingGet()
+          .size
+      } else {
+        solutionsFlowable.count().blockingGet()
+      }
 
     val t1 = clock.instant()
     println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + solutionCount + " solutionFlowable found")
