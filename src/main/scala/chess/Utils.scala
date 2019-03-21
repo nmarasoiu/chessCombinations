@@ -35,28 +35,16 @@ object Utils {
 object FlowableUtils {
 
   implicit class RichFlowable[A](inFlow: Flowable[A]) {
+    def mapInParallel[B](mapper: A => B): Flowable[B] =
+      flatMapInParallel(a => Flowable.just(mapper(a)))
 
-    def flatMapInParallel[B]: (A => Flowable[B]) => Flowable[B] = flatMap1(inParallel = true)
-
-    def mapInParallel[B]: (A => B) => Flowable[B] = map1(inParallel = true)
-
-    def map1[B](inParallel: Boolean)(mapper: A => B): Flowable[B] =
-      flatMap1(inParallel)(a => Flowable.just(mapper(a)))
-
-    def flatMap2[B, C](inParallel: Boolean)(mapper1: A => Flowable[B])(mapper2: B => Flowable[C]): Flowable[C] = {
-      flatMap1(inParallel)(a => mapper1(a).flatMap(b => mapper2(b)))
-    }
-
-    def flatMap1[B](inParallel: Boolean)(flatMapper: A => Flowable[B]): Flowable[B] = {
+    def flatMapInParallel[B](flatMapper: A => Flowable[B]): Flowable[B] = {
       val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
-      if (inParallel)
-        inFlow
-          .parallel()
-          .runOn(Schedulers.computation())
-          .flatMap(rxFlatMapper)
-          .sequential()
-      else
-        inFlow.flatMap(rxFlatMapper)
+      inFlow
+        .parallel()
+        .runOn(Schedulers.computation())
+        .flatMap(rxFlatMapper)
+        .sequential()
     }
   }
 

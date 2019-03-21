@@ -38,26 +38,28 @@ case class SolutionPath(table: Table) {
       case None =>
         just(builtSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
-        val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
-        positionFlow.flatMap1(inParallel = firstLevel) {
-          position => {
-            val incompatiblePositions = piece.incompatiblePositions(PositionInTable(table, position))
-            if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-              empty
-            } else {
-              val newRemainingPieces = count match {
-                case 1 => remainingPieces - piece
-                case _ => remainingPieces + (piece -> (count - 1, position + 1))
-              }
-              solutions(
-                remainingPieces = newRemainingPieces,
-                builtSolutionSoFar = Cons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
-                remainingPositions = remainingPositions &~ incompatiblePositions,
-                positionsTakenSoFar = positionsTakenSoFar + position,
-                firstLevel = false)
+        def solutionsForPick(position: Position): Flowable[Solution] = {
+          val incompatiblePositions = piece.incompatiblePositions(PositionInTable(table, position))
+          if (positionsTakenSoFar.intersects(incompatiblePositions)) {
+            empty
+          } else {
+            val newRemainingPieces = count match {
+              case 1 => remainingPieces - piece
+              case _ => remainingPieces + (piece -> (count - 1, position + 1))
             }
+            solutions(
+              remainingPieces = newRemainingPieces,
+              builtSolutionSoFar = Cons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
+              remainingPositions = remainingPositions &~ incompatiblePositions,
+              positionsTakenSoFar = positionsTakenSoFar + position,
+              firstLevel = false)
           }
         }
+        val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
+        if (firstLevel)
+          positionFlow.flatMapInParallel(solutionsForPick)
+        else
+          positionFlow.flatMap(solutionsForPick)
     }
   }
 }
