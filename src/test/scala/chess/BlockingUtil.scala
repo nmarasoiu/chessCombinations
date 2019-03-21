@@ -17,8 +17,6 @@ object BlockingUtil {
 
   def blockToIterable[T](flowable: Flowable[T]): Iterable[T] = asScala(flowable.blockingIterable())
 
-  def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala
-
   def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDup: Boolean = false): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
@@ -78,12 +76,6 @@ object BlockingUtil {
 
   import scala.collection.JavaConverters._
 
-  def priorityDecreasingThreadFactory(factory: ThreadFactory): ThreadFactory = {
-    runnable: Runnable => {
-      val thread = factory.newThread(runnable)
-      thread.setPriority(Thread.MIN_PRIORITY)
-      thread
-    }
-  }
+  def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala
 
 }
