@@ -33,7 +33,7 @@ object Utils {
 object FlowableUtils {
   def parallel[T](flowable: Flowable[T]): ParallelFlowable[T] = flowable.parallel().runOn(Schedulers.computation())
 
-  def asRxFunction[A,B](func: A => B): Function[A, B] = {
+  def asRxFunction[A, B](func: A => B): Function[A, B] = {
     func(_)
   }
 

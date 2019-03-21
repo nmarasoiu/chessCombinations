@@ -13,9 +13,11 @@ import io.reactivex.parallel.ParallelFlowable
 import scala.collection.mutable
 
 object BlockingUtil {
+  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(GenerationCore.solutions(input))
+
   def blockToIterable[T](flowable: Flowable[T]): Iterable[T] = asScala(flowable.blockingIterable())
 
-  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(GenerationCore.solutions(input))
+  def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala
 
   def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDup: Boolean = false): Long = {
     println("Computing..")
@@ -74,6 +76,8 @@ object BlockingUtil {
         ).toIndexedSeq.sortBy(_.piece))
   }
 
+  import scala.collection.JavaConverters._
+
   def priorityDecreasingThreadFactory(factory: ThreadFactory): ThreadFactory = {
     runnable: Runnable => {
       val thread = factory.newThread(runnable)
@@ -81,8 +85,5 @@ object BlockingUtil {
       thread
     }
   }
-  import scala.collection.JavaConverters._
-
-  def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala
 
 }
