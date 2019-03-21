@@ -2,51 +2,57 @@ package chess
 
 import chess.FlowableUtils._
 import io.reactivex.Flowable
-import io.reactivex.Flowable.just
-import org.roaringbitmap.RoaringBitmap._
+import io.reactivex.Flowable.{empty, just}
 
-import scala.collection.JavaConverters._
-import scala.collection.immutable.SortedMap
+import scala.collection.immutable.{BitSet, SortedMap}
 
-case class SolutionPath(table: Table,
-                        remainingPositions: Positions,
-                        builtSolutionSoFar: Solution,
-                        positionsTakenSoFar: Positions,
-                        remainingPieces: SortedMap[Piece, (PieceCount, Position)],
-                        firstLevel: Boolean) {
+object SolutionPath {
+
+  def solutions(input: Input): Flowable[Solution] = {
+    val table = input.table
+    if (table.vertical <= 0 || table.horizontal <= 0)
+      empty()
+    else
+      SolutionPath(table).solutions(
+        remainingPositions = input.positions,
+        builtSolutionSoFar = EmptyList$PiecePosition,
+        remainingPieces = input.pieces.mapValues(count => (count, 0)),
+        positionsTakenSoFar = BitSet(),
+        firstLevel = true)
+  }
+}
+
+case class SolutionPath(table: Table) {
 
   private val empty: Flowable[Solution] = Flowable.empty[Solution]
 
-  def solutions(): Flowable[Solution] =
+  def solutions(remainingPositions: Positions,
+                builtSolutionSoFar: Solution,
+                positionsTakenSoFar: Positions,
+                remainingPieces: SortedMap[Piece, (PieceCount, Position)],
+                firstLevel: Boolean): Flowable[Solution] = {
+
     remainingPieces.headOption match {
       case None =>
         just(builtSolutionSoFar)
-      case Some((piece, (count, minPosition))) =>
-        fromIterable(iterable(remainingPositions, minPosition))
-          .flatMapInParallel(firstLevel)(flatMapperFunction(remainingPieces, piece, count))
-    }
-
-  def iterable(positions: Positions, minPosition: Position): Iterable[Position] =
-    positions.asScala.filter(pos => pos >= minPosition).map(_.toInt)
-
-  private def flatMapperFunction(pieces: SortedMap[Piece, (PieceCount, Position)], piece: Piece, pieceCount: PieceCount)
-                                (position: Position): Flowable[Solution] = {
-    val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
-    val positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice = andNot(positionsTakenSoFar, incompatiblePositions)
-    if (positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice.getCardinality < positionsTakenSoFar.getCardinality) {
-      empty
-    } else {
-      val newTakenPositions = positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice //a clone of positionsTakenSoFar
-      newTakenPositions.add(position)
-
-      val nextStepSolutionPath = SolutionPath(table,
-        positionsTakenSoFar = newTakenPositions,
-        remainingPositions = andNot(remainingPositions, incompatiblePositions),
-        builtSolutionSoFar = PiecePositionIntListCons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
-        remainingPieces = if (pieceCount == 1) pieces - piece else pieces + (piece -> (pieceCount - 1, position + 1)),
-        firstLevel = false)
-
-      nextStepSolutionPath.solutions()
+      case Some((piece, (pieceCount, minPosition))) =>
+        fromIterable(remainingPositions.filter(pos => pos >= minPosition))
+          .flatMapInParallel(firstLevel) {
+            position =>
+              val incompatiblePositions = piece.incompatiblePositions(PositionInTable(position, table))
+              //newTakenPositions is a clone of positionsTakenSoFar minus (andNot) incompatiblePositions, meaning positionsTakenSoFarWhichAreStillCompatibleWithTheNewChoice
+              val newTakenPositions = positionsTakenSoFar &~ incompatiblePositions //diff
+              if (newTakenPositions.size < positionsTakenSoFar.size) {
+                empty
+              } else {
+                solutions(
+                  remainingPieces = if (pieceCount == 1) remainingPieces - piece else remainingPieces + (piece -> (pieceCount - 1, position + 1)),
+                  builtSolutionSoFar = PickListCons(PiecePosition.toInt(piece, position), builtSolutionSoFar),
+                  remainingPositions = remainingPositions &~ incompatiblePositions, //diff
+                  positionsTakenSoFar = newTakenPositions + position,
+                  firstLevel = false)
+              }
+          }
     }
   }
 }

@@ -1,10 +1,10 @@
 package chess
 
 import enumeratum.{Enum, EnumEntry}
-import org.roaringbitmap.RoaringBitmap
 import scalaz.Memo
 
 import scala.collection.immutable
+import scala.collection.immutable.BitSet
 
 sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
   val incompatiblePositions: PositionInTable => Positions =
@@ -14,7 +14,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
         val positions: Seq[Position] =
           for ((x, y) <- incompatiblePositions(x, y, table))
             yield table.fromPairToInt(x, y)
-        RoaringBitmap.bitmapOfUnordered(positions: _*)
+        BitSet(positions: _*)
     }
 
   def compare(that: Piece): Int = this.order - that.order

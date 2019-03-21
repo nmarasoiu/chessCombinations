@@ -1,10 +1,10 @@
 package chess
 
 import java.time.Clock
+import java.util
 import java.util.concurrent._
 import java.util.stream
 import java.util.stream.Collectors
-import java.{lang, util}
 
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
@@ -13,17 +13,13 @@ import io.reactivex.parallel.ParallelFlowable
 import scala.collection.mutable
 
 object BlockingUtil {
-  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(GenerationCore.solutions(input))
-
-  def blockToIterable[T](flowable: Flowable[T]): Iterable[T] = asScala(flowable.blockingIterable())
-
   def blockingTest(table: Table, piecesToPositions: Map[Piece, Position], checkDup: Boolean = false): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
     val input = Input.from(table, piecesToPositions)
-    val solutionsFlowable: Flowable[Solution] = GenerationCore.solutions(input)
+    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(input)
 
     val solutionCount: Long =
       if (checkDup) {
@@ -36,7 +32,7 @@ object BlockingUtil {
 
         val solTFlowable: ParallelFlowable[util.List[SolT]] =
           FlowableUtils
-            .parallel(solutionsFlowable.buffer(32))
+            .parallel(solutionsFlowable.buffer(Config.bufferSize))
             .map((solutions: util.List[Solution]) => {
               val solTs: stream.Stream[SolT] = solutions.stream().map(solution => SolT(solution))
               solTs.collect(Collectors.toList[SolT])
@@ -47,7 +43,7 @@ object BlockingUtil {
         val folder: BiFunction[Solutions, SolT, Solutions] = {
           case (solutions: Solutions, solution: SolT) =>
             assert(solutions.add(solution))
-            if (solutions.size % 5000000 == 1)
+            if (solutions.size % Config.printEvery == 1)
               print(input, solution.piecePositions)
             solutions
         }
@@ -74,8 +70,9 @@ object BlockingUtil {
         ).toIndexedSeq.sortBy(_.piece))
   }
 
+  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(SolutionPath.solutions(input))
+
   import scala.collection.JavaConverters._
 
-  def asScala[T](javaIterable: lang.Iterable[T]): Iterable[T] = javaIterable.asScala
-
+  def blockToIterable[T](flowable: Flowable[T]): Iterable[T] = flowable.blockingIterable().asScala
 }
