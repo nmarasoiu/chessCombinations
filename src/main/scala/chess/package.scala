@@ -40,8 +40,8 @@ package object chess {
 
     def apply(table: Table, position: Position): PositionInTable = PositionInTable(position.pos + (table.table << fourteen))
   }
+
   final case class Table(table: Int) extends AnyVal {
-//    def fromPairToInt(x: Int, y: Int): Position = Position(x + y * horizontal)
 
     def fromPairToInt(x: CoordinateX, y: CoordinateY): Position = Position(x.x + y.y * horizontal)
 
