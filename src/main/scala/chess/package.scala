@@ -56,8 +56,6 @@ package object chess {
     def apply(horizontal: Int, vertical: Int): Table = Table(horizontal + (vertical << 7))
   }
 
-  case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
-
   final case class Pick(pickInt: Int) extends AnyVal { // a Piece (3bits) in a Position
     //    def piece: Piece = PiecePosition.fromIntToPieceAndCoordinates(pick)
     //
@@ -67,11 +65,6 @@ package object chess {
   object Pick {
     private val pieceEncodingBits = 3
     private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
-
-    def fromIntToPieceAndCoordinates(piecePositionInt: Pick, table: Table): PieceAndCoordinates = {
-      val (x,y) = table.fromIntToPair(position(piecePositionInt))
-      PieceAndCoordinates(piece(piecePositionInt), (x.x,y.y))
-    }
 
     def piece(piecePosition: Pick): Piece = Piece.of(PieceId(piecePosition.pickInt & pieceEncodingOnes))
 

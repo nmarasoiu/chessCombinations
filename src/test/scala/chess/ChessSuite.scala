@@ -53,7 +53,7 @@ class ChessSuite extends FunSuite {
              SolutionPath.solutions(table, pieces.mapValues(c=>PieceCount(c))).blockingScalaIterable())
         yield {
           for (piecePosition: Pick <- solution.toList.toSet;
-               PieceAndCoordinates(piece, (x, y)) = Pick.fromIntToPieceAndCoordinates(piecePosition, table))
+               PieceAndCoordinates(piece, (x, y)) = PickTest.fromIntToPieceAndCoordinates(piecePosition, table))
             yield (piece, (x, y))
         }
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(table, board))

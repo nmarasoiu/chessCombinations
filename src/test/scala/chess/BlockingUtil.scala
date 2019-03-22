@@ -78,7 +78,7 @@ object BlockingUtil {
   private def print[T](table: Table, solution: Iterable[Pick]): Unit = {
     println(
       (for (pick <- solution)
-        yield Pick.fromIntToPieceAndCoordinates(pick, table)
+        yield PickTest.fromIntToPieceAndCoordinates(pick, table)
         ).toIndexedSeq.sortBy(_.piece))
   }
 }
