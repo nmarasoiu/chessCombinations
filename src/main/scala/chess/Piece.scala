@@ -6,18 +6,19 @@ import scalaz.Memo
 import scala.collection.immutable
 import scala.collection.immutable.BitSet
 
-sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece] {
+sealed abstract class Piece(val order: PieceId) extends EnumEntry with Ordered[Piece] {
   val incompatiblePositions: PositionInTable => Positions =
     Memo.immutableHashMapMemo[PositionInTable, Positions] {
-      case PositionInTable(table: Table, position: Position) =>
+      positionInTable =>
+        val (table: Table, position: Position) = (positionInTable.table, positionInTable.position)
         val (x, y) = table.fromIntToPair(position)
-        val positions: Seq[Position] =
-          for ((x, y) <- incompatiblePositions(x, y, table))
-            yield table.fromPairToInt(x, y)
+        val positions: Seq[Int] =
+          for ((x, y) <- incompatiblePositions(x.x, y.y, table))
+            yield table.fromPairToInt(CoordinateX(x), CoordinateY(y)).pos
         BitSet(positions: _*)
     }
 
-  def compare(that: Piece): Int = this.order - that.order
+  def compare(that: Piece): Int = this.order.pieceInt - that.order.pieceInt
 
   /**
     * @return the BitSet of positions that cannot be filled by other pieces:
@@ -31,7 +32,7 @@ sealed abstract class Piece(val order: Int) extends EnumEntry with Ordered[Piece
 object Piece extends Enum[Piece] {
   val values: immutable.IndexedSeq[Piece] = findValues
 
-  def of(ordinal: Int): Piece = values(ordinal)
+  def of(pieceId: PieceId): Piece = values(pieceId.pieceInt)
 
   def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
 
@@ -42,12 +43,12 @@ object Piece extends Enum[Piece] {
     fittingX(table)(position._1) && fittingY(table)(position._2)
   }
 
-  case object Queen extends Piece(0) {
+  case object Queen extends Piece(PieceId(0)) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] =
       Rook.incompatiblePositions(x, y, table) ++ Bishop.incompatiblePositions(x, y, table)
   }
 
-  case object Bishop extends Piece(1) {
+  case object Bishop extends Piece(PieceId(1)) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
       val h = table.horizontal
       for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset))
@@ -55,7 +56,7 @@ object Piece extends Enum[Piece] {
     }
   }
 
-  case object Rook extends Piece(2) {
+  case object Rook extends Piece(PieceId(2)) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
       val xs =
         for (hOffset <- 0 until table.horizontal)
@@ -67,7 +68,7 @@ object Piece extends Enum[Piece] {
     }
   }
 
-  case object Knight extends Piece(3) {
+  case object Knight extends Piece(PieceId(3)) {
     private val horizontalVerticalOffsets: Array[(Int, Int)] =
       for ((absHorizontalOffset, absVerticalOffset) <- Array((0, 0), (1, 2), (2, 1));
            (hOffset, vOffset) <- Set(
@@ -81,7 +82,7 @@ object Piece extends Enum[Piece] {
     }
   }
 
-  case object King extends Piece(4) {
+  case object King extends Piece(PieceId(4)) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
       val xs = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
       val ys = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)

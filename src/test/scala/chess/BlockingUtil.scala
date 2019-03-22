@@ -13,27 +13,32 @@ import io.reactivex.functions.BiFunction
 import scala.collection.mutable
 
 object BlockingUtil {
-  def blockingTest(table: Table, pieces: Map[Piece, PieceCount], duplicationAssertion: Boolean = false): Long = {
+  def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean = false): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(table, pieces)
+    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(table, pieces.mapValues(c=>PieceCount(c)))
 
     val solutionCount: Long =
       if (duplicationAssertion) {
 
         case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
 
-          override lazy val hashCode: Int = util.Arrays.hashCode(picks)
+          override lazy val hashCode: Int = util.Arrays.hashCode(pickInts)
 
-          override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Sol) => util.Arrays.equals(other.picks, picks))
+          private def pickInts: Array[Int] = {
+            picks.map(_.pickInt)
+          }
+
+          override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Sol) =>
+            util.Arrays.equals(other.pickInts, pickInts))
 
           override def iterator: Iterator[Pick] = picks.iterator
         }
 
         object Sol {
-          def apply(solution: Solution): Sol = Sol(solution.toList.toArray.sorted)
+          def apply(solution: Solution): Sol = Sol(solution.toList.toArray.sortBy(_.pickInt))
         }
 
         val solFlowable: Flowable[Sol] =
@@ -73,7 +78,7 @@ object BlockingUtil {
   private def print[T](table: Table, solution: Iterable[Pick]): Unit = {
     println(
       (for (pick <- solution)
-        yield PiecePosition.fromIntToPieceAndCoordinates(pick, table)
+        yield Pick.fromIntToPieceAndCoordinates(pick, table)
         ).toIndexedSeq.sortBy(_.piece))
   }
 }

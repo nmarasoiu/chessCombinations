@@ -45,13 +45,15 @@ class ChessSuite extends FunSuite {
     blockingTest(Table(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
   }
 
-  def areResultingBoardsTheExpectedOnes(table: Table, piecesToPositions: Map[Piece, Position], expectedBoards: Set[Board]) {
-    blockingTest(table, piecesToPositions)
+  def areResultingBoardsTheExpectedOnes(table: Table, pieces: Map[Piece, Int],
+                                        expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
+    blockingTest(table, pieces)
     val obtainedBoards: Iterable[Board] =
-      for (solution:Solution <- SolutionPath.solutions(table, piecesToPositions).blockingScalaIterable())
+      for (solution:Solution <-
+             SolutionPath.solutions(table, pieces.mapValues(c=>PieceCount(c))).blockingScalaIterable())
         yield {
-          for (piecePosition: Int <- solution.toList.toSet;
-               PieceAndCoordinates(piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table))
+          for (piecePosition: Pick <- solution.toList.toSet;
+               PieceAndCoordinates(piece, (x, y)) = Pick.fromIntToPieceAndCoordinates(piecePosition, table))
             yield (piece, (x, y))
         }
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(table, board))

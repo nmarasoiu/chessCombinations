@@ -8,6 +8,6 @@ case object Empty extends PickList {
   override lazy val toList: List[Pick] = Nil
 }
 
-case class Cons(head: Int, tail: PickList) extends PickList {
+case class Cons(head: Pick, tail: PickList) extends PickList {
   override lazy val toList: List[Pick] = head :: tail.toList
 }
