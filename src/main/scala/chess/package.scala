@@ -1,9 +1,9 @@
 import scala.collection.immutable.BitSet
 
 package object chess {
-  type Position = Int
   type PieceInt = Int
   type PieceCount = Int
+  type Position = Int //encoding (x,y) as x*horiz+y as Int
   type Pick = Int // a Piece (3bits) in a Position
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
   type Solution = PickList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
@@ -33,7 +33,7 @@ package object chess {
     }
   }
 
-  case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
+  case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))//move to test
 
   object PiecePosition {
     private val pieceEncodingBits = 3

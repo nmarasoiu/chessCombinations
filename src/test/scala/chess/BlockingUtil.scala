@@ -13,13 +13,12 @@ import io.reactivex.functions.BiFunction
 import scala.collection.mutable
 
 object BlockingUtil {
-  def blockingTest(table: Table, pieces: Map[Piece, Position], duplicationAssertion: Boolean = false): Long = {
+  def blockingTest(table: Table, pieces: Map[Piece, PieceCount], duplicationAssertion: Boolean = false): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val input = Input.from(table, pieces)
-    val solutionsFlowable: Flowable[Solution] = solutions(input)
+    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(table, pieces)
 
     val solutionCount: Long =
       if (duplicationAssertion) {
@@ -52,7 +51,7 @@ object BlockingUtil {
           case (solutions: Solutions, solT: Sol) =>
             assert(solutions.add(solT))
             if (solutions.size % Config.printEvery == 1)
-              print(input.table, solT)
+              print(table, solT)
             solutions
         }
 
@@ -71,21 +70,10 @@ object BlockingUtil {
     solutionCount
   }
 
-  private def solutions(input: Input): Flowable[Solution] = {
-    SolutionPath.solutions(table = input.table,
-      positions = input.positions, pieces = input.pieces)
-  }
-
   private def print[T](table: Table, solution: Iterable[Pick]): Unit = {
     println(
       (for (pick <- solution)
         yield PiecePosition.fromIntToPieceAndCoordinates(pick, table)
         ).toIndexedSeq.sortBy(_.piece))
   }
-
-  def blockingIterable(input: Input): Iterable[Solution] = blockToIterable(solutions(input))
-
-  import scala.collection.JavaConverters._
-
-  def blockToIterable[T](flowable: Flowable[T]): Iterable[T] = flowable.blockingIterable().asScala
 }

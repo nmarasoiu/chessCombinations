@@ -1,6 +1,7 @@
 package chess
 
 import chess.BlockingUtil._
+import chess.FlowableUtils._
 import chess.Piece._
 import org.scalatest.FunSuite
 
@@ -46,15 +47,14 @@ class ChessSuite extends FunSuite {
 
   def areResultingBoardsTheExpectedOnes(table: Table, piecesToPositions: Map[Piece, Position], expectedBoards: Set[Board]) {
     blockingTest(table, piecesToPositions)
-    val input = Input.from(table, piecesToPositions)
     val obtainedBoards: Iterable[Board] =
-      for (solution <- blockingIterable(input))
+      for (solution:Solution <- SolutionPath.solutions(table, piecesToPositions).blockingScalaIterable())
         yield {
           for (piecePosition: Int <- solution.toList.toSet;
-               PieceAndCoordinates(piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, input.table))
+               PieceAndCoordinates(piece, (x, y)) = PiecePosition.fromIntToPieceAndCoordinates(piecePosition, table))
             yield (piece, (x, y))
         }
-    val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(input.table, board))
+    val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(table, board))
 
     assert(obtainedBoards.size == allExpectedBoards.size)
     val obtainedSet = obtainedBoards.toSet

@@ -8,6 +8,9 @@ import io.reactivex.Flowable.{empty, just}
 import scala.collection.immutable.{BitSet, Map}
 
 object SolutionPath {
+  def solutions(table: Table,
+                pieces: Map[Piece, PieceCount]): Flowable[Solution] =
+    solutions(table, pieces, positions = BitSet(0 until table.vertical * table.horizontal: _*))
 
   def solutions(table: Table,
                 pieces: Map[Piece, PieceCount],
@@ -55,6 +58,7 @@ case class SolutionPath(table: Table) {
               firstLevel = false)
           }
         }
+
         val positionFlow = fromIterable(remainingPositions.filter(pos => pos >= minPosition))
         if (firstLevel)
           positionFlow.flatMapInParallel(solutionsForPick)

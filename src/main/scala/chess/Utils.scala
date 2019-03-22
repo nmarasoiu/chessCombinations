@@ -31,24 +31,24 @@ object Utils {
   }
 
 }
-
 object FlowableUtils {
-
-  implicit class RichFlowable[A](inFlow: Flowable[A]) {
+  implicit class RichFlowable[A](flowable: Flowable[A]) {
     def mapInParallel[B](mapper: A => B): Flowable[B] =
       flatMapInParallel(a => Flowable.just(mapper(a)))
 
     def flatMapInParallel[B](flatMapper: A => Flowable[B]): Flowable[B] = {
+      def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
       val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
-      inFlow
+      flowable
         .parallel()
         .runOn(Schedulers.computation())
         .flatMap(rxFlatMapper)
         .sequential()
     }
-  }
+    import scala.collection.JavaConverters._
 
-  def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
+    def blockingScalaIterable(): Iterable[A] = flowable.blockingIterable().asScala
+  }
 
   import scala.collection.JavaConverters._
 
