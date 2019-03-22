@@ -38,36 +38,44 @@ case class SolutionPath(table: Table) {
                 positionsTakenSoFar: Positions,
                 remainingPieces: Map[PieceId, (PieceCount, Position)],
                 firstLevel: Boolean): Flowable[Solution] = {
-    if (remainingPieces.isEmpty) {
-      just(builtSolutionSoFar)
-    } else {
-      val (pieceId: PieceId, (count: PieceCount, minPosition: Position)) = remainingPieces.minBy(count => count._1.pieceInt)
-
-      def solutionsForPick(position: Position): Flowable[Solution] = {
-        val positionInTable = PositionInTable(table, position)
-        val incompatiblePositions = Piece.of(pieceId).incompatiblePositions(positionInTable)
-        if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-          empty
-        } else {
-          val newRemainingPieces = count.count match {
-            case 1 => remainingPieces - pieceId
-            case _ => remainingPieces + (pieceId -> (PieceCount(count.count - 1), Position(position.pos + 1)))
+    minOption(remainingPieces) match {
+      case None =>
+        just(builtSolutionSoFar)
+      case Some((pieceId: PieceId, (PieceCount(count), Position(minPosition)))) =>
+        def solutionsForPick(position: Position): Flowable[Solution] = {
+          val Position(positionInt) = position
+          val positionInTable = PositionInTable(table, position)
+          val incompatiblePositions = Piece.of(pieceId).incompatiblePositions(positionInTable)
+          if (positionsTakenSoFar.intersects(incompatiblePositions)) {
+            empty
+          } else {
+            val newRemainingPieces = count match {
+              case 1 => remainingPieces - pieceId
+              case _ => remainingPieces + (pieceId -> (PieceCount(count - 1), Position(positionInt + 1)))
+            }
+            solutions(
+              remainingPieces = newRemainingPieces,
+              builtSolutionSoFar = Cons(Pick.toInt(pieceId.piece, position), builtSolutionSoFar),
+              remainingPositions = remainingPositions &~ incompatiblePositions,
+              positionsTakenSoFar = positionsTakenSoFar + positionInt,
+              firstLevel = false)
           }
-          solutions(
-            remainingPieces = newRemainingPieces,
-            builtSolutionSoFar = Cons(Pick.toInt(pieceId.piece, position), builtSolutionSoFar),
-            remainingPositions = remainingPositions &~ incompatiblePositions,
-            positionsTakenSoFar = positionsTakenSoFar + position.pos,
-            firstLevel = false)
         }
-      }
 
-      val positionFlow: Flowable[Position] =
-        fromIterable(remainingPositions.filter(pos => pos >= minPosition.pos).map(pos => Position(pos)))
-      if (firstLevel)
-        positionFlow.flatMapInParallel(solutionsForPick)
-      else
-        positionFlow.flatMap(solutionsForPick)
+        val positionFlow: Flowable[Position] =
+          fromIterable(remainingPositions.filter(pos => pos >= minPosition).map(pos => Position(pos)))
+        if (firstLevel)
+          positionFlow.flatMapInParallel(solutionsForPick)
+        else
+          positionFlow.flatMap(solutionsForPick)
+    }
+  }
+
+  def minOption[V](map: Map[PieceId, V]): Option[(PieceId, V)] = {
+    val none: Option[(PieceId, V)] = None
+    map.foldLeft(none) {
+      case (None, kv) => Some(kv)
+      case (Some((k1, v1)), (k2, v2)) => if (PieceId.compare(k1, k2) <= 0) Some(k1, v1) else Some(k2, v2)
     }
   }
 }

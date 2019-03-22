@@ -4,19 +4,24 @@ import enumeratum.{Enum, EnumEntry}
 import scalaz.Memo
 
 import scala.collection.immutable
-import scala.collection.immutable.BitSet
+import scala.collection.immutable.{BitSet, HashMap}
 
 sealed abstract class Piece(val order: PieceId) extends EnumEntry with Ordered[Piece] {
-  val incompatiblePositions: PositionInTable => Positions =
-    Memo.immutableHashMapMemo[PositionInTable, Positions] {
-      positionInTable =>
-        val (table: Table, position: Position) = (positionInTable.table, positionInTable.position)
-        val (x, y) = table.fromIntToPair(position)
-        val positions: Seq[Int] =
-          for ((x, y) <- incompatiblePositions(x.x, y.y, table))
-            yield table.fromPairToInt(CoordinateX(x), CoordinateY(y)).pos
-        BitSet(positions: _*)
-    }
+  val incompatiblePositions: PositionInTable => Positions = {
+    case PositionInTable(pit) =>
+      def incompatiblePositions2: Int => Positions =
+        Memo.immutableMapMemo(HashMap.empty[Int, Positions]) {
+          pit =>
+            val positionInTable = PositionInTable(pit)
+            val (table: Table, position: Position) = (positionInTable.table, positionInTable.position)
+            val (x, y) = table.fromIntToPair(position)
+            val positions: Seq[Int] =
+              for ((x, y) <- incompatiblePositions(x.x, y.y, table))
+                yield table.fromPairToInt(CoordinateX(x), CoordinateY(y)).pos
+            BitSet(positions: _*)
+        }
+      incompatiblePositions2(pit)
+  }
 
   def compare(that: Piece): Int = this.order.pieceInt - that.order.pieceInt
 

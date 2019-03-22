@@ -1,4 +1,4 @@
-import scala.collection.immutable.{BitSet, Map}
+import scala.collection.immutable.BitSet
 
 package object chess {
 
@@ -10,7 +10,10 @@ package object chess {
   final case class CoordinateY(y: Int) extends AnyVal
 
   final case class PieceId(pieceInt: Int) extends AnyVal {
-    def piece(): Piece =Piece.of(this)
+    def piece: Piece = Piece.of(this)
+  }
+  object PieceId extends Ordering[PieceId] {
+    override def compare(x: PieceId, y: PieceId): Int = x.pieceInt.compareTo(y.pieceInt)
   }
 
   final case class PieceCount(count: Int) extends AnyVal {
@@ -46,6 +49,7 @@ package object chess {
     def fromPairToInt(x: CoordinateX, y: CoordinateY): Position = Position(x.x + y.y * horizontal)
 
     def horizontal: Int = table & 127
+
     def vertical: Int = table >> 7
 
     def fromIntToPair(position: Position): (CoordinateX, CoordinateY) =
@@ -84,16 +88,6 @@ package object chess {
 
   implicit class RichBitSet(bitSet: Positions) {
     def intersects(other: Positions): Boolean = (bitSet & other).nonEmpty
-  }
-
-  implicit class RichMap[K, V](map: Map[K, V])(implicit cmp: Ordering[K]) {
-    def minOption(): Option[(K, V)] = {
-      val none: Option[(K, V)] = None
-      map.foldLeft(none) {
-        case (None, kv) => Some(kv)
-        case (Some((k1, v1)), (k2, v2)) => if (cmp.compare(k1, k2) <= 0) Some(k1, v1) else Some(k2, v2)
-      }
-    }
   }
 
 }
