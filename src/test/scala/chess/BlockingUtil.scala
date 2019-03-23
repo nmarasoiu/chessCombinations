@@ -2,13 +2,11 @@ package chess
 
 import java.time.Clock
 import java.util
-import java.util.concurrent._
-import java.util.stream
-import java.util.stream.Collectors
 
 import chess.FlowableUtils._
 import io.reactivex.Flowable
-import io.reactivex.functions.BiFunction
+
+import scala.collection.JavaConverters
 
 object BlockingUtil {
 
@@ -20,7 +18,7 @@ object BlockingUtil {
     assert(size > 0)
   }
 
-  val bufferSize: BufferSize = BufferSize(64)
+  val bufferSize: BufferSize = BufferSize(1024)
   val printEvery: PrintEvery = PrintEvery(5000000)
 
   def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean): Long = {
@@ -37,43 +35,42 @@ object BlockingUtil {
           (position.positionInt << three) + piece.pieceIndex
         }
 
-        case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
-          override lazy val hashCode: Int = util.Arrays.hashCode(picks.map(pickInt))
-
-          override def iterator: Iterator[Pick] = picks.iterator
+        case class Sol(picks: Array[Int]) {
+          override lazy val hashCode: Int = util.Arrays.hashCode(picks)
         }
 
         object Sol {
-          def apply(solution: SubSolution): Sol = Sol(solution.picks.toArray.sortBy(pickInt))
+          def apply(solution: SubSolution): Sol = Sol(solution.picks.toStream.map(pickInt).toArray.sorted)
         }
-
+        import JavaConverters._
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
             .buffer(bufferSize.size)
-            .mapInParallel {
-              solutions: util.List[SubSolution] =>
-                val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
-                solTs.collect(Collectors.toList[Sol])
-            }.flatMap(lst => Flowable.fromIterable(lst))
-
-        type Solutions = util.HashSet[Sol]
-        val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol](50000000)
-        //todo sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
-        //todo and check why we have so much garbage collection
-        val folder: BiFunction[Solutions, Sol, Solutions] = {
-          case (solutions: Solutions, solT: Sol) =>
-            assert(solutions.add(solT))
-            if (solutions.size % printEvery.size == 1)
-              print(table, solT)
-            solutions
-        }
+            .mapInParallel(solutions => solutions.iterator.asScala.map(Sol(_)).toIterable.asJava)
+            .flatMap(iterable => Flowable.fromIterable(iterable))
+        /*
+                type Solutions = util.HashSet[Sol]
+                val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
+                //to do sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
+                //to do and check why we have so much garbage collection
+                val folder: BiFunction[Solutions, Sol, Solutions] = {
+                  case (solutions: Solutions, solT: Sol) =>
+                    if (solutions.isEmpty) //todo delete this if line, add all the time to the set
+                      assert(solutions.add(solT))
+                    if (solutions.size % printEvery.size == 1)
+                      print(table, solT)
+                    solutions
+                }
+        */
 
         solFlowable
-          .reduceWith(seedFactory, folder)
+          //          .reduceWith(seedFactory, folder)
+          .count()
           .blockingGet()
-          .size
+        //          .size
 
-      } else {
+      }
+      else {
         solutionsFlowable.count().blockingGet()
       }
 
@@ -83,7 +80,9 @@ object BlockingUtil {
     solutionCount
   }
 
-  private def print[T](table: Table, solution: Iterable[Pick]): Unit = {
+  private def print[T](table: Table, solution: Iterable[Pick]): Unit
+
+  = {
     println(
       (for (pick <- solution)
         yield PickTest.fromIntToPieceAndCoordinates(pick, table)
