@@ -51,8 +51,8 @@ case class SolutionPath(table: Table) {
           }
         }
 
-        val positionFlowable = fromIterable(remainingPositions.filter((pos: Int) => pos >= minPosition.positionInt))
-        positionFlowable.flatMapScala(mapper = solutionsForPick)(inParallel = firstLevel)
+        fromIterable(remainingPositions.iterableFrom(minPosition))
+          .flatMapScala(mapper = solutionsForPick)(inParallel = firstLevel)
     }
   }
 }

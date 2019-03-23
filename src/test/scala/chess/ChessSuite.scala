@@ -28,18 +28,18 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example 3, the variety: '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
-    for ((duplicationAssertion, count) <- Map(false -> 0, true -> 1); _ <- 1 to count)
+    for ((duplicationAssertion, count) <- Map(false -> 123, true -> 1); _ <- 1 to count) //PT2M18.372S -> 22684916
       assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion) >= 3063828)
   }
 
   test("Example 3, the variety: '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
-    for ((duplicationAssertion, count) <- Map(false -> 0, true -> 1); _ <- 1 to count)
+    for ((duplicationAssertion, count) <- Map(false -> 12, true -> 1); _ <- 1 to count) //PT14M25.339S -> 40497650
       assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion) >= 2895708)
   }
 
   test("Example 3, the variety: '2 of each piece incl Rook' should return the solutions, and that there are no duplicates in the returned solutions") {
-    while (true)
-      blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2), duplicationAssertion = true)
+    //PT9.784S -> 575352
+    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2), duplicationAssertion = true)
   }
 
   test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {

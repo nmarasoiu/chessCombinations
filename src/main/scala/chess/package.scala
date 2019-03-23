@@ -119,7 +119,7 @@ package object chess {
   case class Pick(piece: Piece, position: Position) {
   }
 
-  case class PositionSet(bitSet: BitSet) extends Iterable[Position] {
+  case class PositionSet(bitSet: BitSet) {
     //encoding (x,y) as x*horiz+y as Int
     def -(that: PositionSet): PositionSet = PositionSet(bitSet &~ that.bitSet)
 
@@ -129,7 +129,8 @@ package object chess {
 
     def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
-    override def iterator: Iterator[Position] = bitSet.iterator.map(positionInt => Position(positionInt))
+    def iterableFrom(minPosition: Position): Iterable[Position] =
+      bitSet.iteratorFrom(minPosition.positionInt).map(Position(_)).toIterable
   }
 
   object PositionSet {
