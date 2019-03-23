@@ -8,10 +8,10 @@ import scala.collection.immutable.{BitSet, Map, TreeMap}
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[Solution] =
-    solutions(table, pieces, positions = BitSet(0 until table.vertical * table.horizontal: _*))
+    solutions(table, pieces, positions = BitSet(0 until table.vertical.height * table.horizontal.length: _*))
 
   def solutions(table: Table, pieces: Map[Piece, Count], positions: Positions): Flowable[Solution] = {
-    if (table.vertical <= 0 || table.horizontal <= 0) {
+    if (table.vertical.height <= 0 || table.horizontal.length <= 0) {
       empty()
     } else {
       val newRemainingPieces = for (
@@ -19,7 +19,7 @@ object SolutionPath {
       ) yield (piece, (pieceCount, position0))
       SolutionPath(table).solutions(
         remainingPositions = positions,
-        builtSolutionSoFar = Empty,
+        builtSolutionSoFar = Nil,
         remainingPieces = TreeMap[Piece, (Count, Position)]() ++ newRemainingPieces,
         positionsTakenSoFar = BitSet(),
         firstLevel = true)
@@ -45,7 +45,7 @@ case class SolutionPath(table: Table) {
 
       def solutionsForPick(position: Position): Flowable[Solution] = {
         val Position(positionInt) = position
-        val positionInTable = PositionInTable(table, position)
+        val positionInTable = PositionInTable(position, table)
         val incompatiblePositions = piece.incompatiblePositions(positionInTable)
         if (positionsTakenSoFar.intersects(incompatiblePositions)) {
           empty
@@ -56,7 +56,7 @@ case class SolutionPath(table: Table) {
           }
           solutions(
             remainingPieces = newRemainingPieces,
-            builtSolutionSoFar = Cons(Pick(piece, position), builtSolutionSoFar),
+            builtSolutionSoFar = ::(Pick(piece, position), builtSolutionSoFar),
             remainingPositions = remainingPositions &~ incompatiblePositions,
             positionsTakenSoFar = positionsTakenSoFar + positionInt,
             firstLevel = false)

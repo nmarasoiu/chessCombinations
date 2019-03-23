@@ -4,15 +4,21 @@ import enumeratum.{Enum, EnumEntry}
 import scalaz.Memo
 
 import scala.collection.immutable
-import scala.collection.immutable.{BitSet, HashMap}
+import scala.collection.immutable.BitSet
 
 sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[Piece] {
   def compare(that: Piece): Int = pieceIndex - that.pieceIndex
 
-  def incompatiblePositions(positionInTable: PositionInTable): Positions = {
-    val PositionInTable(pit) = positionInTable
-    incompatiblePositions2(pit)
-  }
+  val incompatiblePositions: PositionInTable => Positions =
+    Memo.immutableHashMapMemo[PositionInTable, Positions] {
+      positionInTable =>
+        val table: Table = positionInTable.table
+        val pos: Position = positionInTable.position
+        val positions =
+          for ((x, y) <- incompatiblePositions(pos.x(table).x, pos.y(table).y, table))
+            yield Position(X(x), Y(y), table).positionInt
+        BitSet(positions: _*)
+    }
 
   /**
     * @return the BitSet of positions that cannot be filled by other pieces:
@@ -22,19 +28,6 @@ sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[
     */
   protected def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)]
 
-  private def incompatiblePositions2: Int => Positions =
-    Memo.immutableMapMemo(HashMap.empty[Int, Positions]) {
-      pit =>
-        val positionInTable = PositionInTable(pit)
-        val table: Table = positionInTable.table
-        val pos: Position = positionInTable.position
-        val x = pos.x(table)
-        val y = pos.y(table)
-        val positions =
-          for ((x, y) <- incompatiblePositions(x.x, y.y, table))
-            yield table.fromPairToInt(X(x), Y(y)).pos
-        BitSet(positions: _*)
-    }
 }
 
 object Piece extends Enum[Piece] {
@@ -44,9 +37,9 @@ object Piece extends Enum[Piece] {
 
   def fittingXY(table: Table)(position: (Int, Int)): Boolean = {
 
-    def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal
+    def fittingX(table: Table)(x: Int): Boolean = 0 <= x && x < table.horizontal.length
 
-    def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical
+    def fittingY(table: Table)(y: Int): Boolean = 0 <= y && y < table.vertical.height
 
     fittingX(table)(position._1) && fittingY(table)(position._2)
   }
@@ -58,7 +51,7 @@ object Piece extends Enum[Piece] {
 
   case object Bishop extends Piece(1) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
-      val h = table.horizontal
+      val h = table.horizontal.length
       for (hOffset <- 1 - h until h if fittingXY(table)(x + hOffset, y + hOffset))
         yield (x + hOffset, y + hOffset)
     }
@@ -67,10 +60,10 @@ object Piece extends Enum[Piece] {
   case object Rook extends Piece(2) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
       val xs =
-        for (hOffset <- 0 until table.horizontal)
+        for (hOffset <- 0 until table.horizontal.length)
           yield (hOffset, y)
       val ys =
-        for (vOffset <- 0 until table.vertical)
+        for (vOffset <- 0 until table.vertical.height)
           yield (x, vOffset)
       xs ++ ys
     }
@@ -92,8 +85,8 @@ object Piece extends Enum[Piece] {
 
   case object King extends Piece(4) {
     override def incompatiblePositions(x: Int, y: Int, table: Table): Seq[(Int, Int)] = {
-      val xs = math.max(0, x - 1) to math.min(x + 1, table.horizontal - 1)
-      val ys = math.max(0, y - 1) to math.min(y + 1, table.vertical - 1)
+      val xs = math.max(0, x - 1) to math.min(x + 1, table.horizontal.length - 1)
+      val ys = math.max(0, y - 1) to math.min(y + 1, table.vertical.height - 1)
       for (x <- xs; y <- ys) yield (x, y)
     }
   }

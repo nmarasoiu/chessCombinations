@@ -69,7 +69,7 @@ class ChessSuite extends FunSuite {
     Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toSet
 
   def rotation(table: Table, solution: Board): Board = {
-    def rotation(x: Int, y: Int): (Int, Int) = (table.vertical - 1 - y, x)
+    def rotation(x: Int, y: Int): (Int, Int) = (table.vertical.height - 1 - y, x)
 
     for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
   }

@@ -13,8 +13,9 @@ package object chess {
   val (seven, sevenBits) = (7, 128 - 1)
   val (fourteen, fourteenBits) = (14, 128 * 128 - 1)
 
-  def assertRange(value:Int,minValue:Int, maxValue:Int): Boolean = minValue <= value && value <= maxValue
-  
+  def assertRange(value: Int, minValue: Int, maxValue: Int): Boolean =
+    minValue <= value && value <= maxValue
+
   final case class X(x: Int) {
     assertRange(x, minValue = 0, maxValue = sevenBits)
   }
@@ -35,60 +36,29 @@ package object chess {
     assertRange(count, minValue = 1, maxValue = sevenBits)
   }
 
-  final case class Position(pos: Int) {
-    assertRange(pos, 0, fourteenBits)
+  final case class Position(positionInt: Int) {
+    assertRange(positionInt, 0, fourteenBits)
 
     //encoding (x,y) as x*horiz+y as Int
-    def x(table: Table): X = X(pos % table.horizontal)
+    def x(table: Table): X = X(positionInt % table.horizontal.length)
 
-    def y(table: Table): Y = Y(pos / table.horizontal)
-
+    def y(table: Table): Y = Y(positionInt / table.horizontal.length)
   }
 
-
-  final case class PositionInTable(pit: Int) { //2*2*7bit
-    assertRange(pit, 0, 268435455)
-
-    def position: Position = Position(pit & fourteenBits)
-
-    def tableInt: Int = pit >>> fourteen
-
-    def table: Table = Table(Horizontal(tableInt & sevenBits), Vertical(tableInt >>> seven))
+  object Position {
+    def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
   }
 
-  object PositionInTable {
+  final case class Table(horizontal: Horizontal, vertical: Vertical)
 
-    def apply(table: Table, position: Position): PositionInTable = PositionInTable(position.pos + (table.table << fourteen))
-  }
+  final case class PositionInTable(position: Position, table: Table)
 
-  final case class Table(table: Int) {
-    assertRange(table, 1, fourteenBits)
-
-    def fromPairToInt(x: X, y: Y): Position = Position(x.x + y.y * horizontal)
-
-    def horizontal: Int = table & 127
-
-    def vertical: Int = table >> 7
-  }
-
-  object Table {
-    def apply(horizontal: Horizontal, vertical: Vertical): Table = Table(horizontal.length + (vertical.height << 7))
-  }
-
-  final case class Pick(pickInt: Int) { // a Piece (3bits) in a Position
-    assertRange(pickInt, 0, 2147483647)
-
-    def piece(): Piece = Piece.of(pickInt & threeBits)
-
-    def position(): Position = Position(pickInt >>> three)
-  }
-
-  object Pick {
-    def apply(piece: Piece, position: Position): Pick = Pick((position.pos << three) + piece.pieceIndex)
+  final case class Pick(piece:Piece, position: Position) {
+    lazy val pickInt: Int = (position.positionInt << three) + piece.pieceIndex
   }
 
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
-  type Solution = PickList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  type Solution = List[Pick] // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
 
   case class BufferSize(size: Int) {
     assert(size > 0)
