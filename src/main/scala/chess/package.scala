@@ -16,12 +16,46 @@ package object chess {
   def assertRange(value: Int, minValue: Int, maxValue: Int): Boolean =
     minValue <= value && value <= maxValue
 
+  final case class XOffset(xOffsetInt: Int) {
+    def unary_- = XOffset(-xOffsetInt)
+  }
+
+  object XOffset {
+    val zero: XOffset = XOffset(0)
+    val one: XOffset = XOffset(1)
+  }
+
+  final case class YOffset(yOffsetInt: Int) {
+    def unary_- = YOffset(-yOffsetInt)
+  }
+
+  object YOffset {
+    val zero: YOffset = YOffset(0)
+    val one: YOffset = YOffset(1)
+  }
+
   final case class X(x: Int) {
     assertRange(x, minValue = 0, maxValue = sevenBits)
+
+    def +(len: XOffset): X = X(x + len.xOffsetInt)
+
+    def -(len: XOffset): X = X(x - len.xOffsetInt)
+
+    def fitsIn(table: Table): Boolean = 0 <= x && x < table.horizontal.length
   }
 
   final case class Y(y: Int) {
     assertRange(y, minValue = 0, maxValue = sevenBits)
+
+    def +(len: YOffset): Y = Y(y + len.yOffsetInt)
+
+    def -(len: YOffset): Y = Y(y - len.yOffsetInt)
+
+    def fitsIn(table: Table): Boolean = 0 <= y && y < table.vertical.height
+  }
+
+  final case class XY(x: X, y: Y) {
+    def fitsIn(table: Table): Boolean = x.fitsIn(table) && y.fitsIn(table)
   }
 
   final case class Horizontal(length: Int) {
@@ -43,6 +77,8 @@ package object chess {
     def x(table: Table): X = X(positionInt % table.horizontal.length)
 
     def y(table: Table): Y = Y(positionInt / table.horizontal.length)
+
+    def xy(table: Table): XY = XY(x(table), y(table))
   }
 
   object Position {
@@ -53,7 +89,7 @@ package object chess {
 
   final case class PositionInTable(position: Position, table: Table)
 
-  final case class Pick(piece:Piece, position: Position) {
+  final case class Pick(piece: Piece, position: Position) {
     lazy val pickInt: Int = (position.positionInt << three) + piece.pieceIndex
   }
 
