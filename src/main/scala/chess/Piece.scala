@@ -9,15 +9,15 @@ import scala.collection.immutable.BitSet
 sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[Piece] {
   def compare(that: Piece): Int = pieceIndex - that.pieceIndex
 
-  val incompatiblePositions: PositionInTable => Positions =
-    Memo.immutableHashMapMemo[PositionInTable, Positions] {
+  val incompatiblePositions: PositionInTable => PositionSet =
+    Memo.immutableHashMapMemo[PositionInTable, PositionSet] {
       positionInTable =>
         val table: Table = positionInTable.table
         val position: Position = positionInTable.position
         val positions =
           for (xy <- incompatiblePositions(position.x(table), position.y(table), table))
             yield Position(xy.x, xy.y, table).positionInt
-        BitSet(positions: _*)
+        PositionSet(BitSet(positions: _*))
     }
 
   /**

@@ -9,7 +9,7 @@ import scala.collection.immutable.Map
 
 class ChessSuite extends FunSuite {
 
-  type Board = Set[(Piece, (Int, Int))]
+  case class Board(solution: Set[(Piece, (Int, Int))])
 
   object Table2 {
     def apply(horizontal: Int, vertical: Int): Table = Table(Horizontal(horizontal), Vertical(vertical))
@@ -49,29 +49,30 @@ class ChessSuite extends FunSuite {
   def areResultingBoardsTheExpectedOnes(table: Table, pieces: Map[Piece, Int],
                                         expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
     blockingTest(table, pieces)
-    val obtainedBoards: Iterable[Board] =
-      for (solution: Solution <-
-             SolutionPath.solutions(table, pieces.mapValues(c => Count(c))).blockingScalaIterable())
-        yield {
-          for (piecePosition: Pick <- solution.toList.toSet;
-               PieceAndCoordinates(piece, (x, y)) = PickTest.fromIntToPieceAndCoordinates(piecePosition, table))
-            yield (piece, (x, y))
-        }
-    val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(table, board))
+    val obtainedBoards: Iterable[List[(Piece, (Int, Int))]] =
+      for (solution <- SolutionPath.solutions(table, pieces.mapValues(c => Count(c))).blockingScalaIterable())
+              yield {
+                for (piecePosition: Pick <- solution.picks;
+                     PieceAndCoordinates(piece, (x, y)) = PickTest.fromIntToPieceAndCoordinates(piecePosition, table))
+                  yield (piece, (x, y))
+              }
+    val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(table, Board(board)))
 
-    assert(obtainedBoards.size == allExpectedBoards.size)
-    val obtainedSet = obtainedBoards.toSet
+    assert(sorted(obtainedBoards) == sorted(allExpectedBoards.map(board=>board.solution)))
+  }
 
-    assert(Utils.sorted(obtainedSet) == Utils.sorted(allExpectedBoards))
+  def sorted[A](iterableOfIterable: Iterable[Iterable[A]]): IndexedSeq[String] = {
+    def _sorted[B](iterable: Iterable[B]): IndexedSeq[String] = iterable.toIndexedSeq.map(_.toString).sorted
+    _sorted(iterableOfIterable.map(iterable => _sorted(iterable)))
   }
 
   def rotations(table: Table, solution: Board): Set[Board] =
     Stream.iterate(solution)(solution => rotation(table, solution)).take(4).toSet
 
-  def rotation(table: Table, solution: Board): Board = {
+  def rotation(table: Table, board: Board): Board = {
     def rotation(x: Int, y: Int): (Int, Int) = (table.vertical.height - 1 - y, x)
 
-    for ((piece, (x, y)) <- solution) yield (piece, rotation(x, y))
+    Board(for ((piece, (x, y)) <- board.solution) yield (piece, rotation(x, y)))
   }
 
 }

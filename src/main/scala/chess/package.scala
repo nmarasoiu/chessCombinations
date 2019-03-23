@@ -68,9 +68,12 @@ package object chess {
 
   final case class Count(count: Int) {
     assertRange(count, minValue = 1, maxValue = sevenBits)
+    def decremented(): Count = Count(count-1)
   }
 
   final case class Position(positionInt: Int) {
+    def >=(minPosition: Position): Boolean = positionInt >= minPosition.positionInt
+
     assertRange(positionInt, 0, fourteenBits)
 
     //encoding (x,y) as x*horiz+y as Int
@@ -79,9 +82,12 @@ package object chess {
     def y(table: Table): Y = Y(positionInt / table.horizontal.length)
 
     def xy(table: Table): XY = XY(x(table), y(table))
+
+    def next(): Position = Position(positionInt + 1)
   }
 
   object Position {
+    val zero = Position(0)
     def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
   }
 
@@ -90,11 +96,28 @@ package object chess {
   final case class PositionInTable(position: Position, table: Table)
 
   final case class Pick(piece: Piece, position: Position) {
+    override lazy val hashCode: Int = (piece, position).hashCode()
     lazy val pickInt: Int = (position.positionInt << three) + piece.pieceIndex
   }
 
-  type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
-  type Solution = List[Pick] // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
+  case class PositionSet(bitSet: BitSet) extends Iterable[Position] {
+    //encoding (x,y) as x*horiz+y as Int
+    def -(that: PositionSet): PositionSet = PositionSet(bitSet &~ that.bitSet)
+
+    def +(position: Position) = PositionSet(bitSet + position.positionInt)
+
+    def intersects(that: PositionSet): Boolean = (bitSet & that.bitSet).nonEmpty
+
+    override def iterator: Iterator[Position] = bitSet.iterator.map(positionInt => Position(positionInt))
+  }
+
+  case class PartialSolution(picks: List[Pick]) {
+    def +(pick: Pick): PartialSolution = PartialSolution(pick :: picks)
+  }
+
+  object PartialSolution {
+    val Empty = PartialSolution(Nil)
+  }
 
   case class BufferSize(size: Int) {
     assert(size > 0)
@@ -107,10 +130,6 @@ package object chess {
   object Config {
     val bufferSize: BufferSize = BufferSize(64)
     val printEvery: PrintEvery = PrintEvery(5000000)
-  }
-
-  implicit class RichBitSet(bitSet: Positions) {
-    def intersects(other: Positions): Boolean = (bitSet & other).nonEmpty
   }
 
 }

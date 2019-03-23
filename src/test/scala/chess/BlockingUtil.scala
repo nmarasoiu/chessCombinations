@@ -18,34 +18,26 @@ object BlockingUtil {
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(table, pieces.mapValues(c => Count(c)))
+    val solutionsFlowable: Flowable[PartialSolution] = SolutionPath.solutions(table, pieces.mapValues(c => Count(c)))
 
     val solutionCount: Long =
       if (duplicationAssertion) {
 
         case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
-
-          override lazy val hashCode: Int = util.Arrays.hashCode(pickInts)
-
-          private def pickInts: Array[Int] = {
-            picks.map(_.pickInt)
-          }
-
-          override def equals(obj: Any): Boolean = Utils.equals(obj, (other: Sol) =>
-            util.Arrays.equals(other.pickInts, pickInts))
+          override lazy val hashCode: Int = util.Arrays.hashCode(picks.map(_.pickInt))
 
           override def iterator: Iterator[Pick] = picks.iterator
         }
 
         object Sol {
-          def apply(solution: Solution): Sol = Sol(solution.toList.toArray.sortBy(_.pickInt))
+          def apply(solution: PartialSolution): Sol = Sol(solution.picks.toArray.sortBy(_.pickInt))
         }
 
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
             .buffer(Config.bufferSize.size)
             .mapInParallel {
-              solutions: util.List[Solution] =>
+              solutions: util.List[PartialSolution] =>
                 val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
                 solTs.collect(Collectors.toList[Sol])
             }.flatMap(lst => Flowable.fromIterable(lst))

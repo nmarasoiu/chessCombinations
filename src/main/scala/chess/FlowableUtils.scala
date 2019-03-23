@@ -6,18 +6,6 @@ import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.schedulers.Schedulers
 
-import scala.collection.immutable.{SortedSet, TreeSet}
-
-object Utils {
-  def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
-    def sorted[U](set: Set[U])(implicit o: Ordering[U]): SortedSet[U] = TreeSet[U]() ++ set
-
-    implicit val setOrdering: Ordering[SortedSet[T]] = (x, y) => x.toString.compare(y.toString)
-    sorted(obtainedSet.map(s => sorted(s)))
-  }
-
-}
-
 object FlowableUtils {
 
   implicit class RichFlowable[A](flowable: Flowable[A]) {

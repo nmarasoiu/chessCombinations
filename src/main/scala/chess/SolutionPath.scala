@@ -7,10 +7,10 @@ import io.reactivex.Flowable.{empty, just}
 import scala.collection.immutable.{BitSet, Map, TreeMap}
 
 object SolutionPath {
-  def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[Solution] =
-    solutions(table, pieces, positions = BitSet(0 until table.vertical.height * table.horizontal.length: _*))
+  def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[PartialSolution] =
+    solutions(table, pieces, positions = PositionSet(BitSet(0 until table.vertical.height * table.horizontal.length: _*)))
 
-  def solutions(table: Table, pieces: Map[Piece, Count], positions: Positions): Flowable[Solution] = {
+  def solutions(table: Table, pieces: Map[Piece, Count], positions: PositionSet): Flowable[PartialSolution] = {
     if (table.vertical.height <= 0 || table.horizontal.length <= 0) {
       empty()
     } else {
@@ -19,9 +19,9 @@ object SolutionPath {
       ) yield (piece, (pieceCount, position0))
       SolutionPath(table).solutions(
         remainingPositions = positions,
-        builtSolutionSoFar = Nil,
+        partialSolutionSoFar = PartialSolution.Empty,
         remainingPieces = TreeMap[Piece, (Count, Position)]() ++ newRemainingPieces,
-        positionsTakenSoFar = BitSet(),
+        positionsTakenSoFar = PositionSet(BitSet()),
         firstLevel = true)
     }
   }
@@ -31,40 +31,37 @@ object SolutionPath {
 
 case class SolutionPath(table: Table) {
 
-  private val empty: Flowable[Solution] = Flowable.empty[Solution]
+  private val empty: Flowable[PartialSolution] = Flowable.empty[PartialSolution]
 
-  def solutions(remainingPositions: Positions,
-                builtSolutionSoFar: Solution,
-                positionsTakenSoFar: Positions,
+  def solutions(remainingPositions: PositionSet,
+                partialSolutionSoFar: PartialSolution,
+                positionsTakenSoFar: PositionSet,
                 remainingPieces: Map[Piece, (Count, Position)],
-                firstLevel: Boolean): Flowable[Solution] = {
+                firstLevel: Boolean): Flowable[PartialSolution] = {
     if (remainingPieces.isEmpty) {
-      just(builtSolutionSoFar)
+      just(partialSolutionSoFar)
     } else {
-      val (piece, (Count(count), Position(minPosition))) = remainingPieces.head
+      val (piece, (count, minPosition)) = remainingPieces.head
 
-      def solutionsForPick(position: Position): Flowable[Solution] = {
-        val Position(positionInt) = position
-        val positionInTable = PositionInTable(position, table)
-        val incompatiblePositions = piece.incompatiblePositions(positionInTable)
+      def solutionsForPick(position: Position): Flowable[PartialSolution] = {
+        val incompatiblePositions: PositionSet = piece.incompatiblePositions(PositionInTable(position, table))
         if (positionsTakenSoFar.intersects(incompatiblePositions)) {
           empty
         } else {
-          val newRemainingPieces = count match {
-            case 1 => remainingPieces - piece
-            case _ => remainingPieces + (piece -> (Count(count - 1), Position(positionInt + 1)))
-          }
           solutions(
-            remainingPieces = newRemainingPieces,
-            builtSolutionSoFar = ::(Pick(piece, position), builtSolutionSoFar),
-            remainingPositions = remainingPositions &~ incompatiblePositions,
-            positionsTakenSoFar = positionsTakenSoFar + positionInt,
+            partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
+            remainingPositions = remainingPositions - incompatiblePositions,
+            positionsTakenSoFar = positionsTakenSoFar + position,
+            remainingPieces = count match {
+              case Count(1) => remainingPieces - piece
+              case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
+            },
             firstLevel = false)
         }
       }
 
       val positionFlow: Flowable[Position] =
-        fromIterable(remainingPositions.filter(pos => pos >= minPosition).map(pos => Position(pos)))
+        fromIterable(remainingPositions.filter(pos => pos >= minPosition))
       if (firstLevel)
         positionFlow.flatMapInParallel(solutionsForPick)
       else
