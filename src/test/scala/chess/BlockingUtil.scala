@@ -19,7 +19,7 @@ object BlockingUtil {
   case class PrintEvery(size: Int) {
     assert(size > 0)
   }
-  
+
   val bufferSize: BufferSize = BufferSize(64)
   val printEvery: PrintEvery = PrintEvery(5000000)
 
@@ -28,7 +28,7 @@ object BlockingUtil {
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val solutionsFlowable: Flowable[PartialSolution] = SolutionPath.solutions(table, pieces.mapValues(c => Count(c)))
+    val solutionsFlowable: Flowable[SubSolution] = SolutionPath.solutions(table, pieces.mapValues(c => Count(c)))
 
     val solutionCount: Long =
       if (duplicationAssertion) {
@@ -44,14 +44,14 @@ object BlockingUtil {
         }
 
         object Sol {
-          def apply(solution: PartialSolution): Sol = Sol(solution.picks.toArray.sortBy(pickInt))
+          def apply(solution: SubSolution): Sol = Sol(solution.picks.toArray.sortBy(pickInt))
         }
 
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
             .buffer(bufferSize.size)
             .mapInParallel {
-              solutions: util.List[PartialSolution] =>
+              solutions: util.List[SubSolution] =>
                 val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
                 solTs.collect(Collectors.toList[Sol])
             }.flatMap(lst => Flowable.fromIterable(lst))
