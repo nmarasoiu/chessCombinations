@@ -4,29 +4,29 @@ import chess.FlowableUtils._
 import io.reactivex.Flowable
 import io.reactivex.Flowable.{empty, just}
 
-import scala.collection.immutable.{BitSet, Map}
+import scala.collection.immutable.{BitSet, Map, TreeMap}
 
 object SolutionPath {
-  def solutions(table: Table, pieces: Map[Piece, PieceCount]): Flowable[Solution] =
+  def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[Solution] =
     solutions(table, pieces, positions = BitSet(0 until table.vertical * table.horizontal: _*))
 
-  def solutions(table: Table, pieces: Map[Piece, PieceCount], positions: Positions): Flowable[Solution] = {
+  def solutions(table: Table, pieces: Map[Piece, Count], positions: Positions): Flowable[Solution] = {
     if (table.vertical <= 0 || table.horizontal <= 0) {
       empty()
     } else {
-      val newRemainingPieces = pieces.filter {
-        case (piece, count) => count.count > 0
-      }.map {
-        case (piece, count) => (piece.order, (count, Position(0)))
-      }
+      val newRemainingPieces = for (
+        (piece, pieceCount@Count(count)) <- pieces if count > 0
+      ) yield (piece, (pieceCount, position0))
       SolutionPath(table).solutions(
         remainingPositions = positions,
         builtSolutionSoFar = Empty,
-        remainingPieces = newRemainingPieces,
+        remainingPieces = TreeMap[Piece, (Count, Position)]() ++ newRemainingPieces,
         positionsTakenSoFar = BitSet(),
         firstLevel = true)
     }
   }
+
+  val position0 = Position(0)
 }
 
 case class SolutionPath(table: Table) {
@@ -36,28 +36,27 @@ case class SolutionPath(table: Table) {
   def solutions(remainingPositions: Positions,
                 builtSolutionSoFar: Solution,
                 positionsTakenSoFar: Positions,
-                remainingPieces: Map[PieceId, (PieceCount, Position)],
+                remainingPieces: Map[Piece, (Count, Position)],
                 firstLevel: Boolean): Flowable[Solution] = {
     if (remainingPieces.isEmpty) {
       just(builtSolutionSoFar)
     } else {
-      val pieceId: PieceId = remainingPieces.keys.minBy(_.pieceInt)
-      val (PieceCount(count), Position(minPosition)) = remainingPieces(pieceId)
+      val (piece, (Count(count), Position(minPosition))) = remainingPieces.head
 
       def solutionsForPick(position: Position): Flowable[Solution] = {
         val Position(positionInt) = position
         val positionInTable = PositionInTable(table, position)
-        val incompatiblePositions = Piece.of(pieceId).incompatiblePositions(positionInTable)
+        val incompatiblePositions = piece.incompatiblePositions(positionInTable)
         if (positionsTakenSoFar.intersects(incompatiblePositions)) {
           empty
         } else {
           val newRemainingPieces = count match {
-            case 1 => remainingPieces - pieceId
-            case _ => remainingPieces + (pieceId -> (PieceCount(count - 1), Position(positionInt + 1)))
+            case 1 => remainingPieces - piece
+            case _ => remainingPieces + (piece -> (Count(count - 1), Position(positionInt + 1)))
           }
           solutions(
             remainingPieces = newRemainingPieces,
-            builtSolutionSoFar = Cons(Pick.toInt(pieceId.piece, position), builtSolutionSoFar),
+            builtSolutionSoFar = Cons(Pick(piece, position), builtSolutionSoFar),
             remainingPositions = remainingPositions &~ incompatiblePositions,
             positionsTakenSoFar = positionsTakenSoFar + positionInt,
             firstLevel = false)

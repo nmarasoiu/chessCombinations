@@ -2,27 +2,11 @@ import scala.collection.immutable.BitSet
 
 package object chess {
 
-  //todo check that all Int/Long/primitive appearances that can be replaced with typed values are replaced so:) for expressiveness, clarity, type safety, performance & memory
-  //todo check to convert and classes / case classes with a single primitive member to AnyVal
-  //todo convert Table, PIT, etc to AnyVal :)
-  final case class CoordinateX(x: Int) extends AnyVal
+  final case class X(x: Int) extends AnyVal
 
-  final case class CoordinateY(y: Int) extends AnyVal
+  final case class Y(y: Int) extends AnyVal
 
-  final case class PieceId(pieceInt: Int) extends AnyVal {
-    def piece: Piece = Piece.of(this)
-  }
-
-  object PieceId extends Ordering[PieceId] {
-    override def compare(x: PieceId, y: PieceId): Int = x.pieceInt.compareTo(y.pieceInt)
-  }
-
-  final case class PieceCount(count: Int) extends AnyVal {
-  }
-
-  final case class Position(pos: Int) extends AnyVal { //encoding (x,y) as x*horiz+y as Int
-
-  }
+  final case class Count(count: Int) extends AnyVal
 
   /**
     * An Int wil have 32 bits:
@@ -31,6 +15,14 @@ package object chess {
     * - position: 2 * 7 bits
     * - table: 2 * 7 bits
     */
+  final case class Position(pos: Int) extends AnyVal {
+    //encoding (x,y) as x*horiz+y as Int
+    def x(table: Table): X = X(pos % table.horizontal)
+
+    def y(table: Table): Y = Y(pos / table.horizontal)
+
+  }
+
   final case class PositionInTable(pit: Int) extends AnyVal { //2*2*7bit
     import PositionInTable._
 
@@ -50,15 +42,12 @@ package object chess {
 
   final case class Table(table: Int) extends AnyVal {
 
-    def fromPairToInt(x: CoordinateX, y: CoordinateY): Position = Position(x.x + y.y * horizontal)
+    def fromPairToInt(x: X, y: Y): Position = Position(x.x + y.y * horizontal)
 
     def horizontal: Int = table & 127
 
     def vertical: Int = table >> 7
 
-    def x(position: Position): CoordinateX = CoordinateX(position.pos % horizontal)
-
-    def y(position: Position): CoordinateY = CoordinateY(position.pos / horizontal)
   }
 
   object Table {
@@ -66,20 +55,16 @@ package object chess {
   }
 
   final case class Pick(pickInt: Int) extends AnyVal { // a Piece (3bits) in a Position
-    //    def piece: Piece = PiecePosition.fromIntToPieceAndCoordinates(pick)
-    //
-    //    def positionInTable: PositionInTable =
+    def piece(): Piece = Piece.of(pickInt & Pick.pieceEncodingOnes)
+
+    def position(): Position = Position(pickInt >>> Pick.pieceEncodingBits)
   }
 
   object Pick {
     private val pieceEncodingBits = 3
     private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
 
-    def piece(piecePosition: Pick): Piece = Piece.of(PieceId(piecePosition.pickInt & pieceEncodingOnes))
-
-    def position(piecePositionInt: Pick): Position = Position(piecePositionInt.pickInt >>> pieceEncodingBits)
-
-    def toInt(piece: Piece, position: Position): Pick = Pick((position.pos << Pick.pieceEncodingBits) + piece.order.pieceInt)
+    def apply(piece: Piece, position: Position): Pick = Pick((position.pos << Pick.pieceEncodingBits) + piece.pieceIndex)
   }
 
 

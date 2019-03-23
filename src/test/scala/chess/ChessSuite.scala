@@ -49,8 +49,8 @@ class ChessSuite extends FunSuite {
                                         expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
     blockingTest(table, pieces)
     val obtainedBoards: Iterable[Board] =
-      for (solution:Solution <-
-             SolutionPath.solutions(table, pieces.mapValues(c=>PieceCount(c))).blockingScalaIterable())
+      for (solution: Solution <-
+             SolutionPath.solutions(table, pieces.mapValues(c => Count(c))).blockingScalaIterable())
         yield {
           for (piecePosition: Pick <- solution.toList.toSet;
                PieceAndCoordinates(piece, (x, y)) = PickTest.fromIntToPieceAndCoordinates(piecePosition, table))

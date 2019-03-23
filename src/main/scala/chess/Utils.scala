@@ -6,7 +6,7 @@ import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.schedulers.Schedulers
 
-import scala.collection.immutable.{Map, SortedSet, TreeSet}
+import scala.collection.immutable.{SortedSet, TreeSet}
 
 object Utils {
   def sorted[T](obtainedSet: Set[Set[T]])(implicit o: Ordering[T]): SortedSet[SortedSet[T]] = {
@@ -17,13 +17,16 @@ object Utils {
   }
 
 }
+
 object FlowableUtils {
+
   implicit class RichFlowable[A](flowable: Flowable[A]) {
     def mapInParallel[B](mapper: A => B): Flowable[B] =
       flatMapInParallel(a => Flowable.just(mapper(a)))
 
     def flatMapInParallel[B](flatMapper: A => Flowable[B]): Flowable[B] = {
       def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
+
       val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
       flowable
         .parallel()
@@ -31,6 +34,7 @@ object FlowableUtils {
         .flatMap(rxFlatMapper)
         .sequential()
     }
+
     import scala.collection.JavaConverters._
 
     def blockingScalaIterable(): Iterable[A] = flowable.blockingIterable().asScala

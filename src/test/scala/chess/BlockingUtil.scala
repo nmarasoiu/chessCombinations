@@ -18,7 +18,7 @@ object BlockingUtil {
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
 
-    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(table, pieces.mapValues(c=>PieceCount(c)))
+    val solutionsFlowable: Flowable[Solution] = SolutionPath.solutions(table, pieces.mapValues(c => Count(c)))
 
     val solutionCount: Long =
       if (duplicationAssertion) {
