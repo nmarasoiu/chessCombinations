@@ -19,6 +19,7 @@ class ChessSuite extends FunSuite {
     areResultingBoardsTheExpectedOnes(
       Table2(3, 3), Map(King -> 2, Rook -> 1), Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2)))))
   }
+
   test("Example 2 should return the 8 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
       Table2(4, 4), Map(Rook -> 2, Knight -> 4), Set(
@@ -26,28 +27,25 @@ class ChessSuite extends FunSuite {
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
 
+  test("Example '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2), duplicationAssertion = false)
+  }
+
   test("Example '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
-    while (true) {
-      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion = false) >= 3063828)
-    }
+    assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion = false) >= 3063828)
   }
 
   test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
-
     assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false) >= 2895708)
   }
-  //
-  //  test("Example '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {
-  //    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
-  //  }
-  //
-  //  test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {
-  //    blockingTest(Table2(horizontal = 7, vertical = 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-  //  }
-  //
-  //  test("Example 8x8 should return the solutions, and that there are no duplicates in the returned solutions") {
-  //    blockingTest(Table2(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-  //  }
+
+  test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Table2(horizontal = 7, vertical = 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false)
+  }
+
+  test("Example 8x8 should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Table2(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false)
+  }
 
   def areResultingBoardsTheExpectedOnes(table: Table, pieces: Map[Piece, Int],
                                         expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
