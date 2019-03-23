@@ -169,9 +169,4 @@ package object chess {
     assert(size > 0)
   }
 
-  object Config {
-    val bufferSize: BufferSize = BufferSize(64)
-    val printEvery: PrintEvery = PrintEvery(5000000)
-  }
-
 }

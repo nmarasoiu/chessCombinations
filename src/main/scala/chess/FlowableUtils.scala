@@ -9,17 +9,20 @@ import io.reactivex.schedulers.Schedulers
 object FlowableUtils {
 
   implicit class RichFlowable[A](flowable: Flowable[A]) {
+
     def mapInParallel[B](mapper: A => B): Flowable[B] =
       flatMapInParallel(a => Flowable.just(mapper(a)))
 
-    def flatMapInParallel[B](flatMapper: A => Flowable[B]): Flowable[B] = {
-      def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
+    def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
 
-      val rxFlatMapper: RxFunction[A, Flowable[B]] = asRxFunction(flatMapper)
+    def flatMapScala[B](flatMapper: A => Flowable[B]): Flowable[B] =
+      flowable.flatMap(asRxFunction(flatMapper))
+
+    def flatMapInParallel[B](flatMapper: A => Flowable[B]): Flowable[B] = {
       flowable
         .parallel()
         .runOn(Schedulers.computation())
-        .flatMap(rxFlatMapper)
+        .flatMap(asRxFunction(flatMapper))
         .sequential()
     }
 

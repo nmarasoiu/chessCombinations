@@ -59,11 +59,11 @@ case class SolutionPath(table: Table) {
       }
 
       val positionFlow: Flowable[Position] =
-        fromIterable(remainingPositions.filter((pos:Int) => pos >= minPosition.positionInt))
+        fromIterable(remainingPositions.filter((pos: Int) => pos >= minPosition.positionInt))
       if (firstLevel)
         positionFlow.flatMapInParallel(solutionsForPick)
       else
-        positionFlow.flatMap(solutionsForPick)
+        positionFlow.flatMapScala(solutionsForPick)
     }
   }
 }

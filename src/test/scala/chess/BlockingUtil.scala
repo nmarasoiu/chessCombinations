@@ -11,6 +11,10 @@ import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 
 object BlockingUtil {
+
+  val bufferSize: BufferSize = BufferSize(64)
+  val printEvery: PrintEvery = PrintEvery(5000000)
+
   def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
@@ -37,7 +41,7 @@ object BlockingUtil {
 
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
-            .buffer(Config.bufferSize.size)
+            .buffer(bufferSize.size)
             .mapInParallel {
               solutions: util.List[PartialSolution] =>
                 val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
@@ -51,7 +55,7 @@ object BlockingUtil {
         val folder: BiFunction[Solutions, Sol, Solutions] = {
           case (solutions: Solutions, solT: Sol) =>
             assert(solutions.add(solT))
-            if (solutions.size % Config.printEvery.size == 1)
+            if (solutions.size % printEvery.size == 1)
               print(table, solT)
             solutions
         }
