@@ -12,6 +12,14 @@ import io.reactivex.functions.BiFunction
 
 object BlockingUtil {
 
+  case class BufferSize(size: Int) {
+    assert(size > 0)
+  }
+
+  case class PrintEvery(size: Int) {
+    assert(size > 0)
+  }
+  
   val bufferSize: BufferSize = BufferSize(64)
   val printEvery: PrintEvery = PrintEvery(5000000)
 

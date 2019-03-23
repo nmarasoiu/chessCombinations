@@ -1,22 +1,20 @@
-import scala.collection.immutable.BitSet
+
 
 package object chess {
 
-  /**
-    * An Int wil have 32 bits:
-    * - sign 1 bit
-    * - piece 3 bits
-    * - position: 2 * 7 bits
-    * - table: 2 * 7 bits
-    */
+  import chess.Piece
+
+  import scala.collection.immutable.BitSet
+
   val (three, threeBits) = (3, 7)
   val (seven, sevenBits) = (7, 128 - 1)
   val (fourteen, fourteenBits) = (14, 128 * 128 - 1)
 
-  def assertRange(value: Int, minValue: Int, maxValue: Int): Boolean =
-    minValue <= value && value <= maxValue
+  def assertRange[T](value: Int, minValue: Int, maxValue: Int, cls: Class[T]): Unit =
+    assert(minValue <= value && value <= maxValue,
+      s"Condition $minValue <= $value <= $maxValue not respected for $cls")
 
-  final case class XOffset(xOffsetInt: Int) {
+  case class XOffset(xOffsetInt: Int) {
     def unary_- = XOffset(-xOffsetInt)
   }
 
@@ -25,7 +23,7 @@ package object chess {
     val one: XOffset = XOffset(1)
   }
 
-  final case class YOffset(yOffsetInt: Int) {
+  case class YOffset(yOffsetInt: Int) {
     def unary_- = YOffset(-yOffsetInt)
   }
 
@@ -34,8 +32,10 @@ package object chess {
     val one: YOffset = YOffset(1)
   }
 
-  final case class X(x: Int) {
-    assertRange(x, minValue = 0, maxValue = sevenBits)
+  //todo remove duplication between X and Y with type programming w.g. abstract member class
+  // & see with assertRange
+  case class X(x: Int) {
+//    assertRange(x, minValue = 0, maxValue = sevenBits, classOf[X])
 
     def +(len: XOffset): X = X(x + len.xOffsetInt)
 
@@ -44,8 +44,10 @@ package object chess {
     def fitsIn(table: Table): Boolean = 0 <= x && x < table.horizontal.length
   }
 
-  final case class Y(y: Int) {
-    assertRange(y, minValue = 0, maxValue = sevenBits)
+
+
+  case class Y(y: Int) {
+//    assertRange(y, minValue = 0, maxValue = sevenBits, classOf[Y])
 
     def +(len: YOffset): Y = Y(y + len.yOffsetInt)
 
@@ -54,26 +56,30 @@ package object chess {
     def fitsIn(table: Table): Boolean = 0 <= y && y < table.vertical.height
   }
 
-  final case class XY(x: X, y: Y) {
+  case class XY(x: X, y: Y) {
     def fitsIn(table: Table): Boolean = x.fitsIn(table) && y.fitsIn(table)
   }
 
-  final case class Horizontal(length: Int) {
-    assertRange(length, minValue = 1, maxValue = sevenBits)
+  case class Horizontal(length: Int) {
+    assertRange(length, minValue = 1, maxValue = sevenBits, classOf[Horizontal])
   }
 
-  final case class Vertical(height: Int) {
-    assertRange(height, minValue = 1, maxValue = sevenBits)
+  case class Vertical(height: Int) {
+    assertRange(height, minValue = 1, maxValue = sevenBits, classOf[Vertical])
   }
 
-  final case class Count(count: Int) {
-    assertRange(count, minValue = 1, maxValue = sevenBits)
+  case class Count(count: Int) {
+    assertRange(count, minValue = 1, maxValue = Int.MaxValue, classOf[Count])
 
     def decremented(): Count = Count(count - 1)
   }
 
-  final case class Position(positionInt: Int) {
-    assertRange(positionInt, 0, fourteenBits)
+  object Count {
+    val one = Count(1)
+  }
+
+  case class Position(positionInt: Int) {
+    assertRange(positionInt, 0, fourteenBits, classOf[Position])
 
     //encoding (x,y) as x*horiz+y as Int
     def x(table: Table): X = X(positionInt % table.horizontal.length)
@@ -93,9 +99,10 @@ package object chess {
     def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
   }
 
-  final case class Table(horizontal: Horizontal, vertical: Vertical)
+  case class Table(horizontal: Horizontal, vertical: Vertical) {
+  }
 
-  final case class PositionInTable(pit: Int) extends AnyVal {
+  case class PositionInTable(pit: Int) extends AnyVal {
     def tableAndPosition: (Table, Position) = {
       val lower = pit & fourteenBits
       val higher = pit >> fourteen
@@ -110,7 +117,7 @@ package object chess {
       PositionInTable((position.positionInt << fourteen) + (table.vertical.height << seven) + table.horizontal.length)
   }
 
-  final case class Pick(piece: Piece, position: Position) {
+  case class Pick(piece: Piece, position: Position) {
   }
 
   case class PositionSet(bitSet: BitSet) extends Iterable[Position] {
@@ -138,14 +145,6 @@ package object chess {
 
   object PartialSolution {
     val Empty = PartialSolution(Nil)
-  }
-
-  case class BufferSize(size: Int) {
-    assert(size > 0)
-  }
-
-  case class PrintEvery(size: Int) {
-    assert(size > 0)
   }
 
 }

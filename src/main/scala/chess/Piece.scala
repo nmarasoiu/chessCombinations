@@ -79,8 +79,9 @@ object Piece extends Enum[Piece] {
 
   case object King extends Piece(4) {
     override def incompatiblePositions(x: X, y: Y, table: Table): Seq[XY] = {
-      for (x <- Seq(x - xOne, x, x + xOne) if x.fitsIn(table);
-           y <- Seq(y - yOne, y, y + yOne) if y.fitsIn(table)) yield XY(x, y)
+      val xs: Seq[X] = for (x <- Seq(x - xOne, x, x + xOne) if x.fitsIn(table)) yield x
+      val ys: Seq[Y] = for (y <- Seq(y - yOne, y, y + yOne) if y.fitsIn(table)) yield y
+      for (x <- xs; y <- ys) yield XY(x, y)
     }
   }
 

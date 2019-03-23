@@ -51,7 +51,7 @@ case class SolutionPath(table: Table) {
             remainingPositions = remainingPositions - incompatiblePositions,
             positionsTakenSoFar = positionsTakenSoFar + position,
             remainingPieces = count match {
-              case Count(1) => remainingPieces - piece
+              case Count.one => remainingPieces - piece
               case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
             },
             firstLevel = false)
