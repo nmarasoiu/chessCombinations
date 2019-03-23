@@ -58,13 +58,15 @@ package object chess {
     def fitsIn(table: Table): Boolean = x.fitsIn(table) && y.fitsIn(table)
   }
 
+  //todo check how to reduce duplication
   final case class Horizontal(length: Int) {
     assertRange(length, minValue = 1, maxValue = sevenBits)
 
     override def hashCode(): Int = length
 
     override def equals(obj: Any): Boolean = {
-      obj.isInstanceOf[Horizontal] && obj.asInstanceOf[Horizontal].length == length
+      lazy val that = obj.asInstanceOf[Horizontal]
+      obj.isInstanceOf[Horizontal] && (eq(that) || that.length == length)
     }
   }
 
@@ -74,7 +76,8 @@ package object chess {
     override def hashCode(): Int = height
 
     override def equals(obj: Any): Boolean = {
-      obj.isInstanceOf[Vertical] && obj.asInstanceOf[Vertical].height == height
+      val that = obj.asInstanceOf[Vertical]
+      obj.isInstanceOf[Vertical] && (eq(that) || that.height == height)
     }
   }
 
@@ -101,7 +104,8 @@ package object chess {
     override def hashCode(): Int = positionInt
 
     override def equals(obj: Any): Boolean = {
-      obj.isInstanceOf[Position] && positionInt == obj.asInstanceOf[Position].positionInt
+      val that = obj.asInstanceOf[Position]
+      obj.isInstanceOf[Position] && (eq(that) || positionInt == that.positionInt)
     }
   }
 
@@ -117,7 +121,7 @@ package object chess {
 
     override def equals(obj: Any): Boolean = {
       lazy val that = obj.asInstanceOf[Table]
-      obj.isInstanceOf[Table] && horizontal == that.horizontal && vertical == that.vertical
+      obj.isInstanceOf[Table] && (eq(that) || (horizontal == that.horizontal && vertical == that.vertical))
     }
   }
 
@@ -127,7 +131,7 @@ package object chess {
 
     override def equals(obj: Any): Boolean = {
       lazy val that = obj.asInstanceOf[PositionInTable]
-      obj.isInstanceOf[PositionInTable] && position == that.position && table == that.table
+      obj.isInstanceOf[PositionInTable] && (eq(that) || (position == that.position && table == that.table))
     }
   }
 
