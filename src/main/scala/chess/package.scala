@@ -10,6 +10,7 @@ package object chess {
   val (seven, sevenBits) = (7, 128 - 1)
   val (fourteen, fourteenBits) = (14, 128 * 128 - 1)
 
+  //todo try require() in constructor/trait instead of assert
   def assertRange[T](value: Int, minValue: Int, maxValue: Int, cls: Class[T]): Unit =
     assert(minValue <= value && value <= maxValue,
       s"Condition $minValue <= $value <= $maxValue not respected for $cls")
@@ -105,10 +106,8 @@ package object chess {
   case class PositionInTable(pit: Int) extends AnyVal {
     def tableAndPosition: (Table, Position) = {
       val lower = pit & fourteenBits
-      val higher = pit >> fourteen
-      val lowerLower = lower & seven
-      val lowerHigher = lower >> seven
-      (Table(Horizontal(lowerLower), Vertical(lowerHigher)), Position(higher))
+      (Table(Horizontal(lower & sevenBits), Vertical(lower >> seven)),
+        Position(pit >> fourteen))
     }
   }
 
