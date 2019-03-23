@@ -11,8 +11,7 @@ sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[
   val incompatiblePositions: PositionInTable => PositionSet =
     Memo.immutableHashMapMemo[PositionInTable, PositionSet] {
       positionInTable =>
-        val table: Table = positionInTable.table
-        val position: Position = positionInTable.position
+        val (table, position) = positionInTable.tableAndPosition
         PositionSet(
           for (xy <- incompatiblePositions(position.x(table), position.y(table), table))
             yield Position(xy.x, xy.y, table).positionInt)

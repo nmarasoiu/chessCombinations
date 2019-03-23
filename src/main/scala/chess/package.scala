@@ -58,27 +58,12 @@ package object chess {
     def fitsIn(table: Table): Boolean = x.fitsIn(table) && y.fitsIn(table)
   }
 
-  //todo check how to reduce duplication
   final case class Horizontal(length: Int) {
     assertRange(length, minValue = 1, maxValue = sevenBits)
-
-    override def hashCode(): Int = length
-
-    override def equals(obj: Any): Boolean = {
-      lazy val that = obj.asInstanceOf[Horizontal]
-      obj.isInstanceOf[Horizontal] && (eq(that) || that.length == length)
-    }
   }
 
   final case class Vertical(height: Int) {
     assertRange(height, minValue = 1, maxValue = sevenBits)
-
-    override def hashCode(): Int = height
-
-    override def equals(obj: Any): Boolean = {
-      val that = obj.asInstanceOf[Vertical]
-      obj.isInstanceOf[Vertical] && (eq(that) || that.height == height)
-    }
   }
 
   final case class Count(count: Int) {
@@ -88,8 +73,6 @@ package object chess {
   }
 
   final case class Position(positionInt: Int) {
-    def >=(minPosition: Position): Boolean = positionInt >= minPosition.positionInt
-
     assertRange(positionInt, 0, fourteenBits)
 
     //encoding (x,y) as x*horiz+y as Int
@@ -101,12 +84,7 @@ package object chess {
 
     def next(): Position = Position(positionInt + 1)
 
-    override def hashCode(): Int = positionInt
-
-    override def equals(obj: Any): Boolean = {
-      val that = obj.asInstanceOf[Position]
-      obj.isInstanceOf[Position] && (eq(that) || positionInt == that.positionInt)
-    }
+    def >=(minPosition: Position): Boolean = positionInt >= minPosition.positionInt
   }
 
   object Position {
@@ -115,24 +93,21 @@ package object chess {
     def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
   }
 
-  final case class Table(horizontal: Horizontal, vertical: Vertical) {
+  final case class Table(horizontal: Horizontal, vertical: Vertical)
 
-    override lazy val hashCode: Int = horizontal.hashCode() * 31 + vertical.hashCode()
-
-    override def equals(obj: Any): Boolean = {
-      lazy val that = obj.asInstanceOf[Table]
-      obj.isInstanceOf[Table] && (eq(that) || (horizontal == that.horizontal && vertical == that.vertical))
+  final case class PositionInTable(pit: Int) extends AnyVal {
+    def tableAndPosition: (Table, Position) = {
+      val lower = pit & fourteenBits
+      val higher = pit >> fourteen
+      val lowerLower = lower & seven
+      val lowerHigher = lower >> seven
+      (Table(Horizontal(lowerLower), Vertical(lowerHigher)), Position(higher))
     }
   }
 
-  final case class PositionInTable(position: Position, table: Table) {
-
-    override lazy val hashCode: Int = position.hashCode() * 31 + table.hashCode
-
-    override def equals(obj: Any): Boolean = {
-      lazy val that = obj.asInstanceOf[PositionInTable]
-      obj.isInstanceOf[PositionInTable] && (eq(that) || (position == that.position && table == that.table))
-    }
+  object PositionInTable {
+    def apply(position: Position, table: Table): PositionInTable =
+      PositionInTable((position.positionInt << fourteen) + (table.vertical.height << seven) + table.horizontal.length)
   }
 
   final case class Pick(piece: Piece, position: Position) {
