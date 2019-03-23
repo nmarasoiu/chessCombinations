@@ -30,39 +30,41 @@ class ChessSuite extends FunSuite {
     assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion = false) >= 3063828)
   }
 
-//  test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
-//    assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2)) >= 2895708)
-//  }
-//
-//  test("Example '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {
-//    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
-//  }
-//
-//  test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {
-//    blockingTest(Table2(horizontal = 7, vertical = 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-//  }
-//
-//  test("Example 8x8 should return the solutions, and that there are no duplicates in the returned solutions") {
-//    blockingTest(Table2(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
-//  }
+  test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
+    while (true)
+      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false) >= 2895708)
+  }
+  //
+  //  test("Example '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {
+  //    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2))
+  //  }
+  //
+  //  test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {
+  //    blockingTest(Table2(horizontal = 7, vertical = 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
+  //  }
+  //
+  //  test("Example 8x8 should return the solutions, and that there are no duplicates in the returned solutions") {
+  //    blockingTest(Table2(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2))
+  //  }
 
   def areResultingBoardsTheExpectedOnes(table: Table, pieces: Map[Piece, Int],
                                         expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
     blockingTest(table, pieces, duplicationAssertion = true)
     val obtainedBoards: Iterable[List[(Piece, (Int, Int))]] =
       for (solution <- SolutionPath.solutions(table, pieces.mapValues(c => Count(c))).blockingScalaIterable())
-              yield {
-                for (piecePosition: Pick <- solution.picks;
-                     PieceAndCoordinates(piece, (x, y)) = PickTest.fromIntToPieceAndCoordinates(piecePosition, table))
-                  yield (piece, (x, y))
-              }
+        yield {
+          for (piecePosition: Pick <- solution.picks;
+               PieceAndCoordinates(piece, (x, y)) = PickTest.fromIntToPieceAndCoordinates(piecePosition, table))
+            yield (piece, (x, y))
+        }
     val allExpectedBoards: Set[Board] = expectedBoards.flatMap(board => rotations(table, Board(board)))
 
-    assert(sorted(obtainedBoards) == sorted(allExpectedBoards.map(board=>board.solution)))
+    assert(sorted(obtainedBoards) == sorted(allExpectedBoards.map(board => board.solution)))
   }
 
   def sorted[A](iterableOfIterable: Iterable[Iterable[A]]): IndexedSeq[String] = {
     def _sorted[B](iterable: Iterable[B]): IndexedSeq[String] = iterable.toIndexedSeq.map(_.toString).sorted
+
     _sorted(iterableOfIterable.map(iterable => _sorted(iterable)))
   }
 

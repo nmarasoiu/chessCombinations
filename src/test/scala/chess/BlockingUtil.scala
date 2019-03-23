@@ -10,8 +10,6 @@ import chess.FlowableUtils._
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction
 
-import scala.collection.mutable
-
 object BlockingUtil {
   def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean): Long = {
     println("Computing..")
@@ -22,15 +20,19 @@ object BlockingUtil {
 
     val solutionCount: Long =
       if (duplicationAssertion) {
+        def pickInt(pick: Pick): Int = {
+          val Pick(piece, position) = pick
+          (position.positionInt << three) + piece.pieceIndex
+        }
 
         case class Sol(picks: Array[Pick]) extends Iterable[Pick] {
-          override lazy val hashCode: Int = util.Arrays.hashCode(picks.map(_.pickInt))
+          override lazy val hashCode: Int = util.Arrays.hashCode(picks.map(pickInt))
 
           override def iterator: Iterator[Pick] = picks.iterator
         }
 
         object Sol {
-          def apply(solution: PartialSolution): Sol = Sol(solution.picks.toArray.sortBy(_.pickInt))
+          def apply(solution: PartialSolution): Sol = Sol(solution.picks.toArray.sortBy(pickInt))
         }
 
         val solFlowable: Flowable[Sol] =
