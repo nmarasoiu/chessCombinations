@@ -13,13 +13,16 @@ sealed abstract class Piece(val order: PieceId) extends EnumEntry with Ordered[P
         Memo.immutableMapMemo(HashMap.empty[Int, Positions]) {
           pit =>
             val positionInTable = PositionInTable(pit)
-            val (table: Table, position: Position) = (positionInTable.table, positionInTable.position)
-            val (x, y) = table.fromIntToPair(position)
+            val table: Table = positionInTable.table
+            val position: Position = positionInTable.position
+            val x = table.x(position)
+            val y = table.y(position)
             val positions: Seq[Int] =
               for ((x, y) <- incompatiblePositions(x.x, y.y, table))
                 yield table.fromPairToInt(CoordinateX(x), CoordinateY(y)).pos
             BitSet(positions: _*)
         }
+
       incompatiblePositions2(pit)
   }
 

@@ -12,6 +12,7 @@ package object chess {
   final case class PieceId(pieceInt: Int) extends AnyVal {
     def piece: Piece = Piece.of(this)
   }
+
   object PieceId extends Ordering[PieceId] {
     override def compare(x: PieceId, y: PieceId): Int = x.pieceInt.compareTo(y.pieceInt)
   }
@@ -19,7 +20,10 @@ package object chess {
   final case class PieceCount(count: Int) extends AnyVal {
   }
 
-  final case class Position(pos: Int) extends AnyVal //encoding (x,y) as x*horiz+y as Int
+  final case class Position(pos: Int) extends AnyVal { //encoding (x,y) as x*horiz+y as Int
+
+  }
+
   /**
     * An Int wil have 32 bits:
     * - sign 1 bit
@@ -52,8 +56,9 @@ package object chess {
 
     def vertical: Int = table >> 7
 
-    def fromIntToPair(position: Position): (CoordinateX, CoordinateY) =
-      (CoordinateX(position.pos % horizontal), CoordinateY(position.pos / horizontal))
+    def x(position: Position): CoordinateX = CoordinateX(position.pos % horizontal)
+
+    def y(position: Position): CoordinateY = CoordinateY(position.pos / horizontal)
   }
 
   object Table {
