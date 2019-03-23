@@ -27,12 +27,14 @@ class ChessSuite extends FunSuite {
   }
 
   test("Example '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
-    assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion = false) >= 3063828)
+    while (true) {
+      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion = false) >= 3063828)
+    }
   }
 
   test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
-    while (true)
-      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false) >= 2895708)
+
+    assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false) >= 2895708)
   }
   //
   //  test("Example '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {

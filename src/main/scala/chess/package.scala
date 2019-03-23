@@ -1,5 +1,4 @@
 import scala.collection.immutable.BitSet
-import scala.runtime.ScalaRunTime
 
 package object chess {
 
@@ -55,25 +54,24 @@ package object chess {
     def fitsIn(table: Table): Boolean = 0 <= y && y < table.vertical.height
   }
 
-  trait HashcodeCaching {
-    self: Product =>
-    override lazy val hashCode: Int = ScalaRunTime._hashCode(this)
-  }
-
-  final case class XY(x: X, y: Y) extends HashcodeCaching {
+  final case class XY(x: X, y: Y) {
     def fitsIn(table: Table): Boolean = x.fitsIn(table) && y.fitsIn(table)
   }
 
-  final case class Horizontal(length: Int) extends HashcodeCaching {
+  final case class Horizontal(length: Int) {
     assertRange(length, minValue = 1, maxValue = sevenBits)
+
+    override def hashCode(): Int = length
 
     override def equals(obj: Any): Boolean = {
       obj.isInstanceOf[Horizontal] && obj.asInstanceOf[Horizontal].length == length
     }
   }
 
-  final case class Vertical(height: Int) extends HashcodeCaching {
+  final case class Vertical(height: Int) {
     assertRange(height, minValue = 1, maxValue = sevenBits)
+
+    override def hashCode(): Int = height
 
     override def equals(obj: Any): Boolean = {
       obj.isInstanceOf[Vertical] && obj.asInstanceOf[Vertical].height == height
@@ -86,7 +84,7 @@ package object chess {
     def decremented(): Count = Count(count - 1)
   }
 
-  final case class Position(positionInt: Int) extends HashcodeCaching {
+  final case class Position(positionInt: Int) {
     def >=(minPosition: Position): Boolean = positionInt >= minPosition.positionInt
 
     assertRange(positionInt, 0, fourteenBits)
@@ -100,7 +98,8 @@ package object chess {
 
     def next(): Position = Position(positionInt + 1)
 
-    //todo can this be generated like hashCode?
+    override def hashCode(): Int = positionInt
+
     override def equals(obj: Any): Boolean = {
       obj.isInstanceOf[Position] && positionInt == obj.asInstanceOf[Position].positionInt
     }
@@ -112,7 +111,9 @@ package object chess {
     def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
   }
 
-  final case class Table(horizontal: Horizontal, vertical: Vertical) extends HashcodeCaching {
+  final case class Table(horizontal: Horizontal, vertical: Vertical) {
+
+    override def hashCode(): Int = horizontal.hashCode() * 31 + vertical.hashCode()
 
     override def equals(obj: Any): Boolean = {
       lazy val that = obj.asInstanceOf[Table]
@@ -120,8 +121,9 @@ package object chess {
     }
   }
 
-  final case class PositionInTable(position: Position, table: Table) extends HashcodeCaching {
-    override lazy val hashCode: Int = (position, table).hashCode()
+  final case class PositionInTable(position: Position, table: Table) {
+
+    override def hashCode(): Int = position.hashCode() * 31 + table.hashCode()
 
     override def equals(obj: Any): Boolean = {
       lazy val that = obj.asInstanceOf[PositionInTable]
