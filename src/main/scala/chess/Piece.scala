@@ -8,13 +8,19 @@ import scala.collection.immutable
 sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[Piece] {
   def compare(that: Piece): Int = pieceIndex - that.pieceIndex
 
-  val incompatiblePositions: PositionInTable => PositionSet =
-    Memo.immutableHashMapMemo[PositionInTable, PositionSet] {
-      positionInTable =>
-        val (table, position) = positionInTable.tableAndPosition
-        PositionSet(
-          for (xy <- incompatiblePositions(position.x(table), position.y(table), table))
-            yield Position(xy.x, xy.y, table).positionInt)
+  private val incompatiblePositions: Int => PositionSet =
+    Memo.immutableMapMemo(Map[Int, PositionSet]()) {
+      pit =>
+        val (table, position) = PositionInTable(pit).tableAndPosition
+        val XY(posX, posY) = position.xy(table)
+        PositionSet2(
+          for (XY(otherX, otherY) <- incompatiblePositions(posX, posY, table))
+            yield Position(otherX, otherY, table))
+    }
+
+  def incompatiblePositions(position: Position, table: Table): PositionSet =
+    PositionInTable(position, table) match {
+      case PositionInTable(pit) => incompatiblePositions(pit)
     }
 
   /**

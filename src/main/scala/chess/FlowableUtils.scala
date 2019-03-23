@@ -10,21 +10,24 @@ object FlowableUtils {
 
   implicit class RichFlowable[A](flowable: Flowable[A]) {
 
-    def mapInParallel[B](mapper: A => B): Flowable[B] =
-      flatMapInParallel(a => Flowable.just(mapper(a)))
+    def mapInParallel[B](mapper: A => B): Flowable[B] = mapScala(mapper)(inParallel = true)
+
+    def mapScala[B](mapper: A => B)(inParallel: Boolean): Flowable[B] =
+      flatMapScala(a => Flowable.just(mapper(a)))(inParallel)
+
+    def flatMapScala[B](mapper: A => Flowable[B])(inParallel: Boolean): Flowable[B] = {
+      if (inParallel)
+        flowable
+          .parallel()
+          .runOn(Schedulers.computation())
+          .flatMap(asRxFunction(mapper))
+          .sequential()
+      else
+        flowable
+          .flatMap(asRxFunction(mapper))
+    }
 
     def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
-
-    def flatMapScala[B](flatMapper: A => Flowable[B]): Flowable[B] =
-      flowable.flatMap(asRxFunction(flatMapper))
-
-    def flatMapInParallel[B](flatMapper: A => Flowable[B]): Flowable[B] = {
-      flowable
-        .parallel()
-        .runOn(Schedulers.computation())
-        .flatMap(asRxFunction(flatMapper))
-        .sequential()
-    }
 
     import scala.collection.JavaConverters._
 

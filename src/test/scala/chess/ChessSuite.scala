@@ -27,15 +27,17 @@ class ChessSuite extends FunSuite {
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
 
-  test("Example '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
-    assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = true) >= 2895708)
+  test("Example 3, the variety: '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
+    for ((duplicationAssertion, count) <- Map(false -> 999, true -> 1); _ <- 1 to count)
+      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion) >= 3063828)
   }
 
-  test("Example '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
-    assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion = false) >= 3063828)
+  test("Example 3, the variety: '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
+    for (duplicationAssertion <- Seq(false, false, true))
+      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion) >= 2895708)
   }
 
-  test("Example 3, the variety: '2 of each piece' should return the solutions, and that there are no duplicates in the returned solutions") {
+  test("Example 3, the variety: '2 of each piece incl Rook' should return the solutions, and that there are no duplicates in the returned solutions") {
     blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2), duplicationAssertion = false)
   }
 

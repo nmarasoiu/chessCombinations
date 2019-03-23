@@ -2,68 +2,57 @@ package chess
 
 import chess.FlowableUtils._
 import io.reactivex.Flowable
-import io.reactivex.Flowable.{empty, just}
+import io.reactivex.Flowable.just
 
-import scala.collection.immutable.{BitSet, Map, TreeMap}
+import scala.collection.immutable.{Map, SortedMap, TreeMap}
 
 object SolutionPath {
-  def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[PartialSolution] =
+  def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
     solutions(table, pieces, positions = PositionSet(0 until table.vertical.height * table.horizontal.length))
 
-  def solutions(table: Table, pieces: Map[Piece, Count], positions: PositionSet): Flowable[PartialSolution] = {
-    if (table.vertical.height <= 0 || table.horizontal.length <= 0) {
-      empty()
-    } else {
-      val newRemainingPieces = for (
-        (piece, pieceCount@Count(count)) <- pieces if count > 0
-      ) yield (piece, (pieceCount, Position.zero))
-      SolutionPath(table).solutions(
-        remainingPositions = positions,
-        partialSolutionSoFar = PartialSolution.Empty,
-        remainingPieces = TreeMap[Piece, (Count, Position)]() ++ newRemainingPieces,
-        positionsTakenSoFar = PositionSet(BitSet()),
-        firstLevel = true)
-    }
+  def solutions(table: Table, pieces: Map[Piece, Count], positions: PositionSet): Flowable[SubSolution] = {
+    SolutionPath(table).solutions(
+      partialSolutionSoFar = SubSolution(),
+      positionsTakenSoFar = PositionSet(),
+      remainingPositions = positions,
+      remainingPieces = TreeMap[Piece, (Count, Position)]() ++ (
+        for ((piece, pieceCount) <- pieces) yield (piece, (pieceCount, Position.zero))),
+      firstLevel = true)
   }
 }
 
 case class SolutionPath(table: Table) {
 
-  private val empty: Flowable[PartialSolution] = Flowable.empty[PartialSolution]
-
   def solutions(remainingPositions: PositionSet,
-                partialSolutionSoFar: PartialSolution,
+                partialSolutionSoFar: SubSolution,
                 positionsTakenSoFar: PositionSet,
-                remainingPieces: Map[Piece, (Count, Position)],
-                firstLevel: Boolean): Flowable[PartialSolution] = {
-    if (remainingPieces.isEmpty) {
-      just(partialSolutionSoFar)
-    } else {
-      val (piece, (count, minPosition)) = remainingPieces.head
+                remainingPieces: SortedMap[Piece, (Count, Position)],
+                firstLevel: Boolean): Flowable[SubSolution] = {
 
-      def solutionsForPick(position: Position): Flowable[PartialSolution] = {
-        val incompatiblePositions: PositionSet = piece.incompatiblePositions(PositionInTable(position, table))
-        if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-          empty
-        } else {
-          solutions(
-            partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
-            remainingPositions = remainingPositions - incompatiblePositions,
-            positionsTakenSoFar = positionsTakenSoFar + position,
-            remainingPieces = count match {
-              case Count.one => remainingPieces - piece
-              case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
-            },
-            firstLevel = false)
+    remainingPieces.headOption match {
+      case None =>
+        just(partialSolutionSoFar)
+
+      case Some((piece, (count, minPosition))) =>
+        def solutionsForPick(position: Position): Flowable[SubSolution] = {
+          val incompatiblePositions: PositionSet = piece.incompatiblePositions(position, table)
+          if (positionsTakenSoFar.intersects(incompatiblePositions)) {
+            Flowable.empty[SubSolution]
+          } else {
+            solutions(
+              partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
+              remainingPositions = remainingPositions - incompatiblePositions,
+              positionsTakenSoFar = positionsTakenSoFar + position,
+              remainingPieces = count match {
+                case Count.one => remainingPieces - piece
+                case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
+              },
+              firstLevel = false)
+          }
         }
-      }
 
-      val positionFlow: Flowable[Position] =
-        fromIterable(remainingPositions.filter((pos: Int) => pos >= minPosition.positionInt))
-      if (firstLevel)
-        positionFlow.flatMapInParallel(solutionsForPick)
-      else
-        positionFlow.flatMapScala(solutionsForPick)
+        val positionFlowable = fromIterable(remainingPositions.filter((pos: Int) => pos >= minPosition.positionInt))
+        positionFlowable.flatMapScala(mapper = solutionsForPick)(inParallel = firstLevel)
     }
   }
 }

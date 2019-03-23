@@ -138,12 +138,17 @@ package object chess {
     def apply(positions: Seq[Int]): PositionSet = PositionSet(BitSet(positions: _*))
   }
 
-  case class PartialSolution(picks: List[Pick]) {
-    def +(pick: Pick): PartialSolution = PartialSolution(pick :: picks)
+  object PositionSet2 {
+    def apply(positions: Seq[Position]): PositionSet = PositionSet(positions.map(_.positionInt))
   }
 
-  object PartialSolution {
-    val Empty = PartialSolution(Nil)
+  case class SubSolution(picks: List[Pick]) {
+    def +(pick: Pick): SubSolution = SubSolution(pick :: picks)
+  }
+
+  object SubSolution {
+    val Empty = SubSolution(Nil)
+    def apply(): SubSolution = Empty
   }
 
 }
