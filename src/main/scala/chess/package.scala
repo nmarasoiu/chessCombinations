@@ -2,16 +2,6 @@ import scala.collection.immutable.BitSet
 
 package object chess {
 
-  final case class X(x: Int) extends AnyVal
-
-  final case class Y(y: Int) extends AnyVal
-
-  final case class Horizontal(length: Int) extends AnyVal
-
-  final case class Vertical(height: Int) extends AnyVal
-
-  final case class Count(count: Int) extends AnyVal
-
   /**
     * An Int wil have 32 bits:
     * - sign 1 bit
@@ -19,7 +9,35 @@ package object chess {
     * - position: 2 * 7 bits
     * - table: 2 * 7 bits
     */
-  final case class Position(pos: Int) extends AnyVal {
+  val (three, threeBits) = (3, 7)
+  val (seven, sevenBits) = (7, 128 - 1)
+  val (fourteen, fourteenBits) = (14, 128 * 128 - 1)
+
+  def assertRange(value:Int,minValue:Int, maxValue:Int): Boolean = minValue <= value && value <= maxValue
+  
+  final case class X(x: Int) {
+    assertRange(x, minValue = 0, maxValue = sevenBits)
+  }
+
+  final case class Y(y: Int) {
+    assertRange(y, minValue = 0, maxValue = sevenBits)
+  }
+
+  final case class Horizontal(length: Int) {
+    assertRange(length, minValue = 1, maxValue = sevenBits)
+  }
+
+  final case class Vertical(height: Int) {
+    assertRange(height, minValue = 1, maxValue = sevenBits)
+  }
+
+  final case class Count(count: Int) {
+    assertRange(count, minValue = 1, maxValue = sevenBits)
+  }
+
+  final case class Position(pos: Int) {
+    assertRange(pos, 0, fourteenBits)
+
     //encoding (x,y) as x*horiz+y as Int
     def x(table: Table): X = X(pos % table.horizontal)
 
@@ -27,8 +45,9 @@ package object chess {
 
   }
 
-  final case class PositionInTable(pit: Int) extends AnyVal { //2*2*7bit
-    import PositionInTable._
+
+  final case class PositionInTable(pit: Int) { //2*2*7bit
+    assertRange(pit, 0, 268435455)
 
     def position: Position = Position(pit & fourteenBits)
 
@@ -38,46 +57,46 @@ package object chess {
   }
 
   object PositionInTable {
-    val (seven, sevenBits) = (7, 128 - 1)
-    val (fourteen, fourteenBits) = (14, 128 * 128 - 1)
 
     def apply(table: Table, position: Position): PositionInTable = PositionInTable(position.pos + (table.table << fourteen))
   }
 
-  final case class Table(table: Int) extends AnyVal {
+  final case class Table(table: Int) {
+    assertRange(table, 1, fourteenBits)
 
     def fromPairToInt(x: X, y: Y): Position = Position(x.x + y.y * horizontal)
 
     def horizontal: Int = table & 127
 
     def vertical: Int = table >> 7
-
   }
 
   object Table {
     def apply(horizontal: Horizontal, vertical: Vertical): Table = Table(horizontal.length + (vertical.height << 7))
   }
 
-  final case class Pick(pickInt: Int) extends AnyVal { // a Piece (3bits) in a Position
-    def piece(): Piece = Piece.of(pickInt & Pick.pieceEncodingOnes)
+  final case class Pick(pickInt: Int) { // a Piece (3bits) in a Position
+    assertRange(pickInt, 0, 2147483647)
 
-    def position(): Position = Position(pickInt >>> Pick.pieceEncodingBits)
+    def piece(): Piece = Piece.of(pickInt & threeBits)
+
+    def position(): Position = Position(pickInt >>> three)
   }
 
   object Pick {
-    private val pieceEncodingBits = 3
-    private val pieceEncodingOnes = (1 << pieceEncodingBits) - 1
-
-    def apply(piece: Piece, position: Position): Pick = Pick((position.pos << Pick.pieceEncodingBits) + piece.pieceIndex)
+    def apply(piece: Piece, position: Position): Pick = Pick((position.pos << three) + piece.pieceIndex)
   }
-
 
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
   type Solution = PickList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
 
-  case class BufferSize(size: Int) extends AnyVal
+  case class BufferSize(size: Int) {
+    assert(size > 0)
+  }
 
-  case class PrintEvery(size: Int) extends AnyVal
+  case class PrintEvery(size: Int) {
+    assert(size > 0)
+  }
 
   object Config {
     val bufferSize: BufferSize = BufferSize(64)
