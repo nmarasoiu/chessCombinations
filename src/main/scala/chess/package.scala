@@ -68,7 +68,8 @@ package object chess {
 
   final case class Count(count: Int) {
     assertRange(count, minValue = 1, maxValue = sevenBits)
-    def decremented(): Count = Count(count-1)
+
+    def decremented(): Count = Count(count - 1)
   }
 
   final case class Position(positionInt: Int) {
@@ -88,6 +89,7 @@ package object chess {
 
   object Position {
     val zero = Position(0)
+
     def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
   }
 
@@ -108,7 +110,15 @@ package object chess {
 
     def intersects(that: PositionSet): Boolean = (bitSet & that.bitSet).nonEmpty
 
+    def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
+
     override def iterator: Iterator[Position] = bitSet.iterator.map(positionInt => Position(positionInt))
+  }
+
+  object PositionSet {
+    def apply(): PositionSet = PositionSet(BitSet())
+
+    def apply(positions: Seq[Int]): PositionSet = PositionSet(BitSet(positions: _*))
   }
 
   case class PartialSolution(picks: List[Pick]) {

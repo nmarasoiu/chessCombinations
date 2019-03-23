@@ -4,7 +4,6 @@ import enumeratum.{Enum, EnumEntry}
 import scalaz.Memo
 
 import scala.collection.immutable
-import scala.collection.immutable.BitSet
 
 sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[Piece] {
   def compare(that: Piece): Int = pieceIndex - that.pieceIndex
@@ -14,10 +13,9 @@ sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[
       positionInTable =>
         val table: Table = positionInTable.table
         val position: Position = positionInTable.position
-        val positions =
+        PositionSet(
           for (xy <- incompatiblePositions(position.x(table), position.y(table), table))
-            yield Position(xy.x, xy.y, table).positionInt
-        PositionSet(BitSet(positions: _*))
+            yield Position(xy.x, xy.y, table).positionInt)
     }
 
   /**
@@ -86,4 +84,5 @@ object Piece extends Enum[Piece] {
            y <- Seq(y - yOne, y, y + yOne) if y.fitsIn(table)) yield XY(x, y)
     }
   }
+
 }

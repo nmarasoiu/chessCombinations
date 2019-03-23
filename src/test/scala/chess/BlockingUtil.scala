@@ -42,8 +42,10 @@ object BlockingUtil {
                 solTs.collect(Collectors.toList[Sol])
             }.flatMap(lst => Flowable.fromIterable(lst))
 
-        type Solutions = mutable.Set[Sol]
-        val seedFactory: Callable[Solutions] = () => new mutable.HashSet[Sol]
+        type Solutions = util.HashSet[Sol]
+        val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol](50000000)
+        //todo sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
+        //todo and check why we have so much garbage collection
         val folder: BiFunction[Solutions, Sol, Solutions] = {
           case (solutions: Solutions, solT: Sol) =>
             assert(solutions.add(solT))

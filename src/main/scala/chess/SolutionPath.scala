@@ -8,7 +8,7 @@ import scala.collection.immutable.{BitSet, Map, TreeMap}
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[PartialSolution] =
-    solutions(table, pieces, positions = PositionSet(BitSet(0 until table.vertical.height * table.horizontal.length: _*)))
+    solutions(table, pieces, positions = PositionSet(0 until table.vertical.height * table.horizontal.length))
 
   def solutions(table: Table, pieces: Map[Piece, Count], positions: PositionSet): Flowable[PartialSolution] = {
     if (table.vertical.height <= 0 || table.horizontal.length <= 0) {
@@ -16,7 +16,7 @@ object SolutionPath {
     } else {
       val newRemainingPieces = for (
         (piece, pieceCount@Count(count)) <- pieces if count > 0
-      ) yield (piece, (pieceCount, position0))
+      ) yield (piece, (pieceCount, Position.zero))
       SolutionPath(table).solutions(
         remainingPositions = positions,
         partialSolutionSoFar = PartialSolution.Empty,
@@ -25,8 +25,6 @@ object SolutionPath {
         firstLevel = true)
     }
   }
-
-  val position0 = Position(0)
 }
 
 case class SolutionPath(table: Table) {
@@ -61,7 +59,7 @@ case class SolutionPath(table: Table) {
       }
 
       val positionFlow: Flowable[Position] =
-        fromIterable(remainingPositions.filter(pos => pos >= minPosition))
+        fromIterable(remainingPositions.filter((pos:Int) => pos >= minPosition.positionInt))
       if (firstLevel)
         positionFlow.flatMapInParallel(solutionsForPick)
       else
