@@ -123,7 +123,7 @@ package object chess {
 
   final case class PositionInTable(position: Position, table: Table) {
 
-    override lazy val hashCode: Int = position.hashCode() * 31 + table.hashCode()
+    override lazy val hashCode: Int = position.hashCode() * 31 + table.hashCode
 
     override def equals(obj: Any): Boolean = {
       lazy val that = obj.asInstanceOf[PositionInTable]
