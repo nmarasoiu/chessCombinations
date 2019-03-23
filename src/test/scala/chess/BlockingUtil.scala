@@ -13,7 +13,7 @@ import io.reactivex.functions.BiFunction
 import scala.collection.mutable
 
 object BlockingUtil {
-  def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean = false): Long = {
+  def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean = true): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
     val t0 = clock.instant()
