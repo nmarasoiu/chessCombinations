@@ -43,7 +43,7 @@ object BlockingUtil {
 
         val solFlowable: Flowable[Sol] =
           solutionsFlowable
-            .buffer(Config.bufferSize)
+            .buffer(Config.bufferSize.size)
             .mapInParallel {
               solutions: util.List[Solution] =>
                 val solTs: stream.Stream[Sol] = solutions.stream().map(solution => Sol(solution))
@@ -55,7 +55,7 @@ object BlockingUtil {
         val folder: BiFunction[Solutions, Sol, Solutions] = {
           case (solutions: Solutions, solT: Sol) =>
             assert(solutions.add(solT))
-            if (solutions.size % Config.printEvery == 1)
+            if (solutions.size % Config.printEvery.size == 1)
               print(table, solT)
             solutions
         }

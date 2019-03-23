@@ -6,6 +6,10 @@ package object chess {
 
   final case class Y(y: Int) extends AnyVal
 
+  final case class Horizontal(length: Int) extends AnyVal
+
+  final case class Vertical(height: Int) extends AnyVal
+
   final case class Count(count: Int) extends AnyVal
 
   /**
@@ -30,7 +34,7 @@ package object chess {
 
     def tableInt: Int = pit >>> fourteen
 
-    def table: Table = Table(tableInt & sevenBits, tableInt >>> seven)
+    def table: Table = Table(Horizontal(tableInt & sevenBits), Vertical(tableInt >>> seven))
   }
 
   object PositionInTable {
@@ -51,7 +55,7 @@ package object chess {
   }
 
   object Table {
-    def apply(horizontal: Int, vertical: Int): Table = Table(horizontal + (vertical << 7))
+    def apply(horizontal: Horizontal, vertical: Vertical): Table = Table(horizontal.length + (vertical.height << 7))
   }
 
   final case class Pick(pickInt: Int) extends AnyVal { // a Piece (3bits) in a Position
@@ -71,9 +75,13 @@ package object chess {
   type Positions = BitSet //encoding (x,y) as x*horiz+y as Int
   type Solution = PickList // encoding Piece at (x,y) as x*horiz+y as Int followed by 3 bits piece
 
+  case class BufferSize(size: Int) extends AnyVal
+
+  case class PrintEvery(size: Int) extends AnyVal
+
   object Config {
-    val bufferSize: Int = 64
-    val printEvery: Int = 5000000
+    val bufferSize: BufferSize = BufferSize(64)
+    val printEvery: PrintEvery = PrintEvery(5000000)
   }
 
   implicit class RichBitSet(bitSet: Positions) {

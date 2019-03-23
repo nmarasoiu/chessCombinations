@@ -30,7 +30,7 @@ sealed abstract class Piece(val pieceIndex: Int) extends EnumEntry with Ordered[
         val pos: Position = positionInTable.position
         val x = pos.x(table)
         val y = pos.y(table)
-        val positions: Seq[Int] =
+        val positions =
           for ((x, y) <- incompatiblePositions(x.x, y.y, table))
             yield table.fromPairToInt(X(x), Y(y)).pos
         BitSet(positions: _*)
