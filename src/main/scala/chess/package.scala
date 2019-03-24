@@ -130,8 +130,8 @@ package object chess {
 
     def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
-    def iterableFrom(minPosition: Position): Iterable[Position] =
-      bitSet.iteratorFrom(minPosition.positionInt).map(Position(_)).toIterable
+    def iteratorFrom(minPosition: Position): Iterator[Position] =
+      bitSet.iteratorFrom(minPosition.positionInt).map(Position(_))
   }
 
   object PositionSet {

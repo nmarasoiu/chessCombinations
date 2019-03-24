@@ -52,8 +52,12 @@ case class SolutionPath(table: Table) {
           }
         }
 
-        val positionsIterable = remainingPositions.iterableFrom(minPosition)
-        val positionsMonad = if (firstLevel) ParallelFlowableMonad(positionsIterable) else IterableMonad(positionsIterable)
+        val positionsIterator = remainingPositions.iteratorFrom(minPosition)
+        val positionsMonad =
+          if (firstLevel)
+            ParallelFlowableMonad(positionsIterator.toIterable)
+          else
+            IteratorMonad(positionsIterator)
         positionsMonad.flatMap(position => solutionsForPick(position))
     }
   }
