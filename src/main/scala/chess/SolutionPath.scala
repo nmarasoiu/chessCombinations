@@ -1,26 +1,22 @@
 package chess
 
 import io.reactivex.Flowable
-import io.reactivex.parallel.ParallelFlowable
 
 import scala.collection.immutable.{Map, SortedMap, TreeMap}
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
-    solutionsAsParallel(table, pieces).sequential()
+    solutions(table, pieces, positions = PositionSet(0 until table.area))
 
-  def solutionsAsParallel(table: Table, pieces: Map[Piece, Count]): ParallelFlowable[SubSolution] =
-    solutionsAsParallel(table, pieces, positions = PositionSet(0 until table.area))
-
-  def solutionsAsParallel(table: Table, pieces: Map[Piece, Count],
-                          positions: PositionSet): ParallelFlowable[SubSolution] = {
+  private def solutions(table: Table, pieces: Map[Piece, Count],
+                positions: PositionSet): Flowable[SubSolution] = {
     SolutionPath(table)
       .solutions(firstLevel = true,
         remainingPositions = positions,
         positionsTakenSoFar = PositionSet(),
         partialSolutionSoFar = SubSolution(),
         remainingPieces = TreeMap[Piece, (Count, Position)]() ++ pieces.mapValues(count => (count, Position.zero)))
-      .parallelFlowable()
+      .flowable()
   }
 }
 

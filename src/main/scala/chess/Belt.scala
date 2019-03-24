@@ -5,27 +5,28 @@ import io.reactivex.Flowable
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
 
-//todo in parallel using cores; compilations errors - https://www.jetbrains.com/help/idea/troubleshoot-common-scala-issues.html
+//todo in parallel using cores;
+// gc high again
+// compilations errors - https://www.jetbrains.com/help/idea/troubleshoot-common-scala-issues.html
+// remove redundancies in this file
 sealed abstract class Belt[A] {
 
   def flowable(): Flowable[A]
-
-  def parallelFlowable(): ParallelFlowable[A] = flowable().parallel()
 
   def flatMap[B](f: A => Belt[B]): Belt[B]
 }
 
 object Belt {
+  def apply[A](): Belt[A] = EmptyBelt[A]()
+
+  def apply[A](a: A): Belt[A] = SingletonBelt(a)
+
   def apply[A](iterator: Iterator[A])(inParallel: Boolean): Belt[A] = {
     if (inParallel)
       ParallelFlowableBelt(iterator.toIterable)
     else
-      IteratorBelt(iterator)
+      FlowableBelt(iterator.toIterable)
   }
-
-  def apply[A](): Belt[A] = EmptyBelt[A]()
-
-  def apply[A](a: A): Belt[A] = SingletonBelt(a)
 }
 
 object EmptyBelt extends Belt[Nothing] {
@@ -37,7 +38,10 @@ object EmptyBelt extends Belt[Nothing] {
 }
 
 object FlowableBelt {
-  def apply[A](iterableA: Iterable[A]): Belt[A] = FlowableBelt(fromIterable(iterableA))
+  def apply[A](iterableA: Iterable[A]): Belt[A] = {
+    val flow: Flowable[A] = fromIterable(iterableA)
+    FlowableBelt(flow)
+  }
 }
 
 object ParallelFlowableBelt {
@@ -67,6 +71,7 @@ case class IteratorBelt[A](iteratorA: Iterator[A]) extends Belt[A] {
   override def flowable(): Flowable[A] = fromIterable(iteratorA.toIterable)
 }
 
+
 case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] =
     IterableBelt(iterableA.flatMap(a => {
@@ -82,11 +87,7 @@ case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
 
 case class FlowableBelt[A](flowableA: Flowable[A]) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] =
-    FlowableBelt(flowableA.flatMap(a =>
-      f(a) match {
-        case FlowableBelt(flowableB) => flowableB
-        case IterableBelt(iterableB) => fromIterable(iterableB)
-      }))
+    FlowableBelt(flowableA.flatMap(a => f(a).flowable()))
 
   override def flowable(): Flowable[A] = flowableA
 }
@@ -95,15 +96,8 @@ case class ParallelFlowableBelt[A](parFlowableA: ParallelFlowable[A]) extends Be
   override def flatMap[B](f: A => Belt[B]): Belt[B] =
     ParallelFlowableBelt(
       parFlowableA.flatMap(a => {
-        f(a) match {
-          case FlowableBelt(flowableB) => flowableB
-          case IterableBelt(iterableB) => fromIterable(iterableB)
-          case IteratorBelt(iteratorB) => fromIterable(iteratorB.toIterable)
-          case ParallelFlowableBelt(parFlowableB) => parFlowableB.sequential()
-        }
+        f(a).flowable()
       }))
-
-  override def parallelFlowable(): ParallelFlowable[A] = parFlowableA
 
   override def flowable(): Flowable[A] = parFlowableA.sequential()
 }

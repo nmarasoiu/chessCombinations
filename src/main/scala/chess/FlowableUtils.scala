@@ -12,10 +12,10 @@ object FlowableUtils {
 
     def mapInParallel[B](mapper: A => B): Flowable[B] = mapScala(mapper)(inParallel = true)
 
-    def mapScala[B](mapper: A => B)(inParallel: Boolean): Flowable[B] =
+    private def mapScala[B](mapper: A => B)(inParallel: Boolean): Flowable[B] =
       flatMapScala(a => Flowable.just(mapper(a)))(inParallel)
 
-    def flatMapScala[B](mapper: A => Flowable[B])(inParallel: Boolean): Flowable[B] = {
+    private def flatMapScala[B](mapper: A => Flowable[B])(inParallel: Boolean): Flowable[B] = {
       if (inParallel)
         flowable
           .parallel()
@@ -27,7 +27,7 @@ object FlowableUtils {
           .flatMap(asRxFunction(mapper))
     }
 
-    def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
+    private def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
 
     import scala.collection.JavaConverters._
 
