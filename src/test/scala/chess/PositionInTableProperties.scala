@@ -6,9 +6,9 @@ class PositionInTableProperties extends FunSuite {
   def inOrder(a: Int, b: Int, c: Int): Boolean = a <= b && b <= c
 
   test("Table should serialize to int and deserialize back the same") {
-    for (positionInt: Int <- 0 to 130;
-         horizontalInt: Int <- 1 to 17;
-         verticalInt: Int <- 1 to 127) {
+    for (positionInt: Int <- Seq(0, 3, 4, 5, 12, 127, 128, 130);
+         horizontalInt: Int <- Seq(2, 1, 3, 4, 5, 12, 127);
+         verticalInt: Int <- Seq(1, 2, 3, 4, 5, 12, 127)) {
 
       val horizontal = Horizontal(horizontalInt)
       val vertical = Vertical(verticalInt)

@@ -30,35 +30,33 @@ case class SolutionPath(table: Table) {
                 positionsTakenSoFar: PositionSet,
                 partialSolutionSoFar: SubSolution,
                 remainingPieces: SortedMap[Piece, (Count, Position)],
-                firstLevel: Boolean): Monad[SubSolution] = {
+                firstLevel: Boolean): Belt[SubSolution] = {
+
+    def solutionsForPick(position: Position, piece: Piece, count: Count): Belt[SubSolution] = {
+      val incompatiblePositions = piece.incompatiblePositions(position, table)
+      if (positionsTakenSoFar.intersects(incompatiblePositions)) {
+        Belt()
+      } else {
+        solutions(firstLevel = false,
+          positionsTakenSoFar = positionsTakenSoFar + position,
+          remainingPositions = remainingPositions - incompatiblePositions,
+          partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
+          remainingPieces = count match {
+            case Count.one => remainingPieces - piece
+            case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
+          })
+      }
+    }
+
     remainingPieces.headOption match {
       case None =>
-        SingletonMonad(partialSolutionSoFar)
-
+        Belt(partialSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
-        def solutionsForPick(position: Position): Monad[SubSolution] = {
-          val incompatiblePositions: PositionSet = piece.incompatiblePositions(position, table)
-          if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-            EmptyMonad()
-          } else {
-            solutions(firstLevel = false,
-              positionsTakenSoFar = positionsTakenSoFar + position,
-              remainingPositions = remainingPositions - incompatiblePositions,
-              partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
-              remainingPieces = count match {
-                case Count.one => remainingPieces - piece
-                case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
-              })
-          }
-        }
-
-        val positionsIterator = remainingPositions.iteratorFrom(minPosition)
-        val positionsMonad =
-          if (firstLevel)
-            ParallelFlowableMonad(positionsIterator.toIterable)
-          else
-            IteratorMonad(positionsIterator)
-        positionsMonad.flatMap(position => solutionsForPick(position))
+        Belt(
+          iterator = remainingPositions.iteratorFrom(minPosition))(
+          inParallel = firstLevel
+        ).flatMap(
+          position => solutionsForPick(position, piece, count))
     }
   }
 }
