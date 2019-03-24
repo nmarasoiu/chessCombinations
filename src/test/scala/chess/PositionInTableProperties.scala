@@ -7,7 +7,7 @@ class PositionInTableProperties extends FunSuite {
 
   test("Table should serialize to int and deserialize back the same") {
     for (positionInt: Int <- 0 to 130;
-         horizontalInt: Int <- 1 to 127;
+         horizontalInt: Int <- 1 to 17;
          verticalInt: Int <- 1 to 127) {
 
       val horizontal = Horizontal(horizontalInt)

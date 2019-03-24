@@ -101,6 +101,7 @@ package object chess {
   }
 
   case class Table(horizontal: Horizontal, vertical: Vertical) {
+    def area: Int = vertical.height * horizontal.length
   }
 
   case class PositionInTable(pit: Int) extends AnyVal {

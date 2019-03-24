@@ -1,58 +1,60 @@
 package chess
 
-import chess.FlowableUtils._
 import io.reactivex.Flowable
-import io.reactivex.Flowable.just
+import io.reactivex.parallel.ParallelFlowable
 
 import scala.collection.immutable.{Map, SortedMap, TreeMap}
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
-    solutions(table, pieces, positions = PositionSet(0 until table.vertical.height * table.horizontal.length))
+    solutionsAsParallel(table, pieces).sequential()
 
-  def solutions(table: Table, pieces: Map[Piece, Count], positions: PositionSet): Flowable[SubSolution] = {
-    SolutionPath(table).solutions(
-      partialSolutionSoFar = SubSolution(),
-      positionsTakenSoFar = PositionSet(),
-      remainingPositions = positions,
-      remainingPieces = TreeMap[Piece, (Count, Position)]() ++ (
-        for ((piece, pieceCount) <- pieces) yield (piece, (pieceCount, Position.zero))),
-      firstLevel = true)
+  def solutionsAsParallel(table: Table, pieces: Map[Piece, Count]): ParallelFlowable[SubSolution] =
+    solutionsAsParallel(table, pieces, positions = PositionSet(0 until table.area))
+
+  def solutionsAsParallel(table: Table, pieces: Map[Piece, Count],
+                          positions: PositionSet): ParallelFlowable[SubSolution] = {
+    SolutionPath(table)
+      .solutions(firstLevel = true,
+        remainingPositions = positions,
+        positionsTakenSoFar = PositionSet(),
+        partialSolutionSoFar = SubSolution(),
+        remainingPieces = TreeMap[Piece, (Count, Position)]() ++ pieces.mapValues(count => (count, Position.zero)))
+      .parallelFlowable()
   }
 }
 
 case class SolutionPath(table: Table) {
 
   def solutions(remainingPositions: PositionSet,
-                partialSolutionSoFar: SubSolution,
                 positionsTakenSoFar: PositionSet,
+                partialSolutionSoFar: SubSolution,
                 remainingPieces: SortedMap[Piece, (Count, Position)],
-                firstLevel: Boolean): Flowable[SubSolution] = {
-
+                firstLevel: Boolean): Monad[SubSolution] = {
     remainingPieces.headOption match {
       case None =>
-        just(partialSolutionSoFar)
+        SingletonMonad(partialSolutionSoFar)
 
       case Some((piece, (count, minPosition))) =>
-        def solutionsForPick(position: Position): Flowable[SubSolution] = {
+        def solutionsForPick(position: Position): Monad[SubSolution] = {
           val incompatiblePositions: PositionSet = piece.incompatiblePositions(position, table)
           if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-            Flowable.empty[SubSolution]
+            EmptyMonad()
           } else {
-            solutions(
-              partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
-              remainingPositions = remainingPositions - incompatiblePositions,
+            solutions(firstLevel = false,
               positionsTakenSoFar = positionsTakenSoFar + position,
+              remainingPositions = remainingPositions - incompatiblePositions,
+              partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
               remainingPieces = count match {
                 case Count.one => remainingPieces - piece
                 case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
-              },
-              firstLevel = false)
+              })
           }
         }
 
-        fromIterable(remainingPositions.iterableFrom(minPosition))
-          .flatMapScala(mapper = solutionsForPick)(inParallel = firstLevel)
+        val positionsIterable = remainingPositions.iterableFrom(minPosition)
+        val positionsMonad = if (firstLevel) ParallelFlowableMonad(positionsIterable) else IterableMonad(positionsIterable)
+        positionsMonad.flatMap(position => solutionsForPick(position))
     }
   }
 }
