@@ -4,9 +4,11 @@ import java.time.Clock
 import java.util
 
 import chess.FlowableUtils._
+import com.google.common.math.Quantiles
 import io.reactivex.Flowable
+import Enrichments._
 
-import scala.collection.JavaConverters
+import scala.collection.JavaConverters._
 
 object BlockingUtil {
 
@@ -19,6 +21,7 @@ object BlockingUtil {
 
     var sumTimes: Double = 0D
     var countTimes = 0
+    var secondsSeq = List[Double]()
 
     println(s"Computing $executeTimes times for $table $pieces $duplicationAssertion..")
 
@@ -45,7 +48,6 @@ object BlockingUtil {
           }
           import Enrichments._
 
-          import JavaConverters._
           val solFlowable: Flowable[Sol] =
             solutionsFlowable
               .buffer(bufferSize.size)
@@ -80,10 +82,21 @@ object BlockingUtil {
       val t1 = clock.instant()
 
       val duration = java.time.Duration.between(t0, t1)
-      sumTimes += duration.getSeconds
+      val seconds = duration.toNanos.toDouble / 1e9
+      sumTimes += seconds
       countTimes += 1
       println(" computed in " + duration + " -> " + solutionCount + " solutionFlowable found," +
         " with running average=" + (sumTimes / countTimes))
+      secondsSeq = seconds :: secondsSeq
+      val collection = secondsSeq
+        .map(_.doubleValue.asInstanceOf[java.lang.Double])
+        .asJavaCollection
+      val percentiles = Quantiles.percentiles()
+        .indexes(50, 75, 80, 90, 95, 99)
+        .compute(collection)
+        .asScala.toMap
+        .toSortedMap
+      println(percentiles)
       assert(countAssertion(solutionCount))
     }
   }
@@ -102,4 +115,5 @@ object BlockingUtil {
   case class PrintEvery(size: Int) {
     assert(size > 0)
   }
+
 }

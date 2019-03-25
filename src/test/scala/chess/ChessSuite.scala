@@ -54,7 +54,7 @@ class ChessSuite extends FunSuite {
 
   def areResultingBoardsTheExpectedOnes(table: Table, pieces: Map[Piece, Int],
                                         expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
-    blockingTest(table, pieces, duplicationAssertion = true, executeTimes = 1, countAssertion = _ => true)
+    blockingTest(table, pieces, duplicationAssertion = true, executeTimes = 100, countAssertion = _ => true)
     val obtainedBoards: Iterable[List[(Piece, (Int, Int))]] =
       for (solution <- SolutionPath.solutions(table, pieces.mapValues(c => Count(c))).blockingScalaIterable())
         yield {

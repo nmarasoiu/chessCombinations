@@ -3,7 +3,7 @@ package chess
 import chess.Enrichments._
 import io.reactivex.Flowable
 
-import scala.collection.immutable.{Map, TreeMap}
+import scala.collection.immutable.{Map, SortedMap}
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
@@ -13,19 +13,19 @@ object SolutionPath {
                         positions: PositionSet): Flowable[SubSolution] = {
     val root = SolutionPath(table, firstLevel = true, remainingPositions = positions,
       positionsTakenSoFar = PositionSet(), partialSolutionSoFar = SubSolution(),
-      remainingPieces = TreeMap[Piece, (Count, Position)]() ++ pieces.mapValues(count => (count, Position.zero)))
+      remainingPieces = pieces.mapValues(count => (count, Position.zero)).toSortedMap)
     root.solutions().toFlowable
   }
 }
 
-case class SolutionPath(table: Table,firstLevel: Boolean,
+case class SolutionPath(table: Table, firstLevel: Boolean,
                         remainingPositions: PositionSet,
                         positionsTakenSoFar: PositionSet,
                         partialSolutionSoFar: SubSolution,
-                        remainingPieces: Map[Piece, (Count, Position)]) {
+                        remainingPieces: SortedMap[Piece, (Count, Position)]) {
 
   def solutions(): Belt[SubSolution] = {
-    remainingPieces.minOption((x, y) => x.compare(y)) match {
+    remainingPieces.minOption() match {
       case None =>
         Belt(partialSolutionSoFar)
       case Some((piece, (count, minPosition))) =>

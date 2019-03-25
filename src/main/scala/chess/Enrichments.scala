@@ -1,23 +1,25 @@
 package chess
 
-import scala.collection.{AbstractIterable, SortedMap}
+import scala.collection.immutable.{SortedMap, TreeMap}
+import scala.collection.AbstractIterable
 
 object Enrichments {
 
-  implicit class RichMap[K, V](map: Map[K, V]) {
-    val none: Option[(K, V)] = None
+  implicit class RichMap[K, V](map: Map[K, V])(implicit ord: Ordering[K]) {
 
-    def minOption(implicit ord: Ordering[K]): Option[(K, V)] = {
+    def toSortedMap: SortedMap[K,V] = TreeMap[K,V]() ++ map
+
+    def minOption(): Option[(K, V)] = {
       if (map.isInstanceOf[SortedMap[K, V]]) {
         map.headOption
       } else if (map.isEmpty) {
         None
       } else {
-        Some(min(map))
+        Some(min)
       }
     }
 
-    def min(map: Map[K, V])(implicit ord: Ordering[K]): (K, V) = {
+    def min: (K, V) = {
       def reducer(kv1: (K, V), kv2: (K, V)): (K, V) = {
         if (ord.lt(kv1._1, kv2._1)) kv1 else kv2
       }
