@@ -1,7 +1,5 @@
 package chess
 
-import java.lang
-
 import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.parallel.ParallelFlowable
@@ -10,6 +8,8 @@ import io.reactivex.schedulers.Schedulers
 import scala.collection.JavaConverters._
 
 object FlowableUtils {
+
+  def fromIterable[T](scalaIterable: Iterable[T]): Flowable[T] = Flowable.fromIterable(scalaIterable.asJava)
 
   implicit class RichFlowable[A](flowable: Flowable[A]) {
 
@@ -35,9 +35,4 @@ object FlowableUtils {
 
     def blockingScalaIterable(): Iterable[A] = flowable.blockingIterable().asScala
   }
-
-  def fromIterable[T](scalaIterable: Iterable[T]): Flowable[T] = Flowable.fromIterable(scalaIterable.asJava)
-
-  def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
-
 }

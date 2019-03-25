@@ -16,8 +16,10 @@ sealed abstract class Belt[A] {
 object Belt {
   def apply[A](): Belt[A] = EmptyBelt[A]()
   def apply[A](a: A): Belt[A] = SingletonBelt(a)
-  def apply[A](iterable: Iterable[A])(inParallel: Boolean): Belt[A] =
+  def apply[A](iterable: Iterable[A])(inParallel: Boolean): Belt[A] = {
     if (inParallel) ParallelFlowableBelt(iterable) else FlowableBelt(iterable)
+//    IterableBelt(iterable) //todo why it generates so much memory consumption, both as uncollectable as well as collectable?
+  }
 }
 
 object EmptyBelt extends Belt[Nothing] {
