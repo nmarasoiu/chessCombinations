@@ -30,18 +30,18 @@ case class SolutionPath(table: Table, firstLevel: Boolean,
                         partialSolutionSoFar: SubSolution,
                         remainingPieces: SortedMap[Piece, (Count, Position)]) {
 
-  def solutions(): Belt[SubSolution] = {
+  def solutions(): ConveyorBelt[SubSolution] = {
     remainingPieces.minOption() match {
       case None =>
-        Belt(partialSolutionSoFar)
+        ConveyorBelt(partialSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
-        Belt(
+        ConveyorBelt(
           iterable = remainingPositions.iterableFrom(minPosition))(
           inParallel = firstLevel
         ).flatMap(position => {
           val incompatiblePositions = piece.incompatiblePositions(position, table)
           if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-            Belt()
+            ConveyorBelt()
           } else {
             val nextStep = SolutionPath(table, firstLevel = false,
               positionsTakenSoFar = positionsTakenSoFar + position,
