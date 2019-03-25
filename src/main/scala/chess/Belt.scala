@@ -2,8 +2,7 @@ package chess
 
 import java.util
 
-import chess.Enrichments.RichIterator
-import chess.FlowableUtils.fromIterable
+import chess.FlowableUtils.fromIterator
 import io.reactivex.Flowable
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
@@ -39,8 +38,8 @@ case class FlowableBelt[A](flowableA: Flowable[A]) extends Belt[A] {
 }
 
 object FlowableBelt {
-  def apply[A](iterableA: Iterable[A]): Belt[A] = {
-    FlowableBelt(fromIterable(iterableA))
+  def apply[A](iterator: Iterator[A]): Belt[A] = {
+    FlowableBelt(fromIterator(iterator))
   }
 }
 
@@ -52,7 +51,7 @@ case class ParallelFlowableBelt[A](parFlowableA: ParallelFlowable[A]) extends Be
 }
 
 object ParallelFlowableBelt {
-  def apply[A](iterableA: Iterable[A]): ParallelFlowableBelt[A] = apply(fromIterable(iterableA))
+  def apply[A](iteratorA: Iterator[A]): ParallelFlowableBelt[A] = apply(fromIterator(iteratorA))
 
   def apply[A](flowable: Flowable[A]): ParallelFlowableBelt[A] =
     ParallelFlowableBelt(flowable.parallel().runOn(Schedulers.computation()))
@@ -69,7 +68,7 @@ case class IteratorBelt[A](iteratorA: Iterator[A]) extends Belt[A] {
       }
     }))
 
-  override def toFlowable: Flowable[A] = fromIterable(iteratorA.toOneTimeIterable)
+  override def toFlowable: Flowable[A] = fromIterator(iteratorA)
 }
 
 case class ParIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
@@ -78,12 +77,12 @@ case class ParIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
       f(a) match {
         case EmptyBelt => Iterable()
         case SingletonBelt(aa) => Iterable(aa)
-        case IteratorBelt(iteratorB) => iteratorB.toOneTimeIterable
+        case IteratorBelt(iteratorB) => iteratorB
         case IterableBelt(iterableB) => iterableB
       }
     }))
 
-  override def toFlowable: Flowable[A] = fromIterable(parIterableA.seq)
+  override def toFlowable: Flowable[A] = fromIterator(parIterableA.seq.iterator)
 }
 
 object ParIteratorBelt {
@@ -92,7 +91,7 @@ object ParIteratorBelt {
     val trackCount = Runtime.getRuntime.availableProcessors()
     val batchSize = vector.length / trackCount
     import scala.collection.JavaConverters._
-    val flow: Flowable[A] = fromIterable(vector)
+    val flow: Flowable[A] = fromIterator(vector.iterator)
     val batchedFlow: Flowable[util.List[A]] = flow.buffer(batchSize)
 
     val par: ParSeq[util.List[A]] = batchedFlow.toList.blockingGet().asScala.par
@@ -107,12 +106,12 @@ case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
       f(a) match {
         case EmptyBelt => Iterable()
         case SingletonBelt(aa) => Iterable(aa)
-        case IteratorBelt(iteratorB) => iteratorB.toOneTimeIterable
+        case IteratorBelt(iteratorB) => iteratorB
         case IterableBelt(iterableB) => iterableB
       }
     }))
 
-  override def toFlowable: Flowable[A] = fromIterable(iterableA)
+  override def toFlowable: Flowable[A] = fromIterator(iterableA.iterator)
 }
 
 object Belt {
@@ -121,7 +120,7 @@ object Belt {
   def apply[A](a: A): Belt[A] = SingletonBelt(a)
 
   def apply[A](iterator: Iterator[A])(inParallel: Boolean): Belt[A] = {
-    if (inParallel) ParallelFlowableBelt(iterator.toOneTimeIterable) else FlowableBelt(iterator.toOneTimeIterable)
+    if (inParallel) ParallelFlowableBelt(iterator) else FlowableBelt(iterator)
     //        if (inParallel) ParIteratorBelt(iterator) else IteratorBelt(iterator)
   }
 }

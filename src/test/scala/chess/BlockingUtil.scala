@@ -51,8 +51,8 @@ object BlockingUtil {
           val solFlowable: Flowable[Sol] =
             solutionsFlowable
               .buffer(bufferSize.size)
-              .mapInParallel(solutions => solutions.iterator.asScala.map(Sol(_)).toOneTimeIterable.asJava)
-              .flatMap(iterable => Flowable.fromIterable(iterable))
+              .mapInParallel(solutions => solutions.iterator.asScala.map(Sol(_)))
+              .flatMap(iterator => FlowableUtils.fromIterator(iterator))
           /*
                 type Solutions = util.HashSet[Sol]
                 val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
@@ -88,12 +88,11 @@ object BlockingUtil {
       println(" computed in " + duration + " -> " + solutionCount + " solutionFlowable found," +
         " with running average=" + (sumTimes / countTimes))
       secondsSeq = seconds :: secondsSeq
-      val collection = secondsSeq
-        .map(_.doubleValue.asInstanceOf[java.lang.Double])
-        .asJavaCollection
       val percentiles = Quantiles.percentiles()
         .indexes(0, 1, 5, 10, 25, 50, 75, 80, 90, 95, 99, 100)
-        .compute(collection)
+        .compute(secondsSeq
+          .map(_.doubleValue.asInstanceOf[java.lang.Double])
+          .asJavaCollection)
         .asScala.toMap
         .toSortedMap
       println(percentiles)

@@ -5,6 +5,7 @@ import java.{lang, util}
 import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.schedulers.Schedulers
+import scala.collection.JavaConverters._
 
 object FlowableUtils {
 
@@ -29,16 +30,11 @@ object FlowableUtils {
 
     private def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
 
-    import scala.collection.JavaConverters._
-
     def blockingScalaIterable(): Iterable[A] = flowable.blockingIterable().asScala
   }
 
-  import scala.collection.JavaConverters._
-
-
-  def fromIterable[T](iterable: Iterable[T]): Flowable[T] =
-    Flowable.fromIterable(asJava(iterable))
+  def fromIterator[T](scalaIterator: Iterator[T]): Flowable[T] =
+    Flowable.fromIterable(() => scalaIterator.asJava)
 
   def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
 

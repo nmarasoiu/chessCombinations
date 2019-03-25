@@ -6,14 +6,20 @@ import io.reactivex.Flowable
 import scala.collection.immutable.{Map, SortedMap}
 
 object SolutionPath {
-  def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
+  def solutions(table: Table,
+                pieces: Map[Piece, Count]): Flowable[SubSolution] =
     solutions(table, pieces, positions = PositionSet(0 until table.area))
 
-  private def solutions(table: Table, pieces: Map[Piece, Count],
+  private def solutions(table: Table,
+                        pieces: Map[Piece, Count],
                         positions: PositionSet): Flowable[SubSolution] = {
-    val root = SolutionPath(table, firstLevel = true, remainingPositions = positions,
-      positionsTakenSoFar = PositionSet(), partialSolutionSoFar = SubSolution(),
-      remainingPieces = pieces.mapValues(count => (count, Position.zero)).toSortedMap)
+    val root = SolutionPath(table,
+      firstLevel = true,
+      remainingPositions = positions,
+      positionsTakenSoFar = PositionSet(),
+      partialSolutionSoFar = SubSolution(),
+      remainingPieces = pieces.toSortedMap.mapValues(count => (count, Position.zero)))
+
     root.solutions().toFlowable
   }
 }
@@ -37,14 +43,15 @@ case class SolutionPath(table: Table, firstLevel: Boolean,
           if (positionsTakenSoFar.intersects(incompatiblePositions)) {
             Belt()
           } else {
-            SolutionPath(table, firstLevel = false,
+            val nextStep = SolutionPath(table, firstLevel = false,
               positionsTakenSoFar = positionsTakenSoFar + position,
               remainingPositions = remainingPositions - incompatiblePositions,
               partialSolutionSoFar = partialSolutionSoFar + (piece, position),
               remainingPieces = count match {
                 case Count.one => remainingPieces - piece
                 case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
-              }).solutions()
+              })
+            nextStep.solutions()
           }
         })
     }

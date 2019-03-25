@@ -27,11 +27,4 @@ object Enrichments {
       map.reduce(reducer)
     }
   }
-
-  implicit class RichIterator[A](iteratorA: Iterator[A]) {
-    def toOneTimeIterable: Iterable[A] = new AbstractIterable[A](){
-      override def iterator: Iterator[A] = iteratorA
-    }
-  }
-
 }
