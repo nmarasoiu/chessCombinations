@@ -21,6 +21,9 @@ object BlockingUtil {
   val bufferSize: BufferSize = BufferSize(1024)
   val printEvery: PrintEvery = PrintEvery(5000000)
 
+  var sumTimes: Double = 0D
+  var countTimes = 0
+
   def blockingTest(table: Table, pieces: Map[Piece, Int], duplicationAssertion: Boolean): Long = {
     println("Computing..")
     val clock = Clock.systemUTC()
@@ -75,7 +78,12 @@ object BlockingUtil {
       }
 
     val t1 = clock.instant()
-    println(" computed in " + java.time.Duration.between(t0, t1) + " -> " + solutionCount + " solutionFlowable found")
+
+    val duration = java.time.Duration.between(t0, t1)
+    sumTimes += duration.getSeconds
+    countTimes += 1
+    println(" computed in " + duration + " -> " + solutionCount + " solutionFlowable found," +
+      " with running average=" + (sumTimes / countTimes))
 
     solutionCount
   }

@@ -2,20 +2,20 @@ package chess
 
 import io.reactivex.Flowable
 
-import scala.collection.immutable.{Map, SortedMap, TreeMap}
+import scala.collection.immutable.Map
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
     solutions(table, pieces, positions = PositionSet(0 until table.area))
 
   private def solutions(table: Table, pieces: Map[Piece, Count],
-                positions: PositionSet): Flowable[SubSolution] = {
+                        positions: PositionSet): Flowable[SubSolution] = {
     SolutionPath(table)
       .solutions(firstLevel = true,
         remainingPositions = positions,
         positionsTakenSoFar = PositionSet(),
         partialSolutionSoFar = SubSolution(),
-        remainingPieces = TreeMap[Piece, (Count, Position)]() ++ pieces.mapValues(count => (count, Position.zero)))
+        remainingPieces = pieces.mapValues(count => (count, Position.zero)))
       .flowable()
   }
 }
@@ -25,7 +25,7 @@ case class SolutionPath(table: Table) {
   def solutions(remainingPositions: PositionSet,
                 positionsTakenSoFar: PositionSet,
                 partialSolutionSoFar: SubSolution,
-                remainingPieces: SortedMap[Piece, (Count, Position)],
+                remainingPieces: Map[Piece, (Count, Position)],
                 firstLevel: Boolean): Belt[SubSolution] = {
 
     def solutionsForPick(position: Position, piece: Piece, count: Count): Belt[SubSolution] = {
@@ -43,8 +43,8 @@ case class SolutionPath(table: Table) {
           })
       }
     }
-
-    remainingPieces.headOption match {
+    import Enrichments._
+    remainingPieces.minOption((x, y) => x.compare(y)) match {
       case None =>
         Belt(partialSolutionSoFar)
       case Some((piece, (count, minPosition))) =>

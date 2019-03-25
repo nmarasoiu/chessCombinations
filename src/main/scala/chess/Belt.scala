@@ -5,6 +5,8 @@ import io.reactivex.Flowable
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
 
+import scala.collection.AbstractIterable
+
 //todo in parallel using cores;
 // gc high again
 // compilations errors - https://www.jetbrains.com/help/idea/troubleshoot-common-scala-issues.html
@@ -16,16 +18,24 @@ sealed abstract class Belt[A] {
   def flatMap[B](f: A => Belt[B]): Belt[B]
 }
 
+
 object Belt {
+
   def apply[A](): Belt[A] = EmptyBelt[A]()
 
   def apply[A](a: A): Belt[A] = SingletonBelt(a)
 
   def apply[A](iterator: Iterator[A])(inParallel: Boolean): Belt[A] = {
+
+    implicit class RichIterator(iteratorA: Iterator[A]) {// 7.5S to 18S todo compute median
+      def toOneTimeIterable: Iterable[A] = new AbstractIterable[A](){
+        override def iterator: Iterator[A] = iteratorA
+      }
+    }
     if (inParallel)
-      ParallelFlowableBelt(iterator.toIterable)
+      ParallelFlowableBelt(iterator.toOneTimeIterable)
     else
-      FlowableBelt(iterator.toIterable)
+      FlowableBelt(iterator.toOneTimeIterable)
   }
 }
 
@@ -68,7 +78,7 @@ case class IteratorBelt[A](iteratorA: Iterator[A]) extends Belt[A] {
       }
     }))
 
-  override def flowable(): Flowable[A] = fromIterable(iteratorA.toIterable)
+  override def flowable(): Flowable[A] = ??? // fromIterable(iteratorA.toIterable)
 }
 
 
