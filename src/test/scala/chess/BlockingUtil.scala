@@ -3,10 +3,10 @@ package chess
 import java.time.Clock
 import java.util
 
+import chess.Enrichments._
 import chess.FlowableUtils._
 import com.google.common.math.Quantiles
 import io.reactivex.Flowable
-import Enrichments._
 
 import scala.collection.JavaConverters._
 
@@ -92,7 +92,7 @@ object BlockingUtil {
         .map(_.doubleValue.asInstanceOf[java.lang.Double])
         .asJavaCollection
       val percentiles = Quantiles.percentiles()
-        .indexes(50, 75, 80, 90, 95, 99)
+        .indexes(0, 1, 5, 10, 25, 50, 75, 80, 90, 95, 99, 100)
         .compute(collection)
         .asScala.toMap
         .toSortedMap
