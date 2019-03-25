@@ -34,7 +34,8 @@ object FlowableUtils {
   }
 
   def fromIterator[T](scalaIterator: Iterator[T]): Flowable[T] =
-    Flowable.fromIterable(() => scalaIterator.asJava)
+    Flowable.fromIterable(() => scalaIterator.asJava) //this is a oneTimeIterable meaning a not correct iterable if one needs to get multiple times iterator,
+  // but probably more efficient, todo check efficiency gain
 
   def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
 
