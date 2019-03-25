@@ -2,7 +2,7 @@ package chess
 
 import io.reactivex.Flowable
 
-import scala.collection.immutable.Map
+import scala.collection.immutable.{Map, TreeMap}
 
 object SolutionPath {
   def solutions(table: Table, pieces: Map[Piece, Count]): Flowable[SubSolution] =
@@ -15,7 +15,8 @@ object SolutionPath {
         remainingPositions = positions,
         positionsTakenSoFar = PositionSet(),
         partialSolutionSoFar = SubSolution(),
-        remainingPieces = pieces.mapValues(count => (count, Position.zero)))
+        remainingPieces = TreeMap[Piece,(Count,Position)]()
+          ++ pieces.mapValues(count => (count, Position.zero)))
       .flowable()
   }
 }

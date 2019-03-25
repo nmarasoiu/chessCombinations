@@ -1,12 +1,16 @@
 package chess
 
+import scala.collection.{AbstractIterable, SortedMap}
+
 object Enrichments {
 
   implicit class RichMap[K, V](map: Map[K, V]) {
     val none: Option[(K, V)] = None
 
     def minOption(implicit ord: Ordering[K]): Option[(K, V)] = {
-      if (map.isEmpty) {
+      if (map.isInstanceOf[SortedMap[K, V]]) {
+        map.headOption
+      } else if (map.isEmpty) {
         None
       } else {
         Some(min(map))
@@ -19,6 +23,12 @@ object Enrichments {
       }
 
       map.reduce(reducer)
+    }
+  }
+
+  implicit class RichIterator[A](iteratorA: Iterator[A]) {
+    def toOneTimeIterable: Iterable[A] = new AbstractIterable[A](){
+      override def iterator: Iterator[A] = iteratorA
     }
   }
 

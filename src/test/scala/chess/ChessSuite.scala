@@ -15,11 +15,6 @@ class ChessSuite extends FunSuite {
     def apply(horizontal: Int, vertical: Int): Table = Table(Horizontal(horizontal), Vertical(vertical))
   }
 
-  test("Example 3, the variety: '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
-    for ((duplicationAssertion, count) <- Map(false -> 9023, true -> 1); _ <- 1 to count) //PT2M18.372S -> 22684916
-      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1), duplicationAssertion) >= 3063828)
-  }
-
   test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
       Table2(3, 3), Map(King -> 2, Rook -> 1), Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2)))))
@@ -32,27 +27,34 @@ class ChessSuite extends FunSuite {
         Set((Rook, (2, 0)), (Knight, (1, 1)), (Knight, (3, 1)), (Rook, (0, 2)), (Knight, (1, 3)), (Knight, (3, 3)))))
   }
 
+  test("Example 3, the variety: '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
+    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1),
+      duplicationAssertion = false, executeTimes = 900, countAssertion = _ >= 3063828)
+  }
+
   test("Example 3, the variety: '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {
-    for ((duplicationAssertion, count) <- Map(false -> 12, true -> 1); _ <- 1 to count) //PT14M25.339S -> 40497650
-      assert(blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion) >= 2895708)
+    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2),
+      duplicationAssertion = false, executeTimes = 900, countAssertion = _ >= 2895708)
   }
 
   test("Example 3, the variety: '2 of each piece incl Rook' should return the solutions, and that there are no duplicates in the returned solutions") {
-    //PT9.784S -> 575352
-    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2), duplicationAssertion = true)
+    blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2, Rook -> 2),
+      duplicationAssertion = false, executeTimes = 1, countAssertion = _ => true)
   }
 
   test("Example 7x8 should return the solutions, and that there are no duplicates in the returned solutions") {
-    blockingTest(Table2(horizontal = 7, vertical = 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false)
+    blockingTest(Table2(horizontal = 7, vertical = 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2),
+      duplicationAssertion = false, executeTimes = 900, countAssertion = _ => true)
   }
 
   test("Example 8x8 should return the solutions, and that there are no duplicates in the returned solutions") {
-    blockingTest(Table2(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2), duplicationAssertion = false)
+    blockingTest(Table2(8, 8), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 2),
+      duplicationAssertion = false, executeTimes = 900, countAssertion = _ => false)
   }
 
   def areResultingBoardsTheExpectedOnes(table: Table, pieces: Map[Piece, Int],
                                         expectedBoards: Set[Set[(Piece, (Int, Int))]]) {
-    blockingTest(table, pieces, duplicationAssertion = true)
+    blockingTest(table, pieces, duplicationAssertion = true, executeTimes = 1, countAssertion = _ => true)
     val obtainedBoards: Iterable[List[(Piece, (Int, Int))]] =
       for (solution <- SolutionPath.solutions(table, pieces.mapValues(c => Count(c))).blockingScalaIterable())
         yield {
