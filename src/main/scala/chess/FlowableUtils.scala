@@ -1,10 +1,11 @@
 package chess
 
-import java.{lang, util}
+import java.lang
 
 import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.schedulers.Schedulers
+
 import scala.collection.JavaConverters._
 
 object FlowableUtils {
@@ -33,9 +34,7 @@ object FlowableUtils {
     def blockingScalaIterable(): Iterable[A] = flowable.blockingIterable().asScala
   }
 
-  def fromIterator[T](scalaIterator: Iterator[T]): Flowable[T] =
-    Flowable.fromIterable(() => scalaIterator.asJava) //this is a oneTimeIterable meaning a not correct iterable if one needs to get multiple times iterator,
-  // but probably more efficient, todo check efficiency gain
+  def fromIterable[T](scalaIterable: Iterable[T]): Flowable[T] = Flowable.fromIterable(scalaIterable.asJava)
 
   def asJava[T](scalaIterable: Iterable[T]): lang.Iterable[T] = scalaIterable.asJava
 

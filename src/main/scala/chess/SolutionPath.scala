@@ -36,7 +36,7 @@ case class SolutionPath(table: Table, firstLevel: Boolean,
         Belt(partialSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
         Belt(
-          iterator = remainingPositions.iteratorFrom(minPosition))(
+          iterable = remainingPositions.iterableFrom(minPosition))(
           inParallel = firstLevel
         ).flatMap(position => {
           val incompatiblePositions = piece.incompatiblePositions(position, table)

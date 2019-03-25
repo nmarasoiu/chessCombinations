@@ -51,8 +51,8 @@ object BlockingUtil {
           val solFlowable: Flowable[Sol] =
             solutionsFlowable
               .buffer(bufferSize.size)
-              .mapInParallel(solutions => solutions.iterator.asScala.map(Sol(_)))
-              .flatMap(iterator => FlowableUtils.fromIterator(iterator))
+              .mapInParallel(solutions => solutions.asScala.map(Sol(_)))
+              .flatMap(iterable => FlowableUtils.fromIterable(iterable))
           /*
                 type Solutions = util.HashSet[Sol]
                 val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
