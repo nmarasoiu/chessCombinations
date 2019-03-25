@@ -46,7 +46,6 @@ object BlockingUtil {
           object Sol {
             def apply(solution: SubSolution): Sol = Sol(solution.picks.toStream.map(pickInt).toArray.sorted)
           }
-          import Enrichments._
 
           val solFlowable: Flowable[Sol] =
             solutionsFlowable
