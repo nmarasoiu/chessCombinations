@@ -36,7 +36,7 @@ package object chess {
   //todo remove duplication between X and Y with type programming w.g. abstract member class
   // & see with assertRange
   case class X(x: Int) {
-//    assertRange(x, minValue = 0, maxValue = sevenBits, classOf[X])
+    //    assertRange(x, minValue = 0, maxValue = sevenBits, classOf[X])
 
     def +(len: XOffset): X = X(x + len.xOffsetInt)
 
@@ -46,9 +46,8 @@ package object chess {
   }
 
 
-
   case class Y(y: Int) {
-//    assertRange(y, minValue = 0, maxValue = sevenBits, classOf[Y])
+    //    assertRange(y, minValue = 0, maxValue = sevenBits, classOf[Y])
 
     def +(len: YOffset): Y = Y(y + len.yOffsetInt)
 
@@ -146,10 +145,15 @@ package object chess {
 
   case class SubSolution(picks: List[Pick]) {
     def +(pick: Pick): SubSolution = SubSolution(pick :: picks)
+
+    def +(piecePosition: (Piece, Position)): SubSolution = piecePosition match {
+      case (piece, position) => this.+(Pick(piece, position))
+    }
   }
 
   object SubSolution {
     val Empty = SubSolution(Nil)
+
     def apply(): SubSolution = Empty
   }
 

@@ -1,5 +1,6 @@
 package chess
 
+import chess.Enrichments._
 import io.reactivex.Flowable
 
 import scala.collection.immutable.{Map, TreeMap}
@@ -10,41 +11,20 @@ object SolutionPath {
 
   private def solutions(table: Table, pieces: Map[Piece, Count],
                         positions: PositionSet): Flowable[SubSolution] = {
-    val root = SolutionPath(table,
-      firstLevel = true,
-      remainingPositions = positions,
-      positionsTakenSoFar = PositionSet(),
-      partialSolutionSoFar = SubSolution(),
+    val root = SolutionPath(table, firstLevel = true, remainingPositions = positions,
+      positionsTakenSoFar = PositionSet(), partialSolutionSoFar = SubSolution(),
       remainingPieces = TreeMap[Piece, (Count, Position)]() ++ pieces.mapValues(count => (count, Position.zero)))
     root.solutions().toFlowable
   }
 }
 
-case class SolutionPath(table: Table,
+case class SolutionPath(table: Table,firstLevel: Boolean,
                         remainingPositions: PositionSet,
                         positionsTakenSoFar: PositionSet,
                         partialSolutionSoFar: SubSolution,
-                        remainingPieces: Map[Piece, (Count, Position)],
-                        firstLevel: Boolean) {
+                        remainingPieces: Map[Piece, (Count, Position)]) {
 
   def solutions(): Belt[SubSolution] = {
-
-    def solutionsForPick(position: Position, piece: Piece, count: Count): Belt[SubSolution] = {
-      val incompatiblePositions = piece.incompatiblePositions(position, table)
-      if (positionsTakenSoFar.intersects(incompatiblePositions)) {
-        Belt()
-      } else {
-        SolutionPath(table, firstLevel = false,
-          positionsTakenSoFar = positionsTakenSoFar + position,
-          remainingPositions = remainingPositions - incompatiblePositions,
-          partialSolutionSoFar = partialSolutionSoFar + Pick(piece, position),
-          remainingPieces = count match {
-            case Count.one => remainingPieces - piece
-            case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
-          }).solutions()
-      }
-    }
-    import Enrichments._
     remainingPieces.minOption((x, y) => x.compare(y)) match {
       case None =>
         Belt(partialSolutionSoFar)
@@ -52,8 +32,21 @@ case class SolutionPath(table: Table,
         Belt(
           iterator = remainingPositions.iteratorFrom(minPosition))(
           inParallel = firstLevel
-        ).flatMap(
-          position => solutionsForPick(position, piece, count))
+        ).flatMap(position => {
+          val incompatiblePositions = piece.incompatiblePositions(position, table)
+          if (positionsTakenSoFar.intersects(incompatiblePositions)) {
+            Belt()
+          } else {
+            SolutionPath(table, firstLevel = false,
+              positionsTakenSoFar = positionsTakenSoFar + position,
+              remainingPositions = remainingPositions - incompatiblePositions,
+              partialSolutionSoFar = partialSolutionSoFar + (piece, position),
+              remainingPieces = count match {
+                case Count.one => remainingPieces - piece
+                case _ => remainingPieces + (piece -> (count.decremented(), position.next()))
+              }).solutions()
+          }
+        })
     }
   }
 }
