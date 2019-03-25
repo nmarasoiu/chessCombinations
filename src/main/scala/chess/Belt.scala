@@ -4,7 +4,6 @@ import java.util
 
 import chess.Enrichments.RichIterator
 import chess.FlowableUtils.fromIterable
-import chess.ParIteratorBelt.IterableBelt
 import io.reactivex.Flowable
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
@@ -12,26 +11,11 @@ import io.reactivex.schedulers.Schedulers
 import scala.collection.parallel.ParIterable
 import scala.collection.parallel.mutable.ParSeq
 
-//todo in parallel using cores;
-// gc high again
-// compilations errors - https://www.jetbrains.com/help/idea/troubleshoot-common-scala-issues.html
-// remove redundancies in this file
 sealed abstract class Belt[A] {
 
   def flowable(): Flowable[A]
 
   def flatMap[B](f: A => Belt[B]): Belt[B]
-}
-
-object Belt {
-  def apply[A](): Belt[A] = EmptyBelt[A]()
-
-  def apply[A](a: A): Belt[A] = SingletonBelt(a)
-
-  def apply[A](iterator: Iterator[A])(inParallel: Boolean): Belt[A] = {
-    if (inParallel) ParallelFlowableBelt(iterator.toOneTimeIterable) else FlowableBelt(iterator.toOneTimeIterable)
-    //    if (inParallel) ParallelIteratorBelt(iterator) else IteratorBelt(iterator)
-  }
 }
 
 object EmptyBelt extends Belt[Nothing] {
@@ -89,9 +73,9 @@ case class IteratorBelt[A](iteratorA: Iterator[A]) extends Belt[A] {
   override def flowable(): Flowable[A] = fromIterable(iteratorA.toOneTimeIterable)
 }
 
-case class ParIteratorBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
+case class ParIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] =
-    ParIteratorBelt(parIterableA.flatMap(a => {
+    ParIterableBelt(parIterableA.flatMap(a => {
       f(a) match {
         case EmptyBelt => Iterable()
         case SingletonBelt(aa) => Iterable(aa)
@@ -113,22 +97,32 @@ object ParIteratorBelt {
     val batchedFlow: Flowable[util.List[A]] = flow.buffer(batchSize)
 
     val par: ParSeq[util.List[A]] = batchedFlow.toList.blockingGet().asScala.par
-    ParIteratorBelt(par)
+    ParIterableBelt(par)
       .flatMap(lst => IterableBelt(lst.asScala))
   }
+}
 
-  case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
-    override def flatMap[B](f: A => Belt[B]): Belt[B] =
-      IterableBelt(iterableA.flatMap(a => {
-        f(a) match {
-          case EmptyBelt => Iterable()
-          case SingletonBelt(aa) => Iterable(aa)
-          case IteratorBelt(iteratorB) => iteratorB.toOneTimeIterable
-          case IterableBelt(iterableB) => iterableB
-        }
-      }))
+case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
+  override def flatMap[B](f: A => Belt[B]): Belt[B] =
+    IterableBelt(iterableA.flatMap(a => {
+      f(a) match {
+        case EmptyBelt => Iterable()
+        case SingletonBelt(aa) => Iterable(aa)
+        case IteratorBelt(iteratorB) => iteratorB.toOneTimeIterable
+        case IterableBelt(iterableB) => iterableB
+      }
+    }))
 
-    override def flowable(): Flowable[A] = fromIterable(iterableA)
+  override def flowable(): Flowable[A] = fromIterable(iterableA)
+}
+
+object Belt {
+  def apply[A](): Belt[A] = EmptyBelt[A]()
+
+  def apply[A](a: A): Belt[A] = SingletonBelt(a)
+
+  def apply[A](iterator: Iterator[A])(inParallel: Boolean): Belt[A] = {
+    if (inParallel) ParallelFlowableBelt(iterator.toOneTimeIterable) else FlowableBelt(iterator.toOneTimeIterable)
+    //        if (inParallel) ParIteratorBelt(iterator) else IteratorBelt(iterator)
   }
-
 }
