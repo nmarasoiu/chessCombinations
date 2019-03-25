@@ -9,49 +9,36 @@ import scala.collection.parallel.ParIterable
 
 sealed abstract class Belt[A] {
   def flatMap[B](f: A => Belt[B]): Belt[B]
-
-  def toFlowable: Flowable[A]
+  def toFlowable: Flowable[A] = fromIterable(toIterable)
+  def toIterable: Iterable[A]
 }
 
 object EmptyBelt extends Belt[Nothing] {
   def apply[A](): Belt[A] = EmptyBelt.asInstanceOf[Belt[A]]
-
   override def flatMap[B](f: Nothing => Belt[B]): Belt[B] = EmptyBelt()
-
+  override def toIterable: Iterable[Nothing] = Iterable()
   override def toFlowable: Flowable[Nothing] = Flowable.empty()
 }
 
 case class SingletonBelt[A](a: A) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] = f(a)
-
   override def toFlowable: Flowable[A] = Flowable.just(a)
+  override def toIterable: Iterable[A] = Iterable(a)
 }
 
 
 case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
-  override def flatMap[B](f: A => Belt[B]): Belt[B] =
-    IterableBelt(iterableA.flatMap(a => {
-      f(a) match {
-        case EmptyBelt => Iterable()
-        case SingletonBelt(aa) => Iterable(aa)
-        case IterableBelt(iterableB) => iterableB
-      }
-    }))
+  override def toIterable: Iterable[A] = iterableA
 
-  override def toFlowable: Flowable[A] = fromIterable(iterableA)
+  override def flatMap[B](f: A => Belt[B]): Belt[B] =
+    IterableBelt(iterableA.flatMap(a => f(a).toIterable))
 }
 
-case class ParIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
-  override def flatMap[B](f: A => Belt[B]): Belt[B] =
-    ParIterableBelt(parIterableA.flatMap(a => {
-      f(a) match {
-        case EmptyBelt => Iterable()
-        case SingletonBelt(aa) => Iterable(aa)
-        case IterableBelt(iterableB) => iterableB
-      }
-    }))
+case class ParallelIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
+  override def toIterable: Iterable[A] = parIterableA.seq
 
-  override def toFlowable: Flowable[A] = fromIterable(parIterableA.seq)
+  override def flatMap[B](f: A => Belt[B]): Belt[B] =
+    ParallelIterableBelt(parIterableA.flatMap(a => f(a).toIterable))
 }
 
 
@@ -60,6 +47,7 @@ case class FlowableBelt[A](flowableA: Flowable[A]) extends Belt[A] {
     FlowableBelt(flowableA.flatMap(a => f(a).toFlowable))
 
   override def toFlowable: Flowable[A] = flowableA
+  override def toIterable: Iterable[A] = ???
 }
 
 object FlowableBelt {
@@ -73,6 +61,7 @@ case class ParallelFlowableBelt[A](parFlowableA: ParallelFlowable[A]) extends Be
     ParallelFlowableBelt(parFlowableA.flatMap(a => f(a).toFlowable))
 
   override def toFlowable: Flowable[A] = parFlowableA.sequential()
+  override def toIterable: Iterable[A] = ???
 }
 
 object ParallelFlowableBelt {
