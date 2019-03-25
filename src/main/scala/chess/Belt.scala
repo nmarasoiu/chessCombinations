@@ -12,10 +12,9 @@ import scala.collection.parallel.ParIterable
 import scala.collection.parallel.mutable.ParSeq
 
 sealed abstract class Belt[A] {
-
-  def flowable(): Flowable[A]
-
   def flatMap[B](f: A => Belt[B]): Belt[B]
+
+  def toFlowable: Flowable[A]
 }
 
 object EmptyBelt extends Belt[Nothing] {
@@ -23,20 +22,20 @@ object EmptyBelt extends Belt[Nothing] {
 
   override def flatMap[B](f: Nothing => Belt[B]): Belt[B] = EmptyBelt()
 
-  override def flowable(): Flowable[Nothing] = Flowable.empty()
+  override def toFlowable: Flowable[Nothing] = Flowable.empty()
 }
 
 case class SingletonBelt[A](a: A) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] = f(a)
 
-  override def flowable(): Flowable[A] = Flowable.just(a)
+  override def toFlowable: Flowable[A] = Flowable.just(a)
 }
 
 case class FlowableBelt[A](flowableA: Flowable[A]) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] =
-    FlowableBelt(flowableA.flatMap(a => f(a).flowable()))
+    FlowableBelt(flowableA.flatMap(a => f(a).toFlowable))
 
-  override def flowable(): Flowable[A] = flowableA
+  override def toFlowable: Flowable[A] = flowableA
 }
 
 object FlowableBelt {
@@ -47,9 +46,9 @@ object FlowableBelt {
 
 case class ParallelFlowableBelt[A](parFlowableA: ParallelFlowable[A]) extends Belt[A] {
   override def flatMap[B](f: A => Belt[B]): Belt[B] =
-    ParallelFlowableBelt(parFlowableA.flatMap(a => f(a).flowable()))
+    ParallelFlowableBelt(parFlowableA.flatMap(a => f(a).toFlowable))
 
-  override def flowable(): Flowable[A] = parFlowableA.sequential()
+  override def toFlowable: Flowable[A] = parFlowableA.sequential()
 }
 
 object ParallelFlowableBelt {
@@ -70,7 +69,7 @@ case class IteratorBelt[A](iteratorA: Iterator[A]) extends Belt[A] {
       }
     }))
 
-  override def flowable(): Flowable[A] = fromIterable(iteratorA.toOneTimeIterable)
+  override def toFlowable: Flowable[A] = fromIterable(iteratorA.toOneTimeIterable)
 }
 
 case class ParIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
@@ -84,7 +83,7 @@ case class ParIterableBelt[A](parIterableA: ParIterable[A]) extends Belt[A] {
       }
     }))
 
-  override def flowable(): Flowable[A] = fromIterable(parIterableA.seq)
+  override def toFlowable: Flowable[A] = fromIterable(parIterableA.seq)
 }
 
 object ParIteratorBelt {
@@ -113,7 +112,7 @@ case class IterableBelt[A](iterableA: Iterable[A]) extends Belt[A] {
       }
     }))
 
-  override def flowable(): Flowable[A] = fromIterable(iterableA)
+  override def toFlowable: Flowable[A] = fromIterable(iterableA)
 }
 
 object Belt {
