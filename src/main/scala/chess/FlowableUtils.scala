@@ -4,6 +4,7 @@ import java.lang
 
 import io.reactivex.Flowable
 import io.reactivex.functions.{Function => RxFunction}
+import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
 
 import scala.collection.JavaConverters._
@@ -17,11 +18,12 @@ object FlowableUtils {
     private def mapScala[B](mapper: A => B)(inParallel: Boolean): Flowable[B] =
       flatMapScala(a => Flowable.just(mapper(a)))(inParallel)
 
+    def parallelOnComputation(): ParallelFlowable[A] = flowable.parallel().runOn(Schedulers.computation())
+
     private def flatMapScala[B](mapper: A => Flowable[B])(inParallel: Boolean): Flowable[B] = {
       if (inParallel)
         flowable
-          .parallel()
-          .runOn(Schedulers.computation())
+          .parallelOnComputation()
           .flatMap(asRxFunction(mapper))
           .sequential()
       else

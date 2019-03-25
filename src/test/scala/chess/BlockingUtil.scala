@@ -9,6 +9,7 @@ import com.google.common.math.Quantiles
 import io.reactivex.Flowable
 
 import scala.collection.JavaConverters._
+import scala.util.Random
 
 object BlockingUtil {
 
@@ -96,6 +97,7 @@ object BlockingUtil {
         .toSortedMap
       println(percentiles)
       assert(countAssertion(solutionCount))
+      Thread.sleep(math.abs(Random.nextLong() % 543))
     }
   }
 
