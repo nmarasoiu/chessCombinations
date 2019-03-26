@@ -1,5 +1,6 @@
-package chess
+package chess.model
 
+import chess.{PositionSet, PositionSet2}
 import enumeratum.{Enum, EnumEntry}
 import scalaz.Memo
 

@@ -1,6 +1,7 @@
 package chess
 
 import chess.BlockingUtil.Sol
+import chess.model.{Piece, _}
 
 case class PieceAndCoordinates(piece: Piece, coordinates: (Int, Int))
 

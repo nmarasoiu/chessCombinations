@@ -1,6 +1,7 @@
 package chess
 
-import chess.Enrichments._
+import chess.extensions.MapExtension._
+import chess.model._
 import io.reactivex.Flowable
 
 import scala.collection.immutable.{Map, SortedMap}

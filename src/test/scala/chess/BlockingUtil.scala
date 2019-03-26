@@ -4,8 +4,9 @@ import java.time.Clock
 import java.util
 import java.util.concurrent.Callable
 
-import chess.Enrichments._
-import chess.FlowableUtils._
+import chess.extensions.MapExtension._
+import chess.extensions.FlowableUtils._
+import chess.model.{Piece, _}
 import com.google.common.math.Quantiles
 import io.reactivex.Flowable
 import io.reactivex.functions.BiFunction

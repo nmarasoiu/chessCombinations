@@ -1,8 +1,8 @@
-package chess
+package chess.extensions
 
 import scala.collection.immutable.{SortedMap, TreeMap}
 
-object Enrichments {
+object MapExtension {
   implicit class RichMap[K, V](map: Map[K, V])(implicit ord: Ordering[K]) {
 
     def toSortedMap: SortedMap[K, V] = TreeMap[K, V]() ++ map

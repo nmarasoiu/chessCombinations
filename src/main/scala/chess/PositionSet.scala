@@ -1,6 +1,7 @@
 package chess
 
 import chess.CollectionEnrichments.RichIterator
+import chess.model.Position
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.BitSet

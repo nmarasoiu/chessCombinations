@@ -1,5 +1,6 @@
 package chess
 
+import chess.model._
 import org.scalatest.FunSuite
 
 class PositionInTableProperties extends FunSuite {
@@ -12,7 +13,7 @@ class PositionInTableProperties extends FunSuite {
 
       val horizontal = Horizontal(horizontalInt)
       val vertical = Vertical(verticalInt)
-      val table = chess.Table(horizontal, vertical)
+      val table = Table(horizontal, vertical)
       val position = Position(positionInt)
       val positionInTable = PositionInTable(position, table)
       val (resultTable, resultPosition) = positionInTable.tableAndPosition

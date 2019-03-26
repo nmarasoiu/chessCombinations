@@ -1,10 +1,8 @@
-package chess
+package chess.extensions
 
 import io.reactivex.Flowable
-import io.reactivex.functions.{Function => RxFunction}
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
-
 import scala.collection.JavaConverters._
 
 object FlowableUtils {
@@ -31,7 +29,8 @@ object FlowableUtils {
           .flatMap(asRxFunction(mapper))
     }
 
-    private def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
+    import io.reactivex.functions.{Function=>RxFunction}
+    def asRxFunction[AA, BB](func: AA => BB): RxFunction[AA, BB] = func(_)
 
     def blockingScalaIterable(): Iterable[A] = flowable.blockingIterable().asScala
   }

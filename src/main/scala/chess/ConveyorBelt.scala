@@ -1,6 +1,6 @@
 package chess
 
-import chess.FlowableUtils._
+import chess.extensions.FlowableUtils._
 import io.reactivex.Flowable
 import io.reactivex.parallel.ParallelFlowable
 

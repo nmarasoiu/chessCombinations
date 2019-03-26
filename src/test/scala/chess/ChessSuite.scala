@@ -1,8 +1,9 @@
 package chess
 
 import chess.BlockingUtil._
-import chess.FlowableUtils._
-import chess.Piece._
+import chess.extensions.FlowableUtils._
+import chess.model.Piece._
+import chess.model._
 import org.scalatest.FunSuite
 
 import scala.collection.immutable.Map
