@@ -1,6 +1,5 @@
 package chess
 
-import chess.CollectionEnrichments.RichIterator
 import chess.model.Position
 
 import scala.collection.JavaConverters._
@@ -17,10 +16,15 @@ case class PositionSet(bitSet: BitSet) {
   def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
   def iterableFrom(minPosition: Position): Iterable[Position] = {
-    RichIterator[Int](_ => bitSet
-      .iteratorFrom(minPosition.value)
-    ).toResubscribeIterable
-      .map(Position(_))
+    def bitsIterator: Iterator[Int] = bitSet.iteratorFrom(minPosition.value)
+
+    def iterableWithNewIterator: Iterable[Position] =
+      new java.lang.Iterable[Position] {
+        override def iterator(): java.util.Iterator[Position] =
+          bitsIterator.map(Position(_)).asJava
+      }.asScala
+
+    iterableWithNewIterator
   }
 }
 
@@ -36,15 +40,3 @@ object PositionSet2 {
   def apply(positions: Seq[Position]): PositionSet = PositionSet(positions.map(_.value))
 }
 
-object CollectionEnrichments {
-
-  case class RichIterator[A](originalIteratorFactory: Unit => Iterator[A]) {
-    lazy val toResubscribeIterable: Iterable[A] =
-      new java.lang.Iterable[A] {
-        override def iterator(): java.util.Iterator[A] = {
-          originalIteratorFactory.apply().asJava
-        }
-      }.asScala
-  }
-
-}
