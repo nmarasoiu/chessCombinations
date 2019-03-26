@@ -1,5 +1,8 @@
 package chess
 
+import java.{lang, util}
+
+import chess.extensions.CollectionsExtensions.IteratorFactoryBasedIterable
 import chess.model.Position
 
 import scala.collection.JavaConverters._
@@ -13,18 +16,11 @@ case class PositionSet(bitSet: BitSet) {
 
   def intersects(that: PositionSet): Boolean = (bitSet & that.bitSet).nonEmpty
 
-  def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
   def iterableFrom(minPosition: Position): Iterable[Position] = {
-    def bitsIterator: Iterator[Int] = bitSet.iteratorFrom(minPosition.value)
-
-    def iterableWithNewIterator: Iterable[Position] =
-      new java.lang.Iterable[Position] {
-        override def iterator(): java.util.Iterator[Position] =
-          bitsIterator.map(Position(_)).asJava
-      }.asScala
-
-    iterableWithNewIterator
+    IteratorFactoryBasedIterable(
+      () => bitSet.iteratorFrom(minPosition.value))
+      .map(Position(_))
   }
 }
 

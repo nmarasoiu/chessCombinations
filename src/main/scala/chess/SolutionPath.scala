@@ -1,6 +1,6 @@
 package chess
 
-import chess.extensions.MapExtension._
+import chess.extensions.CollectionsExtensions._
 import chess.model._
 import io.reactivex.Flowable
 

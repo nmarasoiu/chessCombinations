@@ -4,7 +4,7 @@ import java.time.Clock
 import java.util
 import java.util.concurrent.Callable
 
-import chess.extensions.MapExtension._
+import chess.extensions.CollectionsExtensions._
 import chess.extensions.FlowableUtils._
 import chess.model.{Piece, _}
 import com.google.common.math.Quantiles

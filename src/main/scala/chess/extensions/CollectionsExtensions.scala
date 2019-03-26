@@ -1,8 +1,20 @@
 package chess.extensions
 
+import java.{lang, util}
+import scala.collection.JavaConverters._
 import scala.collection.immutable.{SortedMap, TreeMap}
 
-object MapExtension {
+object CollectionsExtensions {
+
+  object IteratorFactoryBasedIterable {
+    def apply[A](iteratorFactory: () => Iterator[A]): Iterable[A] =
+      new IteratorFactoryBasedIterable(iteratorFactory).asScala
+  }
+
+  private class IteratorFactoryBasedIterable[A](val iteratorFactory: () => Iterator[A]) extends lang.Iterable[A] {
+    override def iterator(): util.Iterator[A] = iteratorFactory.apply().asJava
+  }
+
   implicit class RichMap[K, V](map: Map[K, V])(implicit ord: Ordering[K]) {
 
     def toSortedMap: SortedMap[K, V] = TreeMap[K, V]() ++ map
