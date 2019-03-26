@@ -21,8 +21,7 @@ object ConveyorBelt {
 
   def apply[A](a: A): ConveyorBelt[A] = SingletonConveyorBelt(a)
 
-  def apply[A](iterable: Iterable[A],
-               inParallel: Boolean): ConveyorBelt[A] =
+  def apply[A](iterable: Iterable[A], inParallel: Boolean): ConveyorBelt[A] =
     if (!inParallel) {
       FlowableConveyorBelt(iterable)
     } else {
@@ -76,6 +75,7 @@ case class ParallelFlowableConveyorBelt[A](parFlowableA: ParallelFlowable[A]) ex
     ParallelFlowableConveyorBelt(parFlowableA.flatMap(a => f(a).toFlowable))
 }
 
+//todo test this
 case class ScalaIterableConveyorBelt[A](iterableA: Iterable[A]) extends IterableConveyorBelt[A] {
   override def toIterable: Iterable[A] = iterableA
 

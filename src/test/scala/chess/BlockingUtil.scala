@@ -45,8 +45,8 @@ object BlockingUtil {
 
           type Solutions = util.HashSet[Sol]
           val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
-          //to do sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
-          //to do and check why we have so much garbage collection
+          //todo why we have so much garbage collection
+          //todo sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
           val folder: BiFunction[Solutions, Sol, Solutions] = {
             case (solutions: Solutions, solT: Sol) =>
               assert(solutions.add(solT))
