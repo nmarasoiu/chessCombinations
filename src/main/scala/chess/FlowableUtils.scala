@@ -9,8 +9,6 @@ import scala.collection.JavaConverters._
 
 object FlowableUtils {
 
-  def fromIterator[T](iterator: Iterator[T]): Flowable[T] = Flowable.fromIterable(()=>iterator.asJava)
-
   def fromIterable[T](iterable: Iterable[T]): Flowable[T] = Flowable.fromIterable(iterable.asJava)
 
   implicit class RichFlowable[A](flowable: Flowable[A]) {

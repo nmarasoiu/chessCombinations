@@ -1,6 +1,4 @@
-
 import scala.collection.immutable.BitSet
-
 
 package object chess {
 
@@ -173,8 +171,13 @@ package object chess {
 
     def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
-    def iteratorFrom(minPosition: Position): Iterator[Position] =
-      bitSet.iteratorFrom(minPosition.value).map(Position(_))
+    def iterableFrom(minPosition: Position): Iterable[Position] = {
+      import scala.collection.JavaConverters._
+      new java.lang.Iterable[Position] {
+        override def iterator(): java.util.Iterator[Position] =
+          bitSet.iteratorFrom(minPosition.value).map(Position(_)).asJava
+      }.asScala
+    }
   }
 
   object PositionSet {
