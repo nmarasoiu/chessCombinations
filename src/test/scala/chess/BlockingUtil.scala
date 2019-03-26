@@ -2,11 +2,13 @@ package chess
 
 import java.time.Clock
 import java.util
+import java.util.concurrent.Callable
 
 import chess.Enrichments._
 import chess.FlowableUtils._
 import com.google.common.math.Quantiles
 import io.reactivex.Flowable
+import io.reactivex.functions.BiFunction
 
 import scala.collection.JavaConverters._
 import scala.util.Random
@@ -17,7 +19,7 @@ object BlockingUtil {
   val printEvery: PrintEvery = PrintEvery(5000000)
 
   def blockingTest(table: Table, pieces: Map[Piece, Int],
-                   duplicationAssertion: Boolean, executeTimes: Int,
+                   duplicationAssertion: Boolean=true, executeTimes: Int,
                    countAssertion: Long => Boolean): Unit = {
 
     var sumTimes: Double = 0D
@@ -39,40 +41,27 @@ object BlockingUtil {
             val Pick(piece, position) = pick
             (position.value << three) + piece.pieceIndex
           }
-
-          case class Sol(picks: Array[Int]) {
-            override lazy val hashCode: Int = util.Arrays.hashCode(picks)
-          }
-
-          object Sol {
-            def apply(solution: SubSolution): Sol = Sol(solution.picks.toArray.map(pickInt).sorted)
-          }
-
           val solFlowable: Flowable[Sol] =
             solutionsFlowable
               .buffer(bufferSize.size)
               .mapInParallel(solutions => solutions.asScala.map(Sol(_)))
               .flatMap(iterable => FlowableUtils.fromIterable(iterable))
-          /*
-                type Solutions = util.HashSet[Sol]
-                val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
-                //to do sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
-                //to do and check why we have so much garbage collection
-                val folder: BiFunction[Solutions, Sol, Solutions] = {
-                  case (solutions: Solutions, solT: Sol) =>
-                    if (solutions.isEmpty) //todo delete this if line, add all the time to the set
-                      assert(solutions.add(solT))
-                    if (solutions.size % printEvery.size == 1)
-                      print(table, solT)
-                    solutions
-                }
-        */
+          type Solutions = util.HashSet[Sol]
+          val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
+          //to do sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
+          //to do and check why we have so much garbage collection
+          val folder: BiFunction[Solutions, Sol, Solutions] = {
+            case (solutions: Solutions, solT: Sol) =>
+              assert(solutions.add(solT))
+              if (solutions.size % printEvery.size == 1)
+                print(table, solT)
+              solutions
+          }
 
           solFlowable
-            //          .reduceWith(seedFactory, folder)
-            .count()
+            .reduceWith(seedFactory, folder)
             .blockingGet()
-          //          .size
+            .size
 
         }
         else {
@@ -89,7 +78,7 @@ object BlockingUtil {
         " with running average=" + (sumTimes / countTimes))
       secondsSeq = seconds :: secondsSeq
       val percentiles = Quantiles.percentiles()
-        .indexes(0, 1, 5, 10, 25, 50, 75, 80, 90, 95, 99, 100)
+        .indexes(0 to 100:_*)
         .compute(secondsSeq
           .map(_.doubleValue.asInstanceOf[java.lang.Double])
           .asJavaCollection)
@@ -101,11 +90,12 @@ object BlockingUtil {
     }
   }
 
-  private def print[T](table: Table, solution: Iterable[Pick]): Unit = {
-    println(
-      (for (pick <- solution)
-        yield PickTest.fromIntToPieceAndCoordinates(pick, table)
-        ).toIndexedSeq.sortBy(_.piece))
+  case class Sol(picks: Array[Pick]) {
+    override lazy val hashCode: Int = util.Arrays.hashCode(picks.asInstanceOf[Array[Object]])
+  }
+
+  object Sol {
+    def apply(solution: SubSolution): Sol = Sol(solution.picks.toArray.sorted)
   }
 
   case class BufferSize(size: Int) {
