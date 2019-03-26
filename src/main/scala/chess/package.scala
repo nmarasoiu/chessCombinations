@@ -1,5 +1,6 @@
 import scala.collection.immutable.BitSet
 
+//todo split this huge object
 package object chess {
 
   val (three, threeBits) = (3, 7)
@@ -172,11 +173,11 @@ package object chess {
     def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
     def iterableFrom(minPosition: Position): Iterable[Position] = {
-      import scala.collection.JavaConverters._
-      new java.lang.Iterable[Position] {
-        override def iterator(): java.util.Iterator[Position] =
-          bitSet.iteratorFrom(minPosition.value).map(Position(_)).asJava
-      }.asScala
+      import chess.JavaEnrichments._
+      bitSet
+        .iteratorFrom(minPosition.value)
+        .map(Position(_))
+        .toJavaIterable
     }
   }
 
