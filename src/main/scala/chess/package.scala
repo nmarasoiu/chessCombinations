@@ -1,4 +1,4 @@
-import scala.collection.immutable.BitSet
+
 
 //todo split this huge object
 package object chess {
@@ -134,6 +134,7 @@ package object chess {
     def area: Int = vertical.height * horizontal.length
   }
 
+
   case class PositionInTable(value: Int) extends AnyVal {
     def tableAndPosition: (Table, Position) = {
       val lower = value & fourteenBits
@@ -146,6 +147,7 @@ package object chess {
     def apply(position: Position, table: Table): PositionInTable =
       PositionInTable((position.value << fourteen) + (table.vertical.height << seven) + table.horizontal.length)
   }
+
 
   case class Pick(piece: Piece, position: Position) extends Ordered[Pick] {
     override def compare(that: Pick): Int = PickOrdering.compare(this, that)
@@ -162,34 +164,6 @@ package object chess {
     }
   }
 
-  case class PositionSet(bitSet: BitSet) {
-
-    def -(that: PositionSet): PositionSet = PositionSet(bitSet &~ that.bitSet)
-
-    def +(position: Position) = PositionSet(bitSet + position.value)
-
-    def intersects(that: PositionSet): Boolean = (bitSet & that.bitSet).nonEmpty
-
-    def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
-
-    def iterableFrom(minPosition: Position): Iterable[Position] = {
-      import chess.JavaEnrichments._
-      bitSet
-        .iteratorFrom(minPosition.value)
-        .map(Position(_))
-        .toJavaIterable
-    }
-  }
-
-  object PositionSet {
-    def apply(): PositionSet = PositionSet(BitSet())
-
-    def apply(positions: Seq[Int]): PositionSet = PositionSet(BitSet(positions: _*))
-  }
-
-  object PositionSet2 {
-    def apply(positions: Seq[Position]): PositionSet = PositionSet(positions.map(_.value))
-  }
 
   case class SubSolution(picks: List[Pick]) {
     def +(pick: Pick): SubSolution = SubSolution(pick :: picks)
