@@ -10,8 +10,8 @@ sealed abstract class ConveyorBelt[A] {
   def toFlowable: Flowable[A]
 }
 
-abstract class IterableConveyorBelt[A] extends ConveyorBelt[A] {
-  def toIterable: Iterable[A]
+abstract class IteratorConveyorBelt[A] extends ConveyorBelt[A] {
+  def toIterator: Iterator[A]
 }
 
 object ConveyorBelt {
@@ -19,38 +19,38 @@ object ConveyorBelt {
 
   def apply[A](a: A): ConveyorBelt[A] = SingletonConveyorBelt(a)
 
-  def apply[A](iterable: Iterable[A], inParallel: Boolean): ConveyorBelt[A] = {
-    if (inParallel) ParallelFlowableConveyorBelt(iterable) else FlowableConveyorBelt(iterable)
+  def apply[A](iterator: Iterator[A], inParallel: Boolean): ConveyorBelt[A] = {
+    if (inParallel) ParallelFlowableConveyorBelt(iterator) else FlowableConveyorBelt(iterator)
   }
 }
 
-object EmptyConveyorBelt extends IterableConveyorBelt[Nothing] {
-  private val emptyIterable = Iterable()
+object EmptyConveyorBelt extends IteratorConveyorBelt[Nothing] {
+  private val emptyIterator = Iterator()
   private val emptyFlowable = Flowable.empty()
 
   override def toFlowable: Flowable[Nothing] = emptyFlowable
 
-  override def toIterable: Iterable[Nothing] = emptyIterable
+  override def toIterator: Iterator[Nothing] = emptyIterator
 
   def apply[A](): ConveyorBelt[A] = EmptyConveyorBelt.asInstanceOf[ConveyorBelt[A]]
 
   override def flatMap[B](f: Nothing => ConveyorBelt[B]): ConveyorBelt[B] = EmptyConveyorBelt()
 }
 
-case class SingletonConveyorBelt[A](a: A) extends IterableConveyorBelt[A] {
+case class SingletonConveyorBelt[A](a: A) extends IteratorConveyorBelt[A] {
   override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] = f(a)
 
   override def toFlowable: Flowable[A] = Flowable.just(a)
 
-  override def toIterable: Iterable[A] = Iterable(a)
+  override def toIterator: Iterator[A] = Iterator(a)
 }
 
 object FlowableConveyorBelt {
-  def apply[A](iterable: Iterable[A]): ConveyorBelt[A] = FlowableConveyorBelt(fromIterable(iterable))
+  def apply[A](iterator: Iterator[A]): ConveyorBelt[A] = FlowableConveyorBelt(fromIterator(iterator))
 }
 
 object ParallelFlowableConveyorBelt {
-  def apply[A](iterableA: Iterable[A]): ParallelFlowableConveyorBelt[A] = apply(fromIterable(iterableA))
+  def apply[A](iteratorA: Iterator[A]): ParallelFlowableConveyorBelt[A] = apply(fromIterator(iteratorA))
 
   def apply[A](flowable: Flowable[A]): ParallelFlowableConveyorBelt[A] = ParallelFlowableConveyorBelt(flowable.parallelOnComputation())
 }
@@ -69,16 +69,16 @@ case class ParallelFlowableConveyorBelt[A](parFlowableA: ParallelFlowable[A]) ex
     ParallelFlowableConveyorBelt(parFlowableA.flatMap(a => f(a).toFlowable))
 }
 
-abstract class ScalaConveyorBelt[A] extends IterableConveyorBelt[A] {
-  def toIterable: Iterable[A]
+abstract class ScalaConveyorBelt[A] extends IteratorConveyorBelt[A] {
+  def toIterator: Iterator[A]
 
-  override def toFlowable: Flowable[A] = fromIterable(toIterable)
+  override def toFlowable: Flowable[A] = fromIterator(toIterator)
 }
 
-case class ScalaIterableConveyorBelt[A](iterableA: Iterable[A]) extends ScalaConveyorBelt[A] {
-  override def toIterable: Iterable[A] = iterableA
+case class ScalaIteratorConveyorBelt[A](iteratorA: Iterator[A]) extends ScalaConveyorBelt[A] {
+  override def toIterator: Iterator[A] = iteratorA
 
   override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] = {
-    ScalaIterableConveyorBelt(iterableA.flatMap(a => f(a).asInstanceOf[IterableConveyorBelt[B]].toIterable))
+    ScalaIteratorConveyorBelt(iteratorA.flatMap(a => f(a).asInstanceOf[IteratorConveyorBelt[B]].toIterator))
   }
 }

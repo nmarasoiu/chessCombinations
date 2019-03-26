@@ -36,7 +36,7 @@ case class SolutionPath(table: Table, firstLevel: Boolean,
         ConveyorBelt(partialSolutionSoFar)
       case Some((piece, (count, minPosition))) =>
         ConveyorBelt(
-          iterable = remainingPositions.iterableFrom(minPosition),
+          iterator = remainingPositions.iteratorFrom(minPosition),
           inParallel = firstLevel
         ).flatMap(position => {
           val incompatiblePositions = piece.incompatiblePositions(position, table)

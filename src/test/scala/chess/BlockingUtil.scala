@@ -19,7 +19,7 @@ object BlockingUtil {
   val printEvery: PrintEvery = PrintEvery(5000000)
 
   def blockingTest(table: Table, pieces: Map[Piece, Int],
-                   duplicationAssertion: Boolean=true, executeTimes: Int,
+                   duplicationAssertion: Boolean=false, executeTimes: Int,
                    countAssertion: Long => Boolean): Unit = {
 
     var sumTimes: Double = 0D
