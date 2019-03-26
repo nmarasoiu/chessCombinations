@@ -37,15 +37,12 @@ object BlockingUtil {
 
       val solutionCount: Long =
         if (duplicationAssertion) {
-          def pickInt(pick: Pick): Int = {
-            val Pick(piece, position) = pick
-            (position.value << three) + piece.pieceIndex
-          }
           val solFlowable: Flowable[Sol] =
             solutionsFlowable
               .buffer(bufferSize.size)
               .mapInParallel(solutions => solutions.asScala.map(Sol(_)))
-              .flatMap(iterable => FlowableUtils.fromIterable(iterable))
+              .flatMap(iterable => fromIterable(iterable))
+
           type Solutions = util.HashSet[Sol]
           val seedFactory: Callable[Solutions] = () => new util.HashSet[Sol]()
           //to do sequence to compute this after upstream since the cpu is filled already by upstream parallelism; change the hardcoded value to the count,
