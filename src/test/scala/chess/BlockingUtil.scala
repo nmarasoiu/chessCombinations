@@ -37,7 +37,7 @@ object BlockingUtil {
         if (duplicationAssertion) {
           def pickInt(pick: Pick): Int = {
             val Pick(piece, position) = pick
-            (position.positionInt << three) + piece.pieceIndex
+            (position.value << three) + piece.pieceIndex
           }
 
           case class Sol(picks: Array[Int]) {
@@ -45,7 +45,7 @@ object BlockingUtil {
           }
 
           object Sol {
-            def apply(solution: SubSolution): Sol = Sol(solution.picks.toStream.map(pickInt).toArray.sorted)
+            def apply(solution: SubSolution): Sol = Sol(solution.picks.toArray.map(pickInt).sorted)
           }
 
           val solFlowable: Flowable[Sol] =

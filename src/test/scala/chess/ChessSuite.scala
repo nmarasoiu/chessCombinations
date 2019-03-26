@@ -15,11 +15,6 @@ class ChessSuite extends FunSuite {
     def apply(horizontal: Int, vertical: Int): Table = Table(Horizontal(horizontal), Vertical(vertical))
   }
 
-  test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
-    areResultingBoardsTheExpectedOnes(
-      Table2(3, 3), Map(King -> 2, Rook -> 1), Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2)))))
-  }
-
   test("Example 2 should return the 8 solutions and no other solution and no duplicate solution") {
     areResultingBoardsTheExpectedOnes(
       Table2(4, 4), Map(Rook -> 2, Knight -> 4), Set(
@@ -30,6 +25,11 @@ class ChessSuite extends FunSuite {
   test("Example 3, the variety: '1 Knight' should return the solutions, and that there are no duplicates in the returned solutions") {
     blockingTest(Table2(7, 7), Map(King -> 2, Queen -> 2, Bishop -> 2, Knight -> 1),
       duplicationAssertion = false, executeTimes = 9000, countAssertion = _ >= 3063828)
+  }
+
+  test("Example 1 should return the 4 solutions and no other solution and no duplicate solution") {
+    areResultingBoardsTheExpectedOnes(
+      Table2(3, 3), Map(King -> 2, Rook -> 1), Set(Set((Rook, (1, 0)), (King, (0, 2)), (King, (2, 2)))))
   }
 
   test("Example 3, the variety: '2 Knights' should return the solutions, and that there are no duplicates in the returned solutions") {

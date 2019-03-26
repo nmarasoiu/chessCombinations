@@ -4,17 +4,13 @@ import chess.FlowableUtils._
 import io.reactivex.Flowable
 import io.reactivex.parallel.ParallelFlowable
 
-import scala.collection.parallel.ParIterable
-
 sealed abstract class ConveyorBelt[A] {
   def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B]
 
   def toFlowable: Flowable[A]
-
-  def toParallelFlowable: ParallelFlowable[A] = toFlowable.parallelOnComputation()
 }
 
-trait IterableConveyorBelt[A] extends ConveyorBelt[A] {
+abstract class IterableConveyorBelt[A] extends ConveyorBelt[A] {
   def toIterable: Iterable[A]
 }
 
@@ -23,11 +19,8 @@ object ConveyorBelt {
 
   def apply[A](a: A): ConveyorBelt[A] = SingletonConveyorBelt(a)
 
-  def apply[A](iterable: Iterable[A])(inParallel: Boolean): ConveyorBelt[A] = {
-    if (inParallel)
-      ParallelFlowableConveyorBelt(iterable)
-    else
-      FlowableConveyorBelt(iterable)
+  def apply[A](iterable: Iterable[A], inParallel: Boolean): ConveyorBelt[A] = {
+    if (inParallel) ParallelFlowableConveyorBelt(iterable) else FlowableConveyorBelt(iterable)
   }
 }
 
@@ -65,54 +58,27 @@ object ParallelFlowableConveyorBelt {
 case class FlowableConveyorBelt[A](flowableA: Flowable[A]) extends ConveyorBelt[A] {
   override def toFlowable: Flowable[A] = flowableA
 
-  override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] = FlowableConveyorBelt(flowableA.flatMap(a => f(a).toFlowable))
+  override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] =
+    FlowableConveyorBelt(flowableA.flatMap(a => f(a).toFlowable))
 }
 
 case class ParallelFlowableConveyorBelt[A](parFlowableA: ParallelFlowable[A]) extends ConveyorBelt[A] {
-  override def toParallelFlowable: ParallelFlowable[A] = parFlowableA
-
   override def toFlowable: Flowable[A] = parFlowableA.sequential()
 
-  override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] = ParallelFlowableConveyorBelt(parFlowableA.flatMap(a => f(a).toFlowable))
+  override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] =
+    ParallelFlowableConveyorBelt(parFlowableA.flatMap(a => f(a).toFlowable))
 }
 
-//the ones below unused ; todo why it generates so much memory consumption, both as uncollectable as well as collectable?
-
-abstract class ScalaConveyorBelt[A] extends ConveyorBelt[A] with IterableConveyorBelt[A] {
+abstract class ScalaConveyorBelt[A] extends IterableConveyorBelt[A] {
   def toIterable: Iterable[A]
 
-  def toParIterable: ParIterable[A]
-
-  override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] = {
-    flatMapScala(a => asScalaConveyorBelt(f(a)))
-  }
-
-  def flatMapScala[B](f: A => ScalaConveyorBelt[B]): ScalaConveyorBelt[B]
-
   override def toFlowable: Flowable[A] = fromIterable(toIterable)
-
-  protected def asScalaConveyorBelt[B](childConveyor: ConveyorBelt[B]): ScalaConveyorBelt[B] = {
-    childConveyor match {
-      case conveyor: ScalaConveyorBelt[B] => conveyor
-    }
-  }
 }
 
 case class ScalaIterableConveyorBelt[A](iterableA: Iterable[A]) extends ScalaConveyorBelt[A] {
   override def toIterable: Iterable[A] = iterableA
 
-  override def toParIterable: ParIterable[A] = toIterable.par
-
-  override def flatMapScala[B](f: A => ScalaConveyorBelt[B]): ScalaConveyorBelt[B] = {
-    ScalaIterableConveyorBelt(iterableA.flatMap(a => f(a).toIterable))
+  override def flatMap[B](f: A => ConveyorBelt[B]): ConveyorBelt[B] = {
+    ScalaIterableConveyorBelt(iterableA.flatMap(a => f(a).asInstanceOf[IterableConveyorBelt[B]].toIterable))
   }
-}
-
-case class ScalaParallelIterableConveyorBelt[A](parIterableA: ParIterable[A]) extends ScalaConveyorBelt[A] {
-  override def toParIterable: ParIterable[A] = parIterableA
-
-  override def toIterable: Iterable[A] = parIterableA.seq
-
-  override def flatMapScala[B](f: A => ScalaConveyorBelt[B]): ScalaConveyorBelt[B] =
-    ScalaParallelIterableConveyorBelt(parIterableA.flatMap(a => f(a).toIterable))
 }

@@ -1,19 +1,12 @@
 
+import scala.collection.immutable.BitSet
+
 
 package object chess {
-
-  import chess.Piece
-
-  import scala.collection.immutable.BitSet
 
   val (three, threeBits) = (3, 7)
   val (seven, sevenBits) = (7, 128 - 1)
   val (fourteen, fourteenBits) = (14, 128 * 128 - 1)
-
-  //todo try require() in constructor/trait instead of assert
-  def assertRange[T](value: Int, minValue: Int, maxValue: Int, cls: Class[T]): Unit =
-    assert(minValue <= value && value <= maxValue,
-      s"Condition $minValue <= $value <= $maxValue not respected for $cls")
 
   case class XOffset(xOffsetInt: Int) {
     def unary_- = XOffset(-xOffsetInt)
@@ -33,105 +26,143 @@ package object chess {
     val one: YOffset = YOffset(1)
   }
 
-  //todo remove duplication between X and Y with type programming w.g. abstract member class
-  // & see with assertRange
-  case class X(x: Int) {
-    //    assertRange(x, minValue = 0, maxValue = sevenBits, classOf[X])
+  abstract class Requiring {
 
-    def +(len: XOffset): X = X(x + len.xOffsetInt)
+    def requireValueConstraints(): Unit
 
-    def -(len: XOffset): X = X(x - len.xOffsetInt)
+    def requirePositiveUpToSevenBits(minValue: Int = 0): Unit = requireRange(value, minValue, maxValue = sevenBits)
 
-    def fitsIn(table: Table): Boolean = 0 <= x && x < table.horizontal.length
+    def requireSevenBitsPlusMinusEvenBits(): Unit = requireRange(value, minValue = -sevenBits, maxValue = 2 * sevenBits)
+
+    def value: Int
+
+    def requireRange[T](value: Int, minValue: Int, maxValue: Int): Unit =
+      require(minValue <= value && value <= maxValue,
+        s"Condition $minValue <= $value <= $maxValue not respected for $getClass")
   }
 
+  abstract class RequiringSevenBitsLenient extends Requiring {
+  }
 
-  case class Y(y: Int) {
-    //    assertRange(y, minValue = 0, maxValue = sevenBits, classOf[Y])
+  abstract class LenientX extends RequiringSevenBitsLenient {
+    def toX: X = X(value)
 
-    def +(len: YOffset): Y = Y(y + len.yOffsetInt)
+    def +(len: XOffset) = AnyX(value + len.xOffsetInt)
 
-    def -(len: YOffset): Y = Y(y - len.yOffsetInt)
+    def -(len: XOffset) = AnyX(value - len.xOffsetInt)
 
-    def fitsIn(table: Table): Boolean = 0 <= y && y < table.vertical.height
+    def fitsIn(table: Table): Boolean = 0 <= value && value < table.horizontal.length
+  }
+
+  case class AnyX(override val value: Int) extends LenientX {
+
+    override def requireValueConstraints(): Unit = requireSevenBitsPlusMinusEvenBits()
+  }
+
+  case class X(override val value: Int) extends LenientX {
+    override def requireValueConstraints(): Unit = requirePositiveUpToSevenBits()
+  }
+
+  abstract class LenientY extends RequiringSevenBitsLenient {
+    def toY: Y = Y(value)
+
+    def +(len: YOffset) = AnyY(value + len.yOffsetInt)
+
+    def -(len: YOffset) = AnyY(value - len.yOffsetInt)
+
+    def fitsIn(table: Table): Boolean = 0 <= value && value < table.vertical.height
+  }
+
+  case class AnyY(override val value: Int) extends LenientY {
+
+    override def requireValueConstraints(): Unit = requireSevenBitsPlusMinusEvenBits()
+  }
+
+  case class Y(override val value: Int) extends LenientY {
+    override def requireValueConstraints(): Unit = requirePositiveUpToSevenBits()
   }
 
   case class XY(x: X, y: Y) {
+  }
+
+  case class AnyXY(x: AnyX, y: AnyY) {
     def fitsIn(table: Table): Boolean = x.fitsIn(table) && y.fitsIn(table)
+
+    def toXY: XY = XY(x.toX, y.toY)
   }
 
-  case class Horizontal(length: Int) {
-    assertRange(length, minValue = 1, maxValue = sevenBits, classOf[Horizontal])
+  case class Horizontal(length: Int) extends Requiring {
+    override def value: Int = length
+
+    override def requireValueConstraints(): Unit = requirePositiveUpToSevenBits(minValue = 1)
   }
 
-  case class Vertical(height: Int) {
-    assertRange(height, minValue = 1, maxValue = sevenBits, classOf[Vertical])
+  case class Vertical(height: Int) extends Requiring {
+    override def value: Int = height
+
+    override def requireValueConstraints(): Unit = requirePositiveUpToSevenBits(minValue = 1)
   }
 
-  case class Count(count: Int) {
-    assertRange(count, minValue = 1, maxValue = Int.MaxValue, classOf[Count])
+  case class Count(value: Int) extends Requiring {
+    override def requireValueConstraints(): Unit = requireRange(value, minValue = 1, maxValue = Int.MaxValue)
 
-    def decremented(): Count = Count(count - 1)
+    def decremented(): Count = Count(value - 1)
   }
 
-  object Count {
-    val one = Count(1)
-  }
+  case class Position(value: Int) extends Requiring {
+    override def requireValueConstraints(): Unit = requireRange(value, minValue = 0, maxValue = fourteenBits)
 
-  case class Position(positionInt: Int) {
-    assertRange(positionInt, 0, fourteenBits, classOf[Position])
+    //encoding (x,y) as x * horizontal + y as Int
+    def x(table: Table): X = X(value % table.horizontal.length)
 
-    //encoding (x,y) as x*horiz+y as Int
-    def x(table: Table): X = X(positionInt % table.horizontal.length)
-
-    def y(table: Table): Y = Y(positionInt / table.horizontal.length)
+    def y(table: Table): Y = Y(value / table.horizontal.length)
 
     def xy(table: Table): XY = XY(x(table), y(table))
 
-    def next(): Position = Position(positionInt + 1)
+    def next(): Position = Position(value + 1)
 
-    def >=(minPosition: Position): Boolean = positionInt >= minPosition.positionInt
+    def >=(minPosition: Position): Boolean = value >= minPosition.value
+
   }
 
   object Position {
     val zero = Position(0)
 
-    def apply(x: X, y: Y, table: Table): Position = Position(x.x + y.y * table.horizontal.length)
+    def apply(x: X, y: Y, table: Table): Position = Position(x.value + y.value * table.horizontal.length)
   }
 
   case class Table(horizontal: Horizontal, vertical: Vertical) {
     def area: Int = vertical.height * horizontal.length
   }
 
-  case class PositionInTable(pit: Int) extends AnyVal {
+  case class PositionInTable(value: Int) extends AnyVal {
     def tableAndPosition: (Table, Position) = {
-      val lower = pit & fourteenBits
+      val lower = value & fourteenBits
       (Table(Horizontal(lower & sevenBits), Vertical(lower >> seven)),
-        Position(pit >> fourteen))
+        Position(value >> fourteen))
     }
   }
 
   object PositionInTable {
     def apply(position: Position, table: Table): PositionInTable =
-      PositionInTable((position.positionInt << fourteen) + (table.vertical.height << seven) + table.horizontal.length)
+      PositionInTable((position.value << fourteen) + (table.vertical.height << seven) + table.horizontal.length)
   }
 
   case class Pick(piece: Piece, position: Position) {
   }
 
   case class PositionSet(bitSet: BitSet) {
-    //encoding (x,y) as x*horiz+y as Int
+
     def -(that: PositionSet): PositionSet = PositionSet(bitSet &~ that.bitSet)
 
-    def +(position: Position) = PositionSet(bitSet + position.positionInt)
+    def +(position: Position) = PositionSet(bitSet + position.value)
 
     def intersects(that: PositionSet): Boolean = (bitSet & that.bitSet).nonEmpty
 
     def filter(predicate: Int => Boolean): PositionSet = PositionSet(bitSet.filter(predicate))
 
-    def iterableFrom(minPosition: Position): Seq[Position] = {
-      bitSet.from(minPosition.positionInt).toSeq.map(Position(_))
-    }
+    def iterableFrom(minPosition: Position): Iterable[Position] =
+      bitSet.iteratorFrom(minPosition.value).map(Position(_)).toIterable
   }
 
   object PositionSet {
@@ -141,7 +172,7 @@ package object chess {
   }
 
   object PositionSet2 {
-    def apply(positions: Seq[Position]): PositionSet = PositionSet(positions.map(_.positionInt))
+    def apply(positions: Seq[Position]): PositionSet = PositionSet(positions.map(_.value))
   }
 
   case class SubSolution(picks: List[Pick]) {
