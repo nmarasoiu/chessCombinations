@@ -10,29 +10,26 @@ class PositionInTableProperties extends FunSuite {
   def inOrder(a: Int, b: Int, c: Int): Boolean = a <= b && b <= c
 
   test("BitSet fromIterator") {
-    for (len <- Seq(7, 3, 2, 1, 0, 4, 8, 9, 43, 12, 14, 2100, 3200);
-         elems = Stream.continually(Random.nextInt(9000)).take(len);
-         startIndex <- if (len == 0) Seq(0) else Stream.continually(Random.nextInt(len)).take(12);
-         bitSet = BitSet(elems: _*);
-         _ <- 1 to 12) {
+    for (len <- 0 to 9000;
+         maxElement = if (len == 0) 0 else len / 12;
+         elements = Stream.continually(Random.nextInt(1 + maxElement)).take(maxElement);
+         startIndex <- if (len == 0) Seq(0) else Stream.continually(Random.nextInt(len)).take(1);
+         bitSet = BitSet(elements: _*)) {
       import chess.PositionSet.RichBitSet
-      val myImplRes = doRepeatedly(bitSet.keysIteratorFromImproved(startIndex).toVector)
-      val scalaImplRes = doRepeatedly(bitSet.keysIteratorFrom(startIndex).toVector)
-      println("-----")
+      val myImplRes = time(bitSet.keysIteratorFromImproved(startIndex).toVector)
+      val scalaImplRes = time(bitSet.keysIteratorFrom(startIndex).toVector)
+      println(s"--$len---")
       assert(myImplRes == scalaImplRes)
     }
   }
 
-  def doRepeatedly[E](expr: => E): E = {
-    var i = 0
+  def time[E](expr: => E): E = {
+    var evaluated: Option[E] = None
     val t0 = System.currentTimeMillis()
-    while (i < 1) {//set this to like 9999 to see differences; my implementation (inspired from foreach/forall, gets 10 times faster on few elements / many zeroes)
-      expr
-      i += 1
-    }
+    evaluated = Some(expr)
     val t1 = System.currentTimeMillis()
     println("Time to execute: " + (t1 - t0))
-    expr
+    evaluated.get
   }
 
   test("Table should serialize to int and deserialize back the same") {
