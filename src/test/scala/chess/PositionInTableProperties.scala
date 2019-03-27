@@ -12,8 +12,9 @@ class PositionInTableProperties extends FunSuite {
   test("BitSet fromIterator") {
     for (len <- 0 to 9000;
          maxElement = if (len == 0) 0 else len;
-         elements = Stream.continually(Random.nextInt(1 + maxElement)).take(maxElement);
-         startIndex <- if (len == 0) Seq(0) else Stream.continually(Random.nextInt(len)).take(1+len);
+         takeCount = 1 + maxElement / 12;
+         elements = Stream.continually(Random.nextInt(1 + maxElement)).take(takeCount);
+         startIndex <- if (len == 0) Seq(0) else Stream.continually(Random.nextInt(len)).take(takeCount);
          bitSet = BitSet(elements: _*)) {
       import chess.PositionSet.RichBitSet
       val myImplRes = time(bitSet.keysIteratorFromImproved(startIndex).toIndexedSeq)
