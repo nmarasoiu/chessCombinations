@@ -15,47 +15,45 @@ object ImprovedBitSetIteratorFactory {
     else
       new ImprovedBitSetIterator(
         words = bitSet.toBitMask,
-        possibleElem = start,
+        nextPotentialElement = start,
         iWord = fullWordsCount,
         word = words(fullWordsCount) >>> (start % WordLen)
       )
   }
 
   class ImprovedBitSetIterator(val words: Array[Long],
-                               var possibleElem: Int,
+                               var nextPotentialElement: Int,
                                var iWord: Int,
-                               var word: Long,
-                               var initialized: Boolean = false) extends AbstractIterator[Int] {
-
+                               var word: Long) extends AbstractIterator[Int] {
     @tailrec
-    final override def hasNext: Boolean = {
-      if ((word & 1L) == 1L) {
-        true
-      } else if (word == 0L) {
-        iWord += 1
-        if (iWord < words.length) {
-          word = words(iWord)
-          possibleElem = iWord * WordLen
-          hasNext
+    override final def hasNext: Boolean = {
+      (word & 1L) == 1L || {
+        if (word == 0L) {
+          iWord += 1
+          if (iWord < words.length) {
+            word = words(iWord)
+            nextPotentialElement = iWord * WordLen
+            hasNext
+          } else {
+            false
+          }
         } else {
-          false
+          moveBitCursor()
+          hasNext
         }
-      } else {
-        moveCursor()
-        hasNext
       }
     }
 
     override def next(): Int = {
-      val elem = possibleElem
-      moveCursor()
+      val elem = nextPotentialElement
+      moveBitCursor()
       elem
     }
 
-    def moveCursor(): Unit = {
-      assert(word != 0L)
+    private final def moveBitCursor() {
+      assert(word != 0L)//todo remove
       word = word >>> 1
-      possibleElem += 1
+      nextPotentialElement += 1
     }
   }
 

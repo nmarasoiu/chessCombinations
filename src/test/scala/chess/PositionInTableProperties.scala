@@ -16,8 +16,8 @@ class PositionInTableProperties extends FunSuite {
          startIndex <- if (len == 0) Seq(0) else Stream.continually(Random.nextInt(len)).take(1);
          bitSet = BitSet(elements: _*)) {
       import chess.PositionSet.RichBitSet
-      val myImplRes = time(bitSet.keysIteratorFromImproved(startIndex).toVector)
-      val scalaImplRes = time(bitSet.keysIteratorFrom(startIndex).toVector)
+      val myImplRes = time(bitSet.keysIteratorFromImproved(startIndex).toIndexedSeq)
+      val scalaImplRes = time(bitSet.from(startIndex).toIndexedSeq)
       println(s"--$len---")
       assert(myImplRes == scalaImplRes)
     }
