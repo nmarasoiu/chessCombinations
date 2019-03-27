@@ -45,13 +45,16 @@ object ImprovedBitSetIteratorFactory {
     }
 
     override def next(): Int = {
-      val elem = nextPotentialElement
-      moveBitCursor()
-      elem
+      if (hasNext) {
+        val nextElement = nextPotentialElement
+        moveBitCursor()
+        nextElement
+      } else {
+        Iterator.empty.next()
+      }
     }
 
     private final def moveBitCursor() {
-      assert(word != 0L)//todo remove
       word = word >>> 1
       nextPotentialElement += 1
     }
