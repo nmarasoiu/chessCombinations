@@ -30,6 +30,8 @@ object PositionSet {
 
   implicit final class RichBitSet(bitSet: BitSet) {
 
+    def iteratorImproved(): Iterator[Int] = iteratorFromImproved(0)
+
     def iteratorFromImproved(start: Int): Iterator[Int] = keysIteratorFromImproved(start)
 
     def keysIteratorFromImproved(start: Int): Iterator[Int] = ImprovedBitSetIteratorFactory.iterator(bitSet, start)

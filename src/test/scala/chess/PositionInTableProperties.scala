@@ -10,16 +10,16 @@ class PositionInTableProperties extends FunSuite {
   def inOrder(a: Int, b: Int, c: Int): Boolean = a <= b && b <= c
 
   test("BitSet fromIterator") {
-    for (len <- 0 to 9000;
-         maxElement = if (len == 0) 0 else len;
-         takeCount = 1 + maxElement / 12;
-         elements = Stream.continually(Random.nextInt(1 + maxElement)).take(takeCount);
-         startIndex <- if (len == 0) Seq(0) else Stream.continually(Random.nextInt(len)).take(takeCount);
+    for (maxElement <- 0 until Int.MaxValue;
+         randoms = Stream.continually(Random.nextInt(1 + maxElement));
+         takeCount <- 0 to maxElement;
+         elements = randoms.take(takeCount);
+         startIndex <- if (maxElement == 0) Seq(0) else randoms.take(takeCount);
          bitSet = BitSet(elements: _*)) {
       import chess.PositionSet.RichBitSet
-      val myImplRes = time(bitSet.keysIteratorFromImproved(startIndex).toIndexedSeq)
-      val scalaImplRes = time(bitSet.from(startIndex).toIndexedSeq)
-      println(s"--$len---")
+      val (myImplRes, scalaImplRes) = (
+        bitSet.iteratorFromImproved(startIndex).toIndexedSeq,
+        bitSet.from(startIndex).toIndexedSeq)
       assert(myImplRes == scalaImplRes)
     }
   }
